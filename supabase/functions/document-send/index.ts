@@ -88,7 +88,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    const ctaUrl = isFacture ? (payUrl || `${baseUrl}/facturation`) : `${baseUrl}/devis/${doc.share_token}`;
+    // Sécurité : pour une facture, on n'envoie JAMAIS un bouton « Payer » qui
+    // pointe ailleurs que Stripe. Si pas de lien → on refuse l'envoi (message clair).
+    if (isFacture && !payUrl) {
+      return json({ error: "no_pay_link", message: "Impossible de créer le lien de paiement (montant ≥ 0,50 € + Stripe connecté requis). Crée le lien depuis la carte « Paiement en ligne », puis renvoie." });
+    }
+
+    const ctaUrl = isFacture ? (payUrl as string) : `${baseUrl}/devis/${doc.share_token}`;
     const ctaLabel = isFacture ? "Payer en ligne" : "Voir et signer le devis";
     const docWord = isFacture ? "facture" : "devis";
 
