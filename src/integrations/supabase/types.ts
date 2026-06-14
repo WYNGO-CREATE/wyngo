@@ -134,6 +134,7 @@ export type Database = {
           client_email: string | null
           created_at: string
           duration_min: number
+          external_ref: string | null
           google_event_id: string | null
           google_event_link: string | null
           id: string
@@ -144,6 +145,7 @@ export type Database = {
           owner_id: string
           prospect_id: string | null
           scheduled_at: string
+          source: string
           status: string
           title: string
         }
@@ -151,6 +153,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string
           duration_min?: number
+          external_ref?: string | null
           google_event_id?: string | null
           google_event_link?: string | null
           id?: string
@@ -161,6 +164,7 @@ export type Database = {
           owner_id: string
           prospect_id?: string | null
           scheduled_at: string
+          source?: string
           status?: string
           title: string
         }
@@ -168,6 +172,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string
           duration_min?: number
+          external_ref?: string | null
           google_event_id?: string | null
           google_event_link?: string | null
           id?: string
@@ -178,6 +183,7 @@ export type Database = {
           owner_id?: string
           prospect_id?: string | null
           scheduled_at?: string
+          source?: string
           status?: string
           title?: string
         }

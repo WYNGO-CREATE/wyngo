@@ -6,14 +6,15 @@
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CalendarDays, Video, MapPin, ExternalLink, User, Plus, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Video, MapPin, ExternalLink, User, Plus, Search, X, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   addMonths, isSameMonth, isSameDay, isToday,
@@ -41,9 +42,35 @@ const prospectName = (p: Appt["prospects"]) => {
 };
 
 function AgendaPage() {
+  const qc = useQueryClient();
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
   const [open, setOpen] = useState(false);
+
+  // Calendly : sync des réservations (si jeton configuré)
+  const { data: calStatus } = useQuery({
+    queryKey: ["calendly-status"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.functions.invoke("calendly-sync", { body: { action: "status" } });
+      return data as { configured?: boolean } | null;
+    },
+  });
+  const syncCalendly = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("calendly-sync", { body: {} });
+      if (error) throw new Error(error.message);
+      const res = data as { ok?: boolean; error?: string; message?: string; imported?: number; leads?: number };
+      if (res?.error) throw new Error(res.message || "Erreur Calendly");
+      return res;
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["agenda-month"] });
+      qc.invalidateQueries({ queryKey: ["all-appointments"] });
+      toast.success(res?.imported ? `${res.imported} réservation(s) importée(s)${res.leads ? ` · ${res.leads} lead(s) créé(s)` : ""}` : "Agenda à jour — aucune nouvelle réservation");
+    },
+    onError: (e: Error) => toast.error(e.message || "Synchronisation impossible."),
+  });
 
   const gridStart = startOfWeek(startOfMonth(viewMonth), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 1 });
@@ -79,15 +106,22 @@ function AgendaPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><CalendarDays className="h-6 w-6 text-primary" /> Agenda</h1>
           <p className="text-sm text-muted-foreground">Tes rendez-vous, synchronisés Google Agenda — reliés à tes prospects.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-1.5"><Plus className="h-4 w-4" /> Nouveau rendez-vous</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>Nouveau rendez-vous</DialogTitle></DialogHeader>
-            <NewAppointment defaultDay={selectedDay} onCreated={() => setOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          {calStatus?.configured && (
+            <Button variant="outline" className="gap-1.5" disabled={syncCalendly.isPending} onClick={() => syncCalendly.mutate()}>
+              {syncCalendly.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Synchroniser Calendly
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-1.5"><Plus className="h-4 w-4" /> Nouveau rendez-vous</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader><DialogTitle>Nouveau rendez-vous</DialogTitle></DialogHeader>
+              <NewAppointment defaultDay={selectedDay} onCreated={() => setOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-[1.4fr_1fr] gap-5 items-start">
