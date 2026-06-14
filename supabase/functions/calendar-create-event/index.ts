@@ -55,18 +55,18 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
 
     const { prospect_id, title, client_email, start_iso, end_iso, notes, is_video, location } = await req.json();
-    if (!title || !start_iso || !end_iso) return json({ error: "Champs manquants (titre, dates)." }, 400);
+    if (!title || !start_iso || !end_iso) return json({ error: "missing", message: "Champs manquants (titre, dates)." });
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Compte Google connecté
     const { data: account } = await admin
       .from("gmail_accounts").select("*").eq("user_id", userId).eq("is_active", true).maybeSingle();
-    if (!account) return json({ error: "no_google", message: "Aucun compte Google connecté." }, 400);
+    if (!account) return json({ error: "no_google", message: "Aucun compte Google connecté." });
 
     // Scope Agenda présent ?
     if (!String(account.scope || "").includes(CAL_SCOPE)) {
-      return json({ error: "no_calendar_scope", message: "Reconnecte Google pour autoriser l'Agenda." }, 400);
+      return json({ error: "no_calendar_scope", message: "Reconnecte Google pour autoriser l'Agenda." });
     }
 
     // Refresh token si expiré
@@ -109,12 +109,12 @@ Deno.serve(async (req) => {
       console.error("[calendar] Google API error", gRes.status, errTxt);
       // Calendar API non activée dans le projet Google Cloud
       if (gRes.status === 403 && /Calendar API has not been used|accessNotConfigured/i.test(errTxt)) {
-        return json({ error: "api_disabled", message: "Active l'API Google Calendar dans ton projet Google Cloud." }, 400);
+        return json({ error: "api_disabled", message: "Active l'API Google Calendar dans ton projet Google Cloud (Wyngo CRM)." });
       }
       if (gRes.status === 401 || gRes.status === 403) {
-        return json({ error: "no_calendar_scope", message: "Reconnecte Google pour autoriser l'Agenda." }, 400);
+        return json({ error: "no_calendar_scope", message: "Reconnecte Google pour autoriser l'Agenda." });
       }
-      return json({ error: "google_error", message: "Création de l'événement impossible." }, 400);
+      return json({ error: "google_error", message: `Google a refusé : ${errTxt.slice(0, 300)}` });
     }
 
     const ev = await gRes.json();
@@ -144,6 +144,6 @@ Deno.serve(async (req) => {
     return json({ ok: true, event_link: ev.htmlLink, meet_link });
   } catch (e) {
     console.error("[calendar-create-event] uncaught", e);
-    return json({ error: "server_error", message: String(e) }, 500);
+    return json({ error: "server_error", message: String(e) });
   }
 });
