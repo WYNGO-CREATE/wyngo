@@ -74,6 +74,7 @@ export function AppointmentCard({ prospect }: { prospect: Prospect }) {
   // État du formulaire
   const [when, setWhen] = useState("");
   const [duration, setDuration] = useState("30");
+  const [customDur, setCustomDur] = useState("");
   const [title, setTitle] = useState(`Rendez-vous — ${prospectName || "Wyngo"}`);
   const [email, setEmail] = useState(prospect.email || "");
   const [isVideo, setIsVideo] = useState(true);
@@ -86,7 +87,9 @@ export function AppointmentCard({ prospect }: { prospect: Prospect }) {
       const start = new Date(when);
       if (isNaN(start.getTime())) throw new Error("Date invalide.");
       if (start.getTime() < Date.now()) throw new Error("La date est déjà passée.");
-      const end = new Date(start.getTime() + Number(duration) * 60000);
+      const durMin = duration === "custom" ? Math.round(Number(customDur)) : Number(duration);
+      if (!durMin || durMin < 5) throw new Error("Indique une durée valide (au moins 5 minutes).");
+      const end = new Date(start.getTime() + durMin * 60000);
 
       const { data, error } = await supabase.functions.invoke("calendar-create-event", {
         body: {
@@ -154,8 +157,14 @@ export function AppointmentCard({ prospect }: { prospect: Prospect }) {
                         <SelectItem value="45">45 min</SelectItem>
                         <SelectItem value="60">1 heure</SelectItem>
                         <SelectItem value="90">1 h 30</SelectItem>
+                        <SelectItem value="120">2 heures</SelectItem>
+                        <SelectItem value="custom">Personnalisé…</SelectItem>
                       </SelectContent>
                     </Select>
+                    {duration === "custom" && (
+                      <Input type="number" min={5} step={5} value={customDur} onChange={(e) => setCustomDur(e.target.value)}
+                        placeholder="Durée en minutes (ex : 75)" className="mt-1.5" autoFocus />
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1.5">
