@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Receipt, Plus, AlertTriangle, Euro, Clock, CheckCircle2, Settings } from "lucide-react";
+import { FileText, Receipt, Plus, AlertTriangle, Euro, Clock, CheckCircle2, Settings, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -81,6 +81,22 @@ function FacturationDashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const del = useMutation({
+    mutationFn: async (docId: string) => {
+      const { error } = await supabase.from("documents").delete().eq("id", docId);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["documents"] }); toast.success("Document supprimé"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const confirmDelete = (d: Doc) => {
+    const isEmittedFacture = d.type === "facture" && !!d.number;
+    const msg = isEmittedFacture
+      ? "⚠️ Cette facture est émise (numéro légal). La supprimer n'est pas conforme à la réglementation. Supprimer définitivement quand même ?"
+      : "Supprimer définitivement ce document ? Cette action est irréversible.";
+    if (window.confirm(msg)) del.mutate(d.id);
+  };
+
   const money = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
   return (
@@ -131,8 +147,8 @@ function FacturationDashboard() {
               {list.map((d) => {
                 const m = STATUS_META[d.status] || STATUS_META.brouillon;
                 return (
-                  <li key={d.id}>
-                    <Link to="/facturation/document/$id" params={{ id: d.id }} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/40 transition">
+                  <li key={d.id} className="flex items-center hover:bg-muted/40 transition">
+                    <Link to="/facturation/document/$id" params={{ id: d.id }} className="flex-1 flex items-center justify-between gap-3 px-4 py-3 min-w-0">
                       <div className="flex items-center gap-3 min-w-0">
                         {d.type === "facture" ? <Receipt className="h-4 w-4 text-muted-foreground shrink-0" /> : <FileText className="h-4 w-4 text-muted-foreground shrink-0" />}
                         <div className="min-w-0">
@@ -145,6 +161,9 @@ function FacturationDashboard() {
                         <Badge className={cn("border-0", m.cls)}>{m.label}</Badge>
                       </div>
                     </Link>
+                    <button onClick={() => confirmDelete(d)} title="Supprimer" className="px-3 self-stretch text-muted-foreground hover:text-rose-600 shrink-0">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </li>
                 );
               })}

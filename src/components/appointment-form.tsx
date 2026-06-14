@@ -19,6 +19,9 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 export type ApptProspect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email: string | null } | null;
+export type ExistingAppt = { id: string; title: string; scheduled_at: string; duration_min: number; is_video: boolean; location: string | null; notes: string | null; client_email: string | null };
+
+const PRESET_DURATIONS = ["15", "30", "45", "60", "90", "120"];
 
 const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -42,7 +45,7 @@ export function startGoogleOAuth() {
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect: ApptProspect; onCreated?: () => void; defaultDay?: Date }) {
+export function AppointmentForm({ prospect, onCreated, defaultDay, existing }: { prospect: ApptProspect; onCreated?: () => void; defaultDay?: Date; existing?: ExistingAppt }) {
   const qc = useQueryClient();
 
   const { data: account, isLoading } = useQuery({
@@ -53,14 +56,17 @@ export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect:
 
   const prospectName = prospect ? (prospect.company || `${prospect.first_name || ""} ${prospect.last_name || ""}`.trim()) : "";
 
-  const [when, setWhen] = useState(defaultDay ? `${format(defaultDay, "yyyy-MM-dd")}T10:00` : "");
-  const [duration, setDuration] = useState("30");
-  const [customDur, setCustomDur] = useState("");
-  const [title, setTitle] = useState(prospectName ? `Rendez-vous — ${prospectName}` : "Rendez-vous");
-  const [email, setEmail] = useState(prospect?.email || "");
-  const [isVideo, setIsVideo] = useState(true);
-  const [location, setLocation] = useState("");
-  const [notes, setNotes] = useState("");
+  const presetDur = existing && PRESET_DURATIONS.includes(String(existing.duration_min));
+  const [when, setWhen] = useState(
+    existing ? format(new Date(existing.scheduled_at), "yyyy-MM-dd'T'HH:mm")
+      : defaultDay ? `${format(defaultDay, "yyyy-MM-dd")}T10:00` : "");
+  const [duration, setDuration] = useState(existing ? (presetDur ? String(existing.duration_min) : "custom") : "30");
+  const [customDur, setCustomDur] = useState(existing && !presetDur ? String(existing.duration_min) : "");
+  const [title, setTitle] = useState(existing ? existing.title : (prospectName ? `Rendez-vous — ${prospectName}` : "Rendez-vous"));
+  const [email, setEmail] = useState(existing ? (existing.client_email || "") : (prospect?.email || ""));
+  const [isVideo, setIsVideo] = useState(existing ? existing.is_video : true);
+  const [location, setLocation] = useState(existing ? (existing.location || "") : "");
+  const [notes, setNotes] = useState(existing ? (existing.notes || "") : "");
 
   const create = useMutation({
     mutationFn: async () => {
@@ -72,13 +78,14 @@ export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect:
       if (!durMin || durMin < 5) throw new Error("Indique une durée valide (au moins 5 minutes).");
       const end = new Date(start.getTime() + durMin * 60000);
 
-      const { data, error } = await supabase.functions.invoke("calendar-create-event", {
-        body: {
-          prospect_id: prospect?.id || null, title: title.trim() || "Rendez-vous",
-          client_email: email.trim() || null, start_iso: start.toISOString(), end_iso: end.toISOString(),
-          notes: notes.trim() || null, is_video: isVideo, location: location.trim() || null,
-        },
-      });
+      const common = {
+        title: title.trim() || "Rendez-vous", client_email: email.trim() || null,
+        start_iso: start.toISOString(), end_iso: end.toISOString(),
+        notes: notes.trim() || null, is_video: isVideo, location: location.trim() || null,
+      };
+      const { data, error } = existing
+        ? await supabase.functions.invoke("calendar-update-event", { body: { appointment_id: existing.id, ...common } })
+        : await supabase.functions.invoke("calendar-create-event", { body: { prospect_id: prospect?.id || null, ...common } });
       if (error) throw new Error(error.message);
       const res = data as { ok?: boolean; error?: string; message?: string; meet_link?: string };
       if (res?.error) {
@@ -89,9 +96,10 @@ export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect:
       return res;
     },
     onSuccess: (res) => {
-      toast.success("Rendez-vous créé — invitation envoyée au client" + (res?.meet_link ? " (avec lien visio)" : ""));
+      toast.success(existing ? "Rendez-vous modifié — le client est prévenu" : "Rendez-vous créé — invitation envoyée au client" + (res?.meet_link ? " (avec lien visio)" : ""));
       qc.invalidateQueries({ queryKey: ["appointments"] });
       qc.invalidateQueries({ queryKey: ["all-appointments"] });
+      qc.invalidateQueries({ queryKey: ["agenda-month"] });
       qc.invalidateQueries({ queryKey: ["due-followups"] });
       onCreated?.();
     },
@@ -165,7 +173,7 @@ export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect:
       <DialogFooter>
         <Button onClick={() => create.mutate()} disabled={create.isPending} className="gap-1.5 w-full">
           {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarClock className="h-4 w-4" />}
-          Créer le RDV et inviter le client
+          {existing ? "Enregistrer les modifications" : "Créer le RDV et inviter le client"}
         </Button>
       </DialogFooter>
     </div>

@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CalendarDays, Video, MapPin, ExternalLink, User, Plus, Search, X, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { CalendarDays, Video, MapPin, ExternalLink, User, Plus, Search, X, ChevronLeft, ChevronRight, RefreshCw, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
@@ -32,7 +32,7 @@ type Prospect = { company: string | null; first_name: string | null; last_name: 
 type Appt = {
   id: string; title: string; scheduled_at: string; duration_min: number; is_video: boolean;
   location: string | null; meet_link: string | null; google_event_link: string | null;
-  client_email: string | null; prospect_id: string | null; prospects: Prospect | Prospect[] | null;
+  client_email: string | null; notes: string | null; prospect_id: string | null; prospects: Prospect | Prospect[] | null;
 };
 
 const prospectName = (p: Appt["prospects"]) => {
@@ -56,6 +56,26 @@ function AgendaPage() {
       return data as { configured?: boolean } | null;
     },
   });
+  const [editAppt, setEditAppt] = useState<Appt | null>(null);
+  const delAppt = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("calendar-delete-event", { body: { appointment_id: id } });
+      if (error) throw new Error(error.message);
+      const res = data as { ok?: boolean; error?: string; message?: string };
+      if (res?.error) throw new Error(res.message || "Suppression impossible.");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["agenda-month"] });
+      qc.invalidateQueries({ queryKey: ["all-appointments"] });
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+      toast.success("Rendez-vous supprimé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const confirmDelAppt = (a: Appt) => {
+    if (window.confirm("Supprimer ce rendez-vous ? Le client sera prévenu de l'annulation.")) delAppt.mutate(a.id);
+  };
+
   const syncCalendly = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("calendly-sync", { body: {} });
@@ -80,7 +100,7 @@ function AgendaPage() {
     queryKey: ["agenda-month", format(viewMonth, "yyyy-MM")],
     queryFn: async (): Promise<Appt[]> => {
       const { data } = await supabase.from("appointments")
-        .select("id, title, scheduled_at, duration_min, is_video, location, meet_link, google_event_link, client_email, prospect_id, prospects(company, first_name, last_name)")
+        .select("id, title, scheduled_at, duration_min, is_video, location, meet_link, google_event_link, client_email, notes, prospect_id, prospects(company, first_name, last_name)")
         .neq("status", "annule")
         .gte("scheduled_at", gridStart.toISOString())
         .lte("scheduled_at", gridEnd.toISOString())
@@ -200,6 +220,10 @@ function AgendaPage() {
                               : a.location ? <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {a.location}</span> : null}
                           </div>
                         </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button onClick={() => setEditAppt(a)} title="Modifier" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"><Pencil className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => confirmDelAppt(a)} title="Supprimer" className="p-1.5 rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
                       </div>
                       {(a.meet_link || a.google_event_link) && (
                         <div className="flex items-center gap-3 mt-2 pt-2 border-t">
@@ -215,6 +239,20 @@ function AgendaPage() {
           )}
         </div>
       </div>
+
+      {/* Dialog d'édition d'un rendez-vous */}
+      <Dialog open={!!editAppt} onOpenChange={(o) => !o && setEditAppt(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Modifier le rendez-vous</DialogTitle></DialogHeader>
+          {editAppt && (
+            <AppointmentForm prospect={null} onCreated={() => setEditAppt(null)} existing={{
+              id: editAppt.id, title: editAppt.title, scheduled_at: editAppt.scheduled_at,
+              duration_min: editAppt.duration_min, is_video: editAppt.is_video,
+              location: editAppt.location, notes: editAppt.notes, client_email: editAppt.client_email,
+            }} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

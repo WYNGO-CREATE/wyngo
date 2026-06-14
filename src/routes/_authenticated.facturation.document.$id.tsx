@@ -48,6 +48,7 @@ const STATUS_BADGE: Record<string, string> = {
 function DocumentEditor() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = Route.useNavigate();
 
   const { data: doc, isLoading } = useQuery({
     queryKey: ["document", id],
@@ -172,6 +173,22 @@ function DocumentEditor() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const del = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("documents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["documents"] }); toast.success("Document supprimé"); navigate({ to: "/facturation" }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const confirmDelete = () => {
+    const isEmittedFacture = doc?.type === "facture" && !!doc?.number;
+    const msg = isEmittedFacture
+      ? "⚠️ Cette facture est émise (numéro légal). La supprimer n'est pas conforme à la réglementation — l'idéal est de l'annuler. Supprimer définitivement quand même ?"
+      : "Supprimer définitivement ce document ? Cette action est irréversible.";
+    if (window.confirm(msg)) del.mutate();
+  };
+
   const openPdf = () => {
     if (!doc) return;
     const html = renderDocumentHtml(
@@ -218,6 +235,9 @@ function DocumentEditor() {
               {sendDoc.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Envoyer au client
             </Button>
           )}
+          <Button variant="ghost" size="sm" className="gap-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30" disabled={del.isPending} onClick={confirmDelete}>
+            {del.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Supprimer
+          </Button>
         </div>
       </div>
 
