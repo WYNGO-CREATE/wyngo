@@ -794,6 +794,47 @@ export type Database = {
           },
         ]
       }
+      pitch_decks: {
+        Row: {
+          created_at: string
+          headline: string | null
+          id: string
+          model: string | null
+          owner_id: string
+          preview_slug: string | null
+          prospect_id: string
+          slides: Json
+        }
+        Insert: {
+          created_at?: string
+          headline?: string | null
+          id?: string
+          model?: string | null
+          owner_id: string
+          preview_slug?: string | null
+          prospect_id: string
+          slides?: Json
+        }
+        Update: {
+          created_at?: string
+          headline?: string | null
+          id?: string
+          model?: string | null
+          owner_id?: string
+          preview_slug?: string | null
+          prospect_id?: string
+          slides?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_decks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           archived_at: string | null
