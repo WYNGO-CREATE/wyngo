@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Loader2, Save, Send, UserSearch, FileDown, Link2, Copy, CheckCircle2, Eye, ExternalLink, PenLine, CreditCard } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, Save, Send, UserSearch, FileDown, Link2, Copy, CheckCircle2, Eye, ExternalLink, PenLine, CreditCard, Mail } from "lucide-react";
 import { parseFrenchAddress } from "@/lib/address";
 import { renderDocumentHtml } from "@/lib/document-html";
 import { toast } from "sonner";
@@ -151,6 +151,28 @@ function DocumentEditor() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const sendDoc = useMutation({
+    mutationFn: async () => {
+      if (!client.name) throw new Error("Renseigne le client d'abord.");
+      if (!client.email) throw new Error("Renseigne l'email du client pour l'envoyer.");
+      // Persiste l'état courant (email + contenu) avant l'envoi
+      await supabase.from("documents").update({
+        client_name: client.name, client_address: client.address || null, client_postal_code: client.postal_code || null,
+        client_city: client.city || null, client_siret: client.siret || null, client_email: client.email || null,
+        client_is_pro: isPro, client_delivery_address: delivery || null, service_date_text: serviceDate || null,
+        lines: lines as never, total_ht: totals.ht, total_vat: totals.vat, total_ttc: totals.ttc, notes: notes || null,
+        due_date: dueDate || null, updated_at: new Date().toISOString(),
+      }).eq("id", id);
+      const { data, error } = await supabase.functions.invoke("document-send", { body: { document_id: id, origin: window.location.origin } });
+      if (error) throw new Error(error.message);
+      const res = data as { ok?: boolean; error?: string; message?: string };
+      if (res?.error) throw new Error(res.message || "Envoi impossible.");
+      return res;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["document", id] }); qc.invalidateQueries({ queryKey: ["documents"] }); toast.success(`Envoyé à ${client.email}`); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const openPdf = () => {
     if (!doc) return;
     const html = renderDocumentHtml(
@@ -190,6 +212,11 @@ function DocumentEditor() {
           {!emitted && (
             <Button size="sm" className="gap-1.5" disabled={emit.isPending} onClick={() => emit.mutate()}>
               {emit.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Émettre (n° légal)
+            </Button>
+          )}
+          {emitted && (
+            <Button size="sm" className="gap-1.5" disabled={sendDoc.isPending} onClick={() => sendDoc.mutate()}>
+              {sendDoc.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Envoyer au client
             </Button>
           )}
         </div>
