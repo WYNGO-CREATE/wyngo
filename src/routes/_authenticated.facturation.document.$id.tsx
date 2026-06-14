@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/facturation/document/$id")
 
 type Line = { description: string; quantity: number; unit_price_ht: number; vat_rate: number };
 const money = (n: number) => (Number(n) || 0).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+// Parse robuste : accepte la virgule (1,10) et ne renvoie jamais NaN.
+const num = (v: string) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : 0; };
 
 const STATUS_LABEL: Record<string, string> = {
   brouillon: "Brouillon", envoye: "Envoyé", accepte: "Accepté", refuse: "Refusé",
@@ -108,17 +110,21 @@ function DocumentEditor() {
   const setLine = (i: number, patch: Partial<Line>) => setLines((l) => l.map((x, j) => j === i ? { ...x, ...patch } : x));
   const delLine = (i: number) => setLines((l) => l.filter((_, j) => j !== i));
 
+  // Persiste l'état courant en base (réutilisé par Enregistrer + avant l'envoi /
+  // la génération de lien de paiement → garantit que le montant en base = écran).
+  const persistDoc = async () => {
+    const { error } = await supabase.from("documents").update({
+      client_name: client.name || null, client_address: client.address || null, client_postal_code: client.postal_code || null,
+      client_city: client.city || null, client_siret: client.siret || null, client_email: client.email || null,
+      client_is_pro: isPro, client_delivery_address: delivery || null, service_date_text: serviceDate || null,
+      lines: lines as never, total_ht: totals.ht, total_vat: totals.vat, total_ttc: totals.ttc,
+      notes: notes || null, due_date: dueDate || null, updated_at: new Date().toISOString(),
+    }).eq("id", id);
+    if (error) throw error;
+  };
+
   const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("documents").update({
-        client_name: client.name || null, client_address: client.address || null, client_postal_code: client.postal_code || null,
-        client_city: client.city || null, client_siret: client.siret || null, client_email: client.email || null,
-        client_is_pro: isPro, client_delivery_address: delivery || null, service_date_text: serviceDate || null,
-        lines: lines as never, total_ht: totals.ht, total_vat: totals.vat, total_ttc: totals.ttc,
-        notes: notes || null, due_date: dueDate || null, updated_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: persistDoc,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["document", id] }); qc.invalidateQueries({ queryKey: ["documents"] }); toast.success("Enregistré"); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -155,14 +161,7 @@ function DocumentEditor() {
     mutationFn: async () => {
       if (!client.name) throw new Error("Renseigne le client d'abord.");
       if (!client.email) throw new Error("Renseigne l'email du client pour l'envoyer.");
-      // Persiste l'état courant (email + contenu) avant l'envoi
-      await supabase.from("documents").update({
-        client_name: client.name, client_address: client.address || null, client_postal_code: client.postal_code || null,
-        client_city: client.city || null, client_siret: client.siret || null, client_email: client.email || null,
-        client_is_pro: isPro, client_delivery_address: delivery || null, service_date_text: serviceDate || null,
-        lines: lines as never, total_ht: totals.ht, total_vat: totals.vat, total_ttc: totals.ttc, notes: notes || null,
-        due_date: dueDate || null, updated_at: new Date().toISOString(),
-      }).eq("id", id);
+      await persistDoc(); // garantit email + montant à jour avant l'envoi
       const { data, error } = await supabase.functions.invoke("document-send", { body: { document_id: id, origin: window.location.origin } });
       if (error) throw new Error(error.message);
       const res = data as { ok?: boolean; error?: string; message?: string };
@@ -268,9 +267,9 @@ function DocumentEditor() {
           {lines.map((l, i) => (
             <div key={i} className={cn("grid gap-2 items-center", franchise ? "grid-cols-[1fr_70px_110px_40px]" : "grid-cols-[1fr_60px_100px_70px_40px]")}>
               <Input value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} placeholder="Création site web…" className="h-8 text-sm" />
-              <Input type="number" value={l.quantity} onChange={(e) => setLine(i, { quantity: Number(e.target.value) })} className="h-8 text-sm" />
-              <Input type="number" value={l.unit_price_ht} onChange={(e) => setLine(i, { unit_price_ht: Number(e.target.value) })} className="h-8 text-sm" />
-              {!franchise && <Input type="number" value={l.vat_rate} onChange={(e) => setLine(i, { vat_rate: Number(e.target.value) })} className="h-8 text-sm" />}
+              <Input type="number" inputMode="decimal" min={0} step="1" value={l.quantity} onChange={(e) => setLine(i, { quantity: num(e.target.value) })} className="h-8 text-sm" />
+              <Input type="number" inputMode="decimal" min={0} step="0.01" value={l.unit_price_ht} onChange={(e) => setLine(i, { unit_price_ht: num(e.target.value) })} className="h-8 text-sm" />
+              {!franchise && <Input type="number" inputMode="decimal" min={0} step="0.1" value={l.vat_rate} onChange={(e) => setLine(i, { vat_rate: num(e.target.value) })} className="h-8 text-sm" />}
               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => delLine(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
             </div>
           ))}
@@ -300,7 +299,7 @@ function DocumentEditor() {
       </Card>
 
       {/* Paiement en ligne (factures uniquement) */}
-      {isFacture && <PaymentCard doc={doc} />}
+      {isFacture && <PaymentCard doc={doc} persist={persistDoc} />}
 
     </div>
   );
@@ -381,7 +380,7 @@ function SignatureCard({ doc, facture }: { doc: SignDoc; facture?: { id: string;
 
 // ── Paiement en ligne d'une facture (Stripe) ────────────────────────────
 type PayDoc = { id: string; status: string; payment_url: string | null; total_ttc: number };
-function PaymentCard({ doc }: { doc: PayDoc }) {
+function PaymentCard({ doc, persist }: { doc: PayDoc; persist?: () => Promise<void> }) {
   const qc = useQueryClient();
   const emitted = doc.status !== "brouillon";
   const paid = doc.status === "paye";
@@ -398,6 +397,7 @@ function PaymentCard({ doc }: { doc: PayDoc }) {
 
   const gen = useMutation({
     mutationFn: async () => {
+      await persist?.(); // enregistre le montant courant avant de générer (évite un montant périmé)
       const { data, error } = await supabase.functions.invoke("stripe-payment-link", { body: { document_id: doc.id } });
       if (error) throw error;
       const res = data as { ok?: boolean; url?: string; error?: string };

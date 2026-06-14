@@ -63,13 +63,21 @@ Deno.serve(async (req) => {
     const baseUrl = (typeof origin === "string" && origin.startsWith("http")) ? origin.replace(/\/$/, "") : "https://wyngoworkspace.bold-unit-739e.workers.dev";
 
     const isFacture = doc.type === "facture";
-    const total = Number(doc.total_ttc || 0);
+    // Montant recalculé depuis les lignes (source de vérité)
+    const franchise = s?.vat_regime !== "normal";
+    const docLines0 = Array.isArray(doc.lines) ? doc.lines as { quantity: number; unit_price_ht: number; vat_rate: number }[] : [];
+    let total = 0;
+    for (const l of docLines0) {
+      const ht = (Number(l.quantity) || 0) * (Number(l.unit_price_ht) || 0);
+      total += franchise ? ht : ht * (1 + (Number(l.vat_rate) || 0) / 100);
+    }
+    if (!Number.isFinite(total) || total <= 0) total = Number(doc.total_ttc || 0);
 
     // Facture : s'assure d'un lien de paiement (créé via Stripe si absent)
     let payUrl: string | null = doc.payment_url || null;
     if (isFacture && !payUrl && STRIPE_KEY) {
       const cents = Math.round(total * 100);
-      if (cents >= 100) {
+      if (Number.isFinite(cents) && cents >= 50) {
         try {
           const stripe = new Stripe(STRIPE_KEY, { httpClient: Stripe.createFetchHttpClient(), apiVersion: "2023-10-16" });
           const price = await stripe.prices.create({ unit_amount: cents, currency: "eur", product_data: { name: `${doc.number || "Facture"}${doc.client_name ? " · " + doc.client_name : ""}`.slice(0, 250) } });

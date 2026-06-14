@@ -48,8 +48,18 @@ Deno.serve(async (req) => {
     if (doc.status === "brouillon") return json({ error: "Émets la facture avant d'activer le paiement." });
     if (doc.payment_url) return json({ ok: true, url: doc.payment_url }); // déjà généré
 
-    const cents = Math.round(Number(doc.total_ttc || 0) * 100);
-    if (cents < 100) return json({ error: "Montant trop faible (minimum 1 €)." });
+    // Montant recalculé depuis les lignes (source de vérité, jamais périmé)
+    const { data: bs } = await supa.from("billing_settings").select("vat_regime").eq("id", true).maybeSingle();
+    const franchise = bs?.vat_regime !== "normal";
+    const docLines = Array.isArray(doc.lines) ? doc.lines : [];
+    let total = 0;
+    for (const l of docLines) {
+      const ht = (Number(l.quantity) || 0) * (Number(l.unit_price_ht) || 0);
+      total += franchise ? ht : ht * (1 + (Number(l.vat_rate) || 0) / 100);
+    }
+    if (!Number.isFinite(total) || total <= 0) total = Number(doc.total_ttc || 0);
+    const cents = Math.round(total * 100);
+    if (!Number.isFinite(cents) || cents < 50) return json({ error: "Montant trop faible : ajoute une ligne avec un prix (minimum 0,50 €)." });
 
     const stripe = new Stripe(STRIPE_KEY, { httpClient: Stripe.createFetchHttpClient(), apiVersion: "2023-10-16" });
     const label = `${doc.number || "Facture"}${doc.client_name ? " · " + doc.client_name : ""}`.slice(0, 250);
