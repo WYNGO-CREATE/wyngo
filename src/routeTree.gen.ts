@@ -19,6 +19,7 @@ import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTableauRouteImport } from './routes/_authenticated.tableau'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated.studio'
 import { Route as AuthenticatedScriptsRouteImport } from './routes/_authenticated.scripts'
+import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated.rendez-vous'
 import { Route as AuthenticatedRelancesRouteImport } from './routes/_authenticated.relances'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated.pipeline'
@@ -82,6 +83,11 @@ const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
 const AuthenticatedScriptsRoute = AuthenticatedScriptsRouteImport.update({
   id: '/scripts',
   path: '/scripts',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedRendezVousRoute = AuthenticatedRendezVousRouteImport.update({
+  id: '/rendez-vous',
+  path: '/rendez-vous',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRelancesRoute = AuthenticatedRelancesRouteImport.update({
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
+  '/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/scripts': typeof AuthenticatedScriptsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/tableau': typeof AuthenticatedTableauRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
+  '/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/scripts': typeof AuthenticatedScriptsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/tableau': typeof AuthenticatedTableauRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/relances': typeof AuthenticatedRelancesRoute
+  '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/_authenticated/scripts': typeof AuthenticatedScriptsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
   '/_authenticated/tableau': typeof AuthenticatedTableauRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/profil'
     | '/relances'
+    | '/rendez-vous'
     | '/scripts'
     | '/studio'
     | '/tableau'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/profil'
     | '/relances'
+    | '/rendez-vous'
     | '/scripts'
     | '/studio'
     | '/tableau'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pipeline'
     | '/_authenticated/profil'
     | '/_authenticated/relances'
+    | '/_authenticated/rendez-vous'
     | '/_authenticated/scripts'
     | '/_authenticated/studio'
     | '/_authenticated/tableau'
@@ -405,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/scripts'
       fullPath: '/scripts'
       preLoaderRoute: typeof AuthenticatedScriptsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rendez-vous': {
+      id: '/_authenticated/rendez-vous'
+      path: '/rendez-vous'
+      fullPath: '/rendez-vous'
+      preLoaderRoute: typeof AuthenticatedRendezVousRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/relances': {
@@ -555,6 +574,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRelancesRoute: typeof AuthenticatedRelancesRoute
+  AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
   AuthenticatedScriptsRoute: typeof AuthenticatedScriptsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
   AuthenticatedTableauRoute: typeof AuthenticatedTableauRoute
@@ -576,6 +596,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRelancesRoute: AuthenticatedRelancesRoute,
+  AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
   AuthenticatedScriptsRoute: AuthenticatedScriptsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
   AuthenticatedTableauRoute: AuthenticatedTableauRoute,
