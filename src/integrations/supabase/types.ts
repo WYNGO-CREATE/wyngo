@@ -129,6 +129,68 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          client_email: string | null
+          created_at: string
+          duration_min: number
+          google_event_id: string | null
+          google_event_link: string | null
+          id: string
+          is_video: boolean
+          location: string | null
+          meet_link: string | null
+          notes: string | null
+          owner_id: string
+          prospect_id: string | null
+          scheduled_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          client_email?: string | null
+          created_at?: string
+          duration_min?: number
+          google_event_id?: string | null
+          google_event_link?: string | null
+          id?: string
+          is_video?: boolean
+          location?: string | null
+          meet_link?: string | null
+          notes?: string | null
+          owner_id: string
+          prospect_id?: string | null
+          scheduled_at: string
+          status?: string
+          title: string
+        }
+        Update: {
+          client_email?: string | null
+          created_at?: string
+          duration_min?: number
+          google_event_id?: string | null
+          google_event_link?: string | null
+          id?: string
+          is_video?: boolean
+          location?: string | null
+          meet_link?: string | null
+          notes?: string | null
+          owner_id?: string
+          prospect_id?: string | null
+          scheduled_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_settings: {
         Row: {
           address: string | null

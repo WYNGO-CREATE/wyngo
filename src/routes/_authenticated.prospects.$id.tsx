@@ -24,6 +24,7 @@ import { CallPrep } from "@/components/call-prep";
 import { PostcardSender } from "@/components/postcard-sender";
 import { ProspectEnrichButton } from "@/components/prospect-enrich-button";
 import { ProspectPhoneCard } from "@/components/prospect-phone-card";
+import { AppointmentCard } from "@/components/appointment-card";
 import { findTradeByNaf } from "@/lib/trades-catalog";
 import { Briefcase } from "lucide-react";
 import { PROSPECT_STATUSES, STATUS_LABELS, STATUS_VARIANTS, EVENT_LABELS, type ProspectStatus } from "@/lib/crm";
@@ -350,6 +351,8 @@ function ProspectDetail() {
           (activité précise, ville, note Google, statut digital, dernière
           interaction). C'est le "qui c'est, où on en est" en un coup d'œil. */}
       <ProspectBriefingCard prospect={prospect as Parameters<typeof ProspectBriefingCard>[0]["prospect"]} />
+
+      <AppointmentCard prospect={{ id: prospect.id, company: prospect.company, first_name: prospect.first_name, last_name: prospect.last_name, email: prospect.email }} />
 
       {/* ─── Carte d'actions de contact rapides ───
           Met en avant les 3 actions clés : appeler, écrire, voir le site.
