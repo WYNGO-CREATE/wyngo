@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
 import { CalendarClock, Loader2, Video, MapPin, Link2, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 
 export type ApptProspect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email: string | null } | null;
@@ -41,7 +42,7 @@ export function startGoogleOAuth() {
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-export function AppointmentForm({ prospect, onCreated }: { prospect: ApptProspect; onCreated?: () => void }) {
+export function AppointmentForm({ prospect, onCreated, defaultDay }: { prospect: ApptProspect; onCreated?: () => void; defaultDay?: Date }) {
   const qc = useQueryClient();
 
   const { data: account, isLoading } = useQuery({
@@ -52,7 +53,7 @@ export function AppointmentForm({ prospect, onCreated }: { prospect: ApptProspec
 
   const prospectName = prospect ? (prospect.company || `${prospect.first_name || ""} ${prospect.last_name || ""}`.trim()) : "";
 
-  const [when, setWhen] = useState("");
+  const [when, setWhen] = useState(defaultDay ? `${format(defaultDay, "yyyy-MM-dd")}T10:00` : "");
   const [duration, setDuration] = useState("30");
   const [customDur, setCustomDur] = useState("");
   const [title, setTitle] = useState(prospectName ? `Rendez-vous — ${prospectName}` : "Rendez-vous");
