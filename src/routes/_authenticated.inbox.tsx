@@ -443,7 +443,7 @@ function InboxPage() {
                     "https://www.googleapis.com/auth/userinfo.email",
                   ].join(" "),
                   access_type: "offline",
-                  prompt: "consent",
+                  prompt: "select_account consent",
                   state: "gmail_oauth",
                 });
                 window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

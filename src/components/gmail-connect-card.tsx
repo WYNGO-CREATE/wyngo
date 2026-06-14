@@ -43,7 +43,7 @@ export function GmailConnectCard() {
       response_type: "code",
       scope: SCOPES,
       access_type: "offline",
-      prompt: "consent",  // force l'affichage du consentement → garantit le refresh_token
+      prompt: "select_account consent",  // choix du compte + consentement (garantit le refresh_token)
       state: "gmail_oauth",
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
