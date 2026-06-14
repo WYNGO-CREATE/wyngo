@@ -19,7 +19,6 @@ import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTableauRouteImport } from './routes/_authenticated.tableau'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated.studio'
 import { Route as AuthenticatedScriptsRouteImport } from './routes/_authenticated.scripts'
-import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated.rendez-vous'
 import { Route as AuthenticatedRelancesRouteImport } from './routes/_authenticated.relances'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated.pipeline'
@@ -30,6 +29,7 @@ import { Route as AuthenticatedFacturationRouteImport } from './routes/_authenti
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated.equipe'
 import { Route as AuthenticatedChasseRouteImport } from './routes/_authenticated.chasse'
 import { Route as AuthenticatedApolloRouteImport } from './routes/_authenticated.apollo'
+import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated.agenda'
 import { Route as AuthenticatedProspectsIndexRouteImport } from './routes/_authenticated.prospects.index'
 import { Route as AuthenticatedProspectsIdRouteImport } from './routes/_authenticated.prospects.$id'
 import { Route as AuthenticatedFacturationReglagesRouteImport } from './routes/_authenticated.facturation.reglages'
@@ -85,11 +85,6 @@ const AuthenticatedScriptsRoute = AuthenticatedScriptsRouteImport.update({
   path: '/scripts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedRendezVousRoute = AuthenticatedRendezVousRouteImport.update({
-  id: '/rendez-vous',
-  path: '/rendez-vous',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedRelancesRoute = AuthenticatedRelancesRouteImport.update({
   id: '/relances',
   path: '/relances',
@@ -141,6 +136,11 @@ const AuthenticatedApolloRoute = AuthenticatedApolloRouteImport.update({
   path: '/apollo',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProspectsIndexRoute =
   AuthenticatedProspectsIndexRouteImport.update({
     id: '/prospects/',
@@ -176,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
   '/equipe': typeof AuthenticatedEquipeRoute
@@ -186,7 +187,6 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
-  '/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/scripts': typeof AuthenticatedScriptsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/tableau': typeof AuthenticatedTableauRoute
@@ -202,6 +202,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
   '/equipe': typeof AuthenticatedEquipeRoute
@@ -212,7 +213,6 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
-  '/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/scripts': typeof AuthenticatedScriptsRoute
   '/studio': typeof AuthenticatedStudioRouteWithChildren
   '/tableau': typeof AuthenticatedTableauRoute
@@ -231,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/apollo': typeof AuthenticatedApolloRoute
   '/_authenticated/chasse': typeof AuthenticatedChasseRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
@@ -241,7 +242,6 @@ export interface FileRoutesById {
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/relances': typeof AuthenticatedRelancesRoute
-  '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
   '/_authenticated/scripts': typeof AuthenticatedScriptsRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
   '/_authenticated/tableau': typeof AuthenticatedTableauRoute
@@ -261,6 +261,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/agenda'
     | '/apollo'
     | '/chasse'
     | '/equipe'
@@ -271,7 +272,6 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/profil'
     | '/relances'
-    | '/rendez-vous'
     | '/scripts'
     | '/studio'
     | '/tableau'
@@ -287,6 +287,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/signup'
+    | '/agenda'
     | '/apollo'
     | '/chasse'
     | '/equipe'
@@ -297,7 +298,6 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/profil'
     | '/relances'
-    | '/rendez-vous'
     | '/scripts'
     | '/studio'
     | '/tableau'
@@ -315,6 +315,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/signup'
+    | '/_authenticated/agenda'
     | '/_authenticated/apollo'
     | '/_authenticated/chasse'
     | '/_authenticated/equipe'
@@ -325,7 +326,6 @@ export interface FileRouteTypes {
     | '/_authenticated/pipeline'
     | '/_authenticated/profil'
     | '/_authenticated/relances'
-    | '/_authenticated/rendez-vous'
     | '/_authenticated/scripts'
     | '/_authenticated/studio'
     | '/_authenticated/tableau'
@@ -419,13 +419,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScriptsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/rendez-vous': {
-      id: '/_authenticated/rendez-vous'
-      path: '/rendez-vous'
-      fullPath: '/rendez-vous'
-      preLoaderRoute: typeof AuthenticatedRendezVousRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/relances': {
       id: '/_authenticated/relances'
       path: '/relances'
@@ -496,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApolloRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/agenda': {
+      id: '/_authenticated/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AuthenticatedAgendaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/prospects/': {
       id: '/_authenticated/prospects/'
       path: '/prospects'
@@ -564,6 +564,7 @@ const AuthenticatedStudioRouteWithChildren =
   AuthenticatedStudioRoute._addFileChildren(AuthenticatedStudioRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedApolloRoute: typeof AuthenticatedApolloRoute
   AuthenticatedChasseRoute: typeof AuthenticatedChasseRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
@@ -574,7 +575,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRelancesRoute: typeof AuthenticatedRelancesRoute
-  AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
   AuthenticatedScriptsRoute: typeof AuthenticatedScriptsRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
   AuthenticatedTableauRoute: typeof AuthenticatedTableauRoute
@@ -586,6 +586,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedApolloRoute: AuthenticatedApolloRoute,
   AuthenticatedChasseRoute: AuthenticatedChasseRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
@@ -596,7 +597,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRelancesRoute: AuthenticatedRelancesRoute,
-  AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
   AuthenticatedScriptsRoute: AuthenticatedScriptsRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
   AuthenticatedTableauRoute: AuthenticatedTableauRoute,

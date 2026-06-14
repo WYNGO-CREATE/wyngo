@@ -78,10 +78,11 @@ export function AppSidebar() {
 
   type NavItem = { title: string; url: string; icon: typeof Users; badge: number };
 
-  // ── Trois univers : Prospection · Studio (production) · Facturation ──
-  const activeWorkspace: "prospection" | "studio" | "facturation" =
+  // ── Quatre univers : Prospection · Studio · Facturation · Agenda ──
+  const activeWorkspace: "prospection" | "studio" | "facturation" | "agenda" =
     currentPath.startsWith("/studio") ? "studio"
     : currentPath.startsWith("/facturation") ? "facturation"
+    : currentPath.startsWith("/agenda") ? "agenda"
     : "prospection";
 
   const prospectionItems: NavItem[] = [
@@ -90,7 +91,6 @@ export function AppSidebar() {
     { title: "Prospects", url: "/prospects", icon: Users, badge: 0 },
     { title: "Statut prospect", url: "/pipeline", icon: Kanban, badge: 0 },
     { title: "À faire aujourd'hui", url: "/relances", icon: CalendarClock, badge: dueCount },
-    { title: "Rendez-vous", url: "/rendez-vous", icon: CalendarDays, badge: 0 },
     { title: "Génération d'emails", url: "/templates", icon: Sparkles, badge: 0 },
     { title: "Scripts d'appel", url: "/scripts", icon: Headphones, badge: 0 },
     { title: "Chasse aux prospects", url: "/chasse", icon: Target, badge: 0 },
@@ -105,8 +105,13 @@ export function AppSidebar() {
     { title: "Réglages", url: "/facturation/reglages", icon: UserCog, badge: 0 },
   ];
 
+  const agendaItems: NavItem[] = [
+    { title: "Mes rendez-vous", url: "/agenda", icon: CalendarDays, badge: 0 },
+  ];
+
   const mainItems = activeWorkspace === "studio" ? studioItems
     : activeWorkspace === "facturation" ? facturationItems
+    : activeWorkspace === "agenda" ? agendaItems
     : prospectionItems;
 
   // Items "compte", communs aux deux univers
@@ -154,6 +159,7 @@ export function AppSidebar() {
               { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
               { ws: "studio", to: "/studio", icon: Rocket, label: "Studio" },
               { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
+              { ws: "agenda", to: "/agenda", icon: CalendarDays, label: "Agenda" },
             ] as const).map((w) => (
               <Link key={w.ws} to={w.to} className={cn(
                 "flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-semibold transition",
@@ -167,7 +173,7 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : "Prospection"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : "Prospection"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{mainItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
