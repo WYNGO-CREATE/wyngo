@@ -111,6 +111,28 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   body.fs .bar2{display:none}
   body.fs .stage{inset:0}
   body.fs .fsExit{display:block}
+  @media (max-width:760px){
+    .stage{position:fixed;inset:46px 0 60px 0;padding:10px;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .slide{display:none;width:100%;height:auto;min-height:100%;max-width:none;border-radius:16px;padding:26px 22px 30px;justify-content:flex-start;overflow:visible}
+    .slide.active{display:flex}
+    .slide::before{width:6px}
+    h1{font-size:30px;letter-spacing:-.5px}
+    h2{font-size:25px}
+    .sub{font-size:15px;max-width:none}
+    .body{margin-top:18px}
+    .kpis{flex-direction:column;gap:12px}
+    .kpi{min-width:0}
+    .kpi-fig{font-size:34px}
+    .kpi-txt{font-size:14.5px}
+    ul.pts{gap:14px}
+    ul.pts li{font-size:16.5px}
+    .site-grid{display:flex;flex-direction:column;gap:18px}
+    .mockup iframe{min-height:210px;height:220px}
+    .offer .body{padding:18px}
+    .foot{position:static;margin-top:22px;left:auto;right:auto}
+    .cover{justify-content:center}
+    .nav{bottom:10px;padding:7px 14px}
+  }
   @media print{
     @page{size:A4 landscape;margin:0}
     body{background:#fff}
