@@ -24,17 +24,31 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 // Chiffres largement repris dans le secteur du marketing local FR. L'IA ne
 // peut citer QUE ces faits (ou les données propres du prospect).
 const FACTS = [
-  { stat: "87 % des Français consultent Internet avant de choisir un commerce ou un artisan local", source: "Solocal / Opinionway" },
-  { stat: "76 % des personnes qui font une recherche locale sur smartphone visitent un établissement dans les 24 h", source: "Google" },
-  { stat: "28 % des recherches locales aboutissent à un achat", source: "Google" },
-  { stat: "Gagner 1 étoile sur Google peut augmenter le chiffre d'affaires de 5 à 9 %", source: "Harvard Business School" },
-  { stat: "88 % des consommateurs font autant confiance aux avis en ligne qu'à une recommandation personnelle", source: "BrightLocal" },
-  { stat: "75 % des internautes jugent la crédibilité d'une entreprise à partir du design de son site web", source: "Université de Stanford" },
-  { stat: "Plus de 60 % du trafic web provient désormais du mobile", source: "Statista" },
-  { stat: "Le 1er résultat sur Google capte à lui seul environ 28 % des clics", source: "Étude Sistrix" },
-  { stat: "Une fiche d'établissement complète sur Google reçoit 7× plus de clics qu'une fiche incomplète", source: "Google" },
-  { stat: "Environ 1 TPE française sur 3 n'a toujours pas de site web", source: "Baromètre France Num" },
-  { stat: "Les TPE/PME présentes en ligne croissent en moyenne plus vite que celles sans présence digitale", source: "France Num / Bpifrance" },
+  // ── Recherche locale & intention d'achat ──
+  { stat: "87 % des Français consultent Internet avant de choisir un commerce ou un artisan local", source: "Solocal / Opinionway", theme: "local" },
+  { stat: "4 recherches Google sur 5 ont une intention locale", source: "Google", theme: "local" },
+  { stat: "76 % des personnes qui font une recherche locale sur smartphone visitent un établissement dans les 24 h", source: "Google", theme: "local" },
+  { stat: "28 % des recherches locales aboutissent à un achat", source: "Google", theme: "local" },
+  { stat: "« près de moi » : ces recherches ont été multipliées par 2 ces dernières années", source: "Google", theme: "local" },
+  // ── Site web : crédibilité & conversion ──
+  { stat: "75 % des internautes jugent la crédibilité d'une entreprise à partir du design de son site web", source: "Université de Stanford", theme: "site" },
+  { stat: "Il faut 0,05 seconde à un visiteur pour se faire une opinion sur un site", source: "Google / étude EPFL", theme: "site" },
+  { stat: "Un site qui met plus de 3 s à charger fait fuir 53 % des visiteurs mobiles", source: "Google", theme: "site" },
+  { stat: "Plus de 60 % du trafic web provient désormais du mobile", source: "Statista", theme: "site" },
+  // ── Coût de l'absence de site ──
+  { stat: "Environ 1 TPE française sur 3 n'a toujours pas de site web", source: "Baromètre France Num", theme: "absence" },
+  { stat: "Les TPE/PME ayant une présence en ligne avancée croissent jusqu'à 2× plus vite que les autres", source: "France Num / Bpifrance", theme: "absence" },
+  { stat: "Sans site, une entreprise est jugée moins fiable par plus de la moitié des consommateurs", source: "Visual Objects", theme: "absence" },
+  // ── Avis & réputation (Google) ──
+  { stat: "Gagner 1 étoile sur Google peut augmenter le chiffre d'affaires de 5 à 9 %", source: "Harvard Business School", theme: "avis" },
+  { stat: "88 % des consommateurs font autant confiance aux avis en ligne qu'à une recommandation personnelle", source: "BrightLocal", theme: "avis" },
+  { stat: "Une fiche Google Business complète reçoit 7× plus de clics qu'une fiche incomplète", source: "Google", theme: "avis" },
+  { stat: "Le 1er résultat sur Google capte à lui seul environ 28 % des clics", source: "Sistrix", theme: "avis" },
+  // ── Exemples par secteur (à n'utiliser que si le métier correspond) ──
+  { stat: "9 personnes sur 10 lisent les avis en ligne avant de choisir un restaurant", source: "TripAdvisor", theme: "restauration" },
+  { stat: "Plus de 8 Français sur 10 recherchent un artisan sur Internet avant de le contacter", source: "Opinionway pour Solocal", theme: "artisanat / BTP" },
+  { stat: "Plus de la moitié des prises de rendez-vous en coiffure/beauté se font désormais en ligne", source: "Planity / secteur beauté", theme: "beauté / coiffure" },
+  { stat: "80 % des consommateurs se renseignent en ligne avant d'acheter en magasin (effet ROPO)", source: "Google", theme: "commerce / retail" },
 ];
 
 Deno.serve(async (req) => {
@@ -92,11 +106,17 @@ PERSONNALISATION MAXIMALE (le client doit sentir que c'est fait POUR LUI, pas un
 - Adapte les exemples au métier exact (un boulanger ≠ un plombier ≠ un coiffeur) : parle de SON quotidien, de SES clients.
 - Si une info manque, reste général mais crédible — ne l'invente pas.
 
+LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du blabla) :
+- Diapos "constat" et "marche" : CHAQUE diapo doit comporter au moins 2 chiffres MARQUANTS, mis en avant via le champ "figure" (ex figure:"87 %", text:"des clients vérifient en ligne avant de venir") + "source" obligatoire.
+- Choisis en priorité les FACTS dont le thème correspond au métier exact du prospect (ex : un restaurant → fact thème "restauration" ; un plombier/maçon → "artisanat / BTP" ; un coiffeur → "beauté / coiffure" ; un commerce → "commerce / retail"), PUIS les FACTS locaux/avis/site.
+- Reformule le bénéfice pour CE métier précis (parle de ses clients à lui).
+- Interdits : bullet vague sans chiffre ni intérêt concret, chiffre sans source, superlatif creux.
+
 Les 4 diapos (dans cet ordre, via l'outil) :
-1. kind="constat" : la situation actuelle RÉELLE du prospect (son secteur, sa ville, son site actuel ou son absence de site) et ce que ça lui coûte. 1 chiffre sourcé qui appuie.
-2. kind="marche" : le marché chiffré de son secteur/du local — 2-3 faits sourcés pertinents, formulés comme une opportunité pour lui.
-3. kind="site" : ce que son futur site Wyngo va lui apporter concrètement (3-4 bénéfices). Pas besoin de chiffres ici (le mockup de son site sera affiché).
-4. kind="offre" : la proposition Wyngo + l'impact attendu (formulé prudemment, ancré sur les faits) + la prochaine étape claire.`;
+1. kind="constat" : la situation RÉELLE du prospect (secteur, ville, site actuel ou absence) et ce que ça lui coûte CONCRÈTEMENT. 2 chiffres "figure"+"source" qui frappent.
+2. kind="marche" : le marché chiffré de SON secteur en local — 2-3 chiffres "figure"+"source" formulés comme une opportunité directe pour lui.
+3. kind="site" : 3-4 bénéfices très concrets de son futur site (le mockup s'affiche à côté). Bénéfices liés à son métier (ex : prise de contact, réservations, devis, visibilité Google).
+4. kind="offre" : la proposition Wyngo + l'impact attendu (prudent, ancré sur les FACTS) + prochaine étape claire et engageante.`;
 
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
@@ -104,8 +124,8 @@ ${JSON.stringify(ctx, null, 2)}
 CE QUI S'EST DIT AUX APPELS PRÉCÉDENTS (résumés — base-toi dessus pour adapter le pitch) :
 ${callNotes || "(aucun résumé d'appel disponible — adapte au secteur et à la ville)"}
 
-FACTS (les SEULS chiffres autorisés, avec sources) :
-${FACTS.map((f, i) => `${i + 1}. ${f.stat} — Source : ${f.source}`).join("\n")}
+FACTS (les SEULS chiffres autorisés — [thème] aide à choisir selon le métier, avec sources) :
+${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.stat} — Source : ${f.source}`).join("\n")}
 
 Génère la présentation via l'outil "build_deck". Tout doit être taillé pour ${ctx.entreprise} (${ctx.secteur}, ${ctx.ville}). Reprends ce qui s'est dit aux appels pour que ${ctx.interlocuteur || "le dirigeant"} se sente compris.`;
 

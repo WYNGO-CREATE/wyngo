@@ -55,7 +55,7 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     <p class="c-for">Présentation préparée pour <b>${esc(meta.clientName)}</b></p>
     ${(meta.sector || meta.city) ? `<div class="c-chips">${meta.sector ? `<span>${esc(meta.sector)}</span>` : ""}${meta.city ? `<span>${esc(meta.city)}</span>` : ""}</div>` : ""}
   </section>`;
-  const content = slides.map((s, i) => slideHtml(s, meta, i + 1, total)).join("");
+  const content = slides.map((s, i) => slideHtml(s, meta, i + 2, total)).join("");
 
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Présentation — ${esc(meta.clientName)}</title>
@@ -107,6 +107,10 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#0f172a;color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
   .nav button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
   .nav .count{font-size:13px;font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+  .fsExit{display:none;position:fixed;top:12px;right:14px;z-index:60;background:rgba(15,23,42,.88);color:#fff;border:0;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+  body.fs .bar2{display:none}
+  body.fs .stage{inset:0}
+  body.fs .fsExit{display:block}
   @media print{
     @page{size:A4 landscape;margin:0}
     body{background:#fff}
@@ -119,8 +123,9 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 <body>
   <div class="bar2">
     <span>Présentation · <b>${esc(meta.clientName)}</b></span>
-    <span class="grp"><button onclick="fs()">Plein écran</button><button onclick="window.print()">Imprimer / PDF</button></span>
+    <span class="grp"><button id="fsBtn" onclick="fs()">Plein écran</button><button onclick="window.print()">Imprimer / PDF</button></span>
   </div>
+  <button id="fsExit" class="fsExit" onclick="fs()">✕ Quitter le plein écran</button>
   <div class="stage" id="stage">${cover}${content}</div>
   <div class="nav"><button onclick="go(-1)" aria-label="Précédent">‹</button><span class="count" id="count"></span><button onclick="go(1)" aria-label="Suivant">›</button></div>
 <script>
@@ -128,6 +133,7 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   function show(i){cur=Math.max(0,Math.min(slides.length-1,i));slides.forEach(function(s,j){s.classList.toggle('active',j===cur)});document.getElementById('count').textContent=(cur+1)+' / '+slides.length;}
   function go(d){show(cur+d);}
   function fs(){if(document.fullscreenElement){document.exitFullscreen();}else{(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);}}
+  document.addEventListener('fullscreenchange',function(){var on=!!document.fullscreenElement;document.body.classList.toggle('fs',on);var b=document.getElementById('fsBtn');if(b)b.textContent=on?'Quitter':'Plein écran';});
   document.addEventListener('keydown',function(e){if(['ArrowRight',' ','PageDown'].includes(e.key)){go(1);e.preventDefault();}else if(['ArrowLeft','PageUp'].includes(e.key)){go(-1);e.preventDefault();}});
   show(0);
 </script>

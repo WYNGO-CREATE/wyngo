@@ -94,7 +94,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
             <p className="text-xs text-muted-foreground">Générée le {format(new Date(deck.created_at), "PP 'à' HH'h'mm", { locale: fr })}{!(preview?.slug || deck.preview_slug) ? " · (génère l'Aperçu du site pour l'inclure)" : ""}</p>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" className="gap-1.5" onClick={present}><Play className="h-3.5 w-3.5" /> Présenter / PDF</Button>
-              <Button variant="outline" size="sm" className="gap-1.5" disabled={send.isPending || !prospect.email} title={!prospect.email ? "Renseigne l'email du prospect" : undefined} onClick={() => send.mutate()}>
+              <Button variant="outline" size="sm" className="gap-1.5" disabled={send.isPending} onClick={() => send.mutate()}>
                 {send.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Envoyer au prospect
               </Button>
               <Button variant="ghost" size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
