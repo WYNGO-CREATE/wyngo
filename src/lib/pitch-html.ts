@@ -112,7 +112,10 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   body.fs .stage{inset:0}
   body.fs .fsExit{display:block}
   @media (max-width:760px){
-    .bar2{height:44px;font-size:12px}
+    .bar2{height:44px;font-size:12px;padding:0 10px;gap:8px;flex-wrap:nowrap}
+    .bar2>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar2 .grp{flex:none;white-space:nowrap;display:flex}
+    .bar2 .grp button{padding:6px 9px;font-size:11px;margin-left:6px}
     /* Flux document simple (block) + marges explicites → zéro chevauchement */
     .stage{position:fixed;inset:44px 0 58px 0;padding:10px;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
     .slide{display:none;width:100%;height:auto;min-height:0;max-width:none;border-radius:16px;padding:24px 20px 28px;overflow:visible}
