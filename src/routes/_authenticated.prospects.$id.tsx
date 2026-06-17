@@ -355,7 +355,7 @@ function ProspectDetail() {
 
       <AppointmentCard prospect={{ id: prospect.id, company: prospect.company, first_name: prospect.first_name, last_name: prospect.last_name, email: prospect.email }} />
 
-      <PitchCard prospect={{ id: prospect.id, company: prospect.company, first_name: prospect.first_name, last_name: prospect.last_name, brief_activity: (prospect as { brief_activity?: string | null }).brief_activity, industry: (prospect as { industry?: string | null }).industry, location: prospect.location }} />
+      <PitchCard prospect={{ id: prospect.id, company: prospect.company, first_name: prospect.first_name, last_name: prospect.last_name, email: prospect.email, brief_activity: (prospect as { brief_activity?: string | null }).brief_activity, industry: (prospect as { industry?: string | null }).industry, location: prospect.location }} />
 
       {/* ─── Carte d'actions de contact rapides ───
           Met en avant les 3 actions clés : appeler, écrire, voir le site.

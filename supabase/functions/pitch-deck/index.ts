@@ -58,15 +58,24 @@ Deno.serve(async (req) => {
     const { data: prev } = await admin.from("prospect_previews")
       .select("slug, generated_at").eq("prospect_id", prospect_id).order("generated_at", { ascending: false }).limit(1).maybeSingle();
 
+    // Contexte relationnel : ce qui s'est dit au 1er appel (clé pour adapter)
+    const { data: calls } = await admin.from("call_logs")
+      .select("*").eq("prospect_id", prospect_id).order("created_at", { ascending: false }).limit(3);
+    const callNotes = (calls || [])
+      .map((c: Record<string, unknown>) => (c.summary || c.notes || c.transcript || "") as string)
+      .filter(Boolean).join("\n---\n").slice(0, 2500);
+
     const hasWebsite = p.website_status === "has_website" || (!!p.website && p.website_status !== "no_website");
     const ctx = {
       entreprise: p.company || `${p.first_name || ""} ${p.last_name || ""}`.trim(),
+      interlocuteur: `${p.first_name || ""} ${p.last_name || ""}`.trim() || null,
       secteur: p.brief_activity || p.industry || "—",
       ville: p.location || "—",
       site_actuel: hasWebsite ? (p.website || "oui") : "aucun site web",
       score_site: p.website_score ?? null,
       objectif: p.brief_objective || null,
       mots_cles: Array.isArray(p.brief_keywords) ? p.brief_keywords.join(", ") : null,
+      notes_crm: p.notes || null,
     };
 
     const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
@@ -77,6 +86,12 @@ RÈGLE ABSOLUE — zéro blabla, zéro chiffre inventé :
 - Chaque chiffre DOIT porter sa source.
 - Ton : pro, direct, qui donne envie. Phrases courtes. Pas de superlatifs creux.
 
+PERSONNALISATION MAXIMALE (le client doit sentir que c'est fait POUR LUI, pas un template) :
+- Nomme l'entreprise et sa ville explicitement dans les titres/sous-titres.
+- Appuie-toi sur CE QUI S'EST DIT AU 1ER APPEL (résumé fourni) : reprends ses mots, ses objectifs, ses freins, ce qui l'a intéressé. Le 2e RDV doit répondre précisément à ce qu'il a exprimé.
+- Adapte les exemples au métier exact (un boulanger ≠ un plombier ≠ un coiffeur) : parle de SON quotidien, de SES clients.
+- Si une info manque, reste général mais crédible — ne l'invente pas.
+
 Les 4 diapos (dans cet ordre, via l'outil) :
 1. kind="constat" : la situation actuelle RÉELLE du prospect (son secteur, sa ville, son site actuel ou son absence de site) et ce que ça lui coûte. 1 chiffre sourcé qui appuie.
 2. kind="marche" : le marché chiffré de son secteur/du local — 2-3 faits sourcés pertinents, formulés comme une opportunité pour lui.
@@ -86,10 +101,13 @@ Les 4 diapos (dans cet ordre, via l'outil) :
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
 
+CE QUI S'EST DIT AUX APPELS PRÉCÉDENTS (résumés — base-toi dessus pour adapter le pitch) :
+${callNotes || "(aucun résumé d'appel disponible — adapte au secteur et à la ville)"}
+
 FACTS (les SEULS chiffres autorisés, avec sources) :
 ${FACTS.map((f, i) => `${i + 1}. ${f.stat} — Source : ${f.source}`).join("\n")}
 
-Génère la présentation via l'outil "build_deck". Adapte tout au secteur "${ctx.secteur}" et à la ville "${ctx.ville}".`;
+Génère la présentation via l'outil "build_deck". Tout doit être taillé pour ${ctx.entreprise} (${ctx.secteur}, ${ctx.ville}). Reprends ce qui s'est dit aux appels pour que ${ctx.interlocuteur || "le dirigeant"} se sente compris.`;
 
     const SCHEMA = {
       type: "object",

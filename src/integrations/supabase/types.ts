@@ -803,6 +803,8 @@ export type Database = {
           owner_id: string
           preview_slug: string | null
           prospect_id: string
+          public_slug: string | null
+          sent_at: string | null
           slides: Json
         }
         Insert: {
@@ -813,6 +815,8 @@ export type Database = {
           owner_id: string
           preview_slug?: string | null
           prospect_id: string
+          public_slug?: string | null
+          sent_at?: string | null
           slides?: Json
         }
         Update: {
@@ -823,6 +827,8 @@ export type Database = {
           owner_id?: string
           preview_slug?: string | null
           prospect_id?: string
+          public_slug?: string | null
+          sent_at?: string | null
           slides?: Json
         }
         Relationships: [

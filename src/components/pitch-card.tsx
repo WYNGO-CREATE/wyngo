@@ -8,14 +8,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Presentation, Loader2, Sparkles, Play, RefreshCw } from "lucide-react";
+import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { renderPitchHtml, type PitchDeck } from "@/lib/pitch-html";
 
-type Prospect = { id: string; company: string | null; first_name: string | null; last_name: string | null; brief_activity?: string | null; industry?: string | null; location?: string | null };
-type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string };
+type Prospect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email?: string | null; brief_activity?: string | null; industry?: string | null; location?: string | null };
+type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null };
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
@@ -23,7 +23,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
 
   const { data: deck } = useQuery({
     queryKey: ["pitch-deck", prospect.id],
-    queryFn: async () => (await supabase.from("pitch_decks").select("id, headline, slides, preview_slug, created_at").eq("prospect_id", prospect.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as DeckRow | null,
+    queryFn: async () => (await supabase.from("pitch_decks").select("id, headline, slides, preview_slug, created_at, sent_at").eq("prospect_id", prospect.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as DeckRow | null,
   });
 
   // Dernier aperçu de site (mockup le plus à jour)
@@ -44,16 +44,36 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const present = () => {
-    if (!deck) return;
+  const buildHtml = (): string | null => {
+    if (!deck) return null;
     const slug = preview?.slug || deck.preview_slug;
     const previewUrl = slug ? `${window.location.origin}/p/${slug}` : null;
     const d: PitchDeck = { headline: deck.headline || clientName, slides: (Array.isArray(deck.slides) ? deck.slides : []) as PitchDeck["slides"] };
-    const html = renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location, previewUrl });
+    return renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location, previewUrl });
+  };
+
+  const present = () => {
+    const html = buildHtml();
+    if (!html) return;
     const w = window.open("", "_blank");
     if (w) { w.document.write(html); w.document.close(); }
     else { const b = new Blob([html], { type: "text/html" }); window.open(URL.createObjectURL(b), "_blank"); }
   };
+
+  const send = useMutation({
+    mutationFn: async () => {
+      if (!prospect.email) throw new Error("Renseigne l'email du prospect sur sa fiche.");
+      const html = buildHtml();
+      if (!html || !deck) throw new Error("Génère d'abord la présentation.");
+      const { data, error } = await supabase.functions.invoke("pitch-send", { body: { prospect_id: prospect.id, deck_id: deck.id, html, origin: window.location.origin } });
+      if (error) throw new Error(error.message);
+      const res = data as { ok?: boolean; error?: string; message?: string };
+      if (res?.error) throw new Error(res.message || "Envoi impossible.");
+      return res;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["pitch-deck", prospect.id] }); toast.success(`Présentation envoyée à ${prospect.email}`); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <Card className="border-violet-200 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
@@ -74,10 +94,14 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
             <p className="text-xs text-muted-foreground">Générée le {format(new Date(deck.created_at), "PP 'à' HH'h'mm", { locale: fr })}{!(preview?.slug || deck.preview_slug) ? " · (génère l'Aperçu du site pour l'inclure)" : ""}</p>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" className="gap-1.5" onClick={present}><Play className="h-3.5 w-3.5" /> Présenter / PDF</Button>
-              <Button variant="outline" size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
+              <Button variant="outline" size="sm" className="gap-1.5" disabled={send.isPending || !prospect.email} title={!prospect.email ? "Renseigne l'email du prospect" : undefined} onClick={() => send.mutate()}>
+                {send.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Envoyer au prospect
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
                 {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Régénérer
               </Button>
             </div>
+            {deck.sent_at && <p className="text-[11px] text-emerald-600">✓ Envoyée au prospect le {format(new Date(deck.sent_at), "PP 'à' HH'h'mm", { locale: fr })}</p>}
             <p className="text-[11px] text-muted-foreground border-t pt-2">Chiffres issus de sources reconnues (Google, BrightLocal, France Num…). Vérifie ceux que tu cites si besoin.</p>
           </>
         )}
