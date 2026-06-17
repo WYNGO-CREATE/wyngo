@@ -112,25 +112,36 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   body.fs .stage{inset:0}
   body.fs .fsExit{display:block}
   @media (max-width:760px){
-    .stage{position:fixed;inset:46px 0 60px 0;padding:10px;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .slide{display:none;width:100%;height:auto;min-height:100%;max-width:none;border-radius:16px;padding:26px 22px 30px;justify-content:flex-start;overflow:visible}
-    .slide.active{display:flex}
+    .bar2{height:44px;font-size:12px}
+    /* Flux document simple (block) + marges explicites → zéro chevauchement */
+    .stage{position:fixed;inset:44px 0 58px 0;padding:10px;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .slide{display:none;width:100%;height:auto;min-height:0;max-width:none;border-radius:16px;padding:24px 20px 28px;overflow:visible}
+    .slide.active{display:block}
     .slide::before{width:6px}
-    h1{font-size:30px;letter-spacing:-.5px}
-    h2{font-size:25px}
-    .sub{font-size:15px;max-width:none}
-    .body{margin-top:18px}
-    .kpis{flex-direction:column;gap:12px}
-    .kpi{min-width:0}
-    .kpi-fig{font-size:34px}
-    .kpi-txt{font-size:14.5px}
-    ul.pts{gap:14px}
-    ul.pts li{font-size:16.5px}
-    .site-grid{display:flex;flex-direction:column;gap:18px}
-    .mockup iframe{min-height:210px;height:220px}
+    .s-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px}
+    h1{font-size:28px;line-height:1.2;letter-spacing:-.5px;margin:0 0 14px}
+    h2{font-size:23px;line-height:1.28;margin:0 0 12px}
+    .sub{font-size:15px;line-height:1.55;max-width:none;margin:0 0 20px}
+    .body{margin:0}
+    .kpis{display:block}
+    .kpi{display:block;margin:0 0 16px;padding:16px 18px}
+    .kpi:last-child{margin-bottom:0}
+    .kpi-fig{font-size:32px}
+    .kpi-txt{font-size:14.5px;line-height:1.45;margin-top:8px}
+    ul.pts{display:block}
+    ul.pts li{display:flex;gap:12px;font-size:16px;line-height:1.5;margin:0 0 18px}
+    ul.pts li:last-child{margin-bottom:0}
+    .site-grid{display:block;margin:0}
+    .site-grid>div:first-child{margin-bottom:20px}
+    .mockup{display:block}
+    .mockup iframe{height:230px;min-height:0}
     .offer .body{padding:18px}
-    .foot{position:static;margin-top:22px;left:auto;right:auto}
-    .cover{justify-content:center}
+    .foot{position:static;margin-top:24px;left:auto;right:auto}
+    .cover{min-height:calc(100vh - 150px)}
+    .c-brand{margin-bottom:20px}
+    .cover h1{margin-bottom:12px}
+    .c-for{margin-top:6px}
+    .c-chips{margin-top:18px}
     .nav{bottom:10px;padding:7px 14px}
   }
   @media print{
