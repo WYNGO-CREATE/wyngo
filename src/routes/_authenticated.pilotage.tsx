@@ -9,17 +9,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Euro, Clock, TrendingUp, Target, CalendarClock, CheckCircle2, FileText } from "lucide-react";
+import { BarChart3, Euro, Clock, TrendingUp, Target, CalendarClock, CheckCircle2, FileText, Bell, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ProspectsMap } from "@/components/prospects-map";
 
 export const Route = createFileRoute("/_authenticated/pilotage")({
   component: PilotagePage,
   head: () => ({ meta: [{ title: "Pilotage — Wyngo" }] }),
 });
 
-type Doc = { type: string; status: string; total_ttc: number | null; paid_at: string | null; issue_date: string | null; created_at: string };
+type Doc = { id: string; number: string | null; type: string; status: string; total_ttc: number | null; client_name: string | null; due_date: string | null; sent_at: string | null; paid_at: string | null; issue_date: string | null; created_at: string };
+type Prosp = { status: string; location: string | null };
 const money = (n: number) => (Number(n) || 0).toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
 const STATUS_LABELS: { key: string; label: string; cls: string }[] = [
@@ -38,19 +40,20 @@ function PilotagePage() {
     queryKey: ["pilotage-docs", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<Doc[]> => {
-      const { data } = await supabase.from("documents").select("type, status, total_ttc, paid_at, issue_date, created_at");
+      const { data } = await supabase.from("documents").select("id, number, type, status, total_ttc, client_name, due_date, sent_at, paid_at, issue_date, created_at");
       return (data as Doc[]) || [];
     },
   });
 
-  const { data: prospectStatuses = [] } = useQuery({
+  const { data: prospectsData = [] } = useQuery({
     queryKey: ["pilotage-prospects", user?.id],
     enabled: !!user,
-    queryFn: async (): Promise<string[]> => {
-      const { data } = await supabase.from("prospects").select("status");
-      return ((data as { status: string }[]) || []).map((p) => p.status);
+    queryFn: async (): Promise<Prosp[]> => {
+      const { data } = await supabase.from("prospects").select("status, location");
+      return (data as Prosp[]) || [];
     },
   });
+  const prospectStatuses = prospectsData.map((p) => p.status);
 
   const { data: upcomingRdv = 0 } = useQuery({
     queryKey: ["pilotage-rdv", user?.id],
@@ -67,6 +70,16 @@ function PilotagePage() {
     queryFn: async () => {
       const end = new Date(); end.setHours(23, 59, 59, 999);
       const { count } = await supabase.from("follow_ups").select("*", { count: "exact", head: true }).eq("completed", false).lte("scheduled_at", end.toISOString());
+      return count ?? 0;
+    },
+  });
+
+  const { data: rdvSoon = 0 } = useQuery({
+    queryKey: ["pilotage-rdv-soon", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count } = await supabase.from("appointments").select("*", { count: "exact", head: true })
+        .eq("status", "planifie").gte("scheduled_at", new Date().toISOString()).lte("scheduled_at", new Date(Date.now() + 36 * 3600_000).toISOString());
       return count ?? 0;
     },
   });
@@ -107,6 +120,32 @@ function PilotagePage() {
   const tauxConv = totalProspects ? Math.round((convertis / totalProspects) * 100) : 0;
   const maxStatus = Math.max(1, ...STATUS_LABELS.map((s) => counts[s.key] || 0));
 
+  // ── Alertes intelligentes ──
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const in7 = new Date(Date.now() + 7 * 86400_000).toISOString().slice(0, 10);
+  const facturesRetard = factures.filter((d) => (d.status === "envoye" || d.status === "en_retard") && d.due_date && d.due_date < todayStr);
+  const devisExpire = devis.filter((d) => d.status === "envoye" && d.due_date && d.due_date >= todayStr && d.due_date <= in7);
+  const devisSansReponse = devis.filter((d) => {
+    if (d.status !== "envoye") return false;
+    const s = d.sent_at || d.issue_date;
+    const vieux = s && Date.now() - new Date(s).getTime() > 10 * 86400_000;
+    const expireBientot = d.due_date && d.due_date >= todayStr && d.due_date <= in7;
+    return vieux && !expireBientot;
+  });
+  type Alert = { id: string; sev: "red" | "amber" | "sky"; text: string; to: "/facturation" | "/relances" | "/agenda" };
+  const alerts: Alert[] = [];
+  if (facturesRetard.length) alerts.push({ id: "fr", sev: "red", text: `${facturesRetard.length} facture${facturesRetard.length > 1 ? "s" : ""} en retard · ${money(sum(facturesRetard))} à encaisser`, to: "/facturation" });
+  if (dueCount > 0) alerts.push({ id: "rl", sev: "amber", text: `${dueCount} relance${dueCount > 1 ? "s" : ""} à faire aujourd'hui`, to: "/relances" });
+  if (devisExpire.length) alerts.push({ id: "de", sev: "amber", text: `${devisExpire.length} devis expire${devisExpire.length > 1 ? "nt" : ""} sous 7 jours — relance utile`, to: "/facturation" });
+  if (devisSansReponse.length) alerts.push({ id: "dsr", sev: "sky", text: `${devisSansReponse.length} devis sans réponse depuis +10 jours`, to: "/facturation" });
+  if (rdvSoon > 0) alerts.push({ id: "rdv", sev: "sky", text: `${rdvSoon} rendez-vous dans les 36 h`, to: "/agenda" });
+
+  const ALERT_CLS: Record<string, string> = {
+    red: "border-rose-300 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300",
+    amber: "border-amber-300 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300",
+    sky: "border-sky-300 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-950/20 text-sky-700 dark:text-sky-300",
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
@@ -121,6 +160,21 @@ function PilotagePage() {
         <Kpi icon={TrendingUp} tone="violet" label="Pipeline potentiel" value={money(pipeline)} sub="devis + factures à venir" />
         <Kpi icon={Target} tone="sky" label="Taux de closing devis" value={`${tauxClosing} %`} sub={`${devisGagnes}/${devisEmis.length} devis acceptés`} />
       </div>
+
+      {/* Alertes intelligentes */}
+      {alerts.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Alertes</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {alerts.map((a) => (
+              <Link key={a.id} to={a.to} className={cn("flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm transition hover:opacity-90", ALERT_CLS[a.sev])}>
+                <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /> {a.text}</span>
+                <span className="text-xs opacity-70 shrink-0">→</span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trésorerie 6 mois */}
       <Card>
@@ -161,6 +215,14 @@ function PilotagePage() {
           })}
         </CardContent>
       </Card>
+
+      {/* Carte des prospects & clients */}
+      {prospectsData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-violet-600" /> Carte des prospects & clients</CardTitle></CardHeader>
+          <CardContent><ProspectsMap prospects={prospectsData} /></CardContent>
+        </Card>
+      )}
 
       {/* À venir */}
       <div className="grid sm:grid-cols-2 gap-3">
