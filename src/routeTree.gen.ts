@@ -22,6 +22,7 @@ import { Route as AuthenticatedScriptsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedRelancesRouteImport } from './routes/_authenticated.relances'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated.pipeline'
+import { Route as AuthenticatedPilotageRouteImport } from './routes/_authenticated.pilotage'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated.logs'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated.inbox'
 import { Route as AuthenticatedFroidsRouteImport } from './routes/_authenticated.froids'
@@ -98,6 +99,11 @@ const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPilotageRoute = AuthenticatedPilotageRouteImport.update({
+  id: '/pilotage',
+  path: '/pilotage',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLogsRoute = AuthenticatedLogsRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/froids': typeof AuthenticatedFroidsRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/logs': typeof AuthenticatedLogsRoute
+  '/pilotage': typeof AuthenticatedPilotageRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/froids': typeof AuthenticatedFroidsRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/logs': typeof AuthenticatedLogsRoute
+  '/pilotage': typeof AuthenticatedPilotageRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/relances': typeof AuthenticatedRelancesRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/froids': typeof AuthenticatedFroidsRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
+  '/_authenticated/pilotage': typeof AuthenticatedPilotageRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/relances': typeof AuthenticatedRelancesRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/froids'
     | '/inbox'
     | '/logs'
+    | '/pilotage'
     | '/pipeline'
     | '/profil'
     | '/relances'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/froids'
     | '/inbox'
     | '/logs'
+    | '/pilotage'
     | '/pipeline'
     | '/profil'
     | '/relances'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/_authenticated/froids'
     | '/_authenticated/inbox'
     | '/_authenticated/logs'
+    | '/_authenticated/pilotage'
     | '/_authenticated/pipeline'
     | '/_authenticated/profil'
     | '/_authenticated/relances'
@@ -438,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pilotage': {
+      id: '/_authenticated/pilotage'
+      path: '/pilotage'
+      fullPath: '/pilotage'
+      preLoaderRoute: typeof AuthenticatedPilotageRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/logs': {
@@ -572,6 +591,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFroidsRoute: typeof AuthenticatedFroidsRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
+  AuthenticatedPilotageRoute: typeof AuthenticatedPilotageRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRelancesRoute: typeof AuthenticatedRelancesRoute
@@ -594,6 +614,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFroidsRoute: AuthenticatedFroidsRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
+  AuthenticatedPilotageRoute: AuthenticatedPilotageRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRelancesRoute: AuthenticatedRelancesRoute,

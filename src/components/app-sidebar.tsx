@@ -5,6 +5,7 @@ import {
   Users,
   CalendarClock,
   CalendarDays,
+  BarChart3,
   UserCog,
   LogOut,
   Kanban,
@@ -86,6 +87,7 @@ export function AppSidebar() {
     : "prospection";
 
   const prospectionItems: NavItem[] = [
+    { title: "Pilotage", url: "/pilotage", icon: BarChart3, badge: 0 },
     { title: "Tableau de bord", url: "/tableau", icon: LayoutDashboard, badge: 0 },
     { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
     { title: "Prospects", url: "/prospects", icon: Users, badge: 0 },
