@@ -79,15 +79,19 @@ export function AppSidebar() {
 
   type NavItem = { title: string; url: string; icon: typeof Users; badge: number };
 
-  // ── Quatre univers : Prospection · Studio · Facturation · Agenda ──
-  const activeWorkspace: "prospection" | "studio" | "facturation" | "agenda" =
+  // ── Univers : Pilotage · Prospection · Studio · Facturation · Agenda ──
+  const activeWorkspace: "prospection" | "studio" | "facturation" | "agenda" | "pilotage" =
     currentPath.startsWith("/studio") ? "studio"
     : currentPath.startsWith("/facturation") ? "facturation"
     : currentPath.startsWith("/agenda") ? "agenda"
+    : currentPath.startsWith("/pilotage") ? "pilotage"
     : "prospection";
 
+  const pilotageItems: NavItem[] = [
+    { title: "Vue d'ensemble", url: "/pilotage", icon: BarChart3, badge: 0 },
+  ];
+
   const prospectionItems: NavItem[] = [
-    { title: "Pilotage", url: "/pilotage", icon: BarChart3, badge: 0 },
     { title: "Tableau de bord", url: "/tableau", icon: LayoutDashboard, badge: 0 },
     { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
     { title: "Prospects", url: "/prospects", icon: Users, badge: 0 },
@@ -114,6 +118,7 @@ export function AppSidebar() {
   const mainItems = activeWorkspace === "studio" ? studioItems
     : activeWorkspace === "facturation" ? facturationItems
     : activeWorkspace === "agenda" ? agendaItems
+    : activeWorkspace === "pilotage" ? pilotageItems
     : prospectionItems;
 
   // Items "compte", communs aux deux univers
@@ -158,6 +163,7 @@ export function AppSidebar() {
           <p className="px-1 pb-1 text-[10px] uppercase tracking-wider font-semibold text-sidebar-foreground/40">Univers</p>
           <div className="flex flex-col gap-1 rounded-lg bg-sidebar-accent/30 p-1">
             {([
+              { ws: "pilotage", to: "/pilotage", icon: BarChart3, label: "Pilotage" },
               { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
               { ws: "studio", to: "/studio", icon: Rocket, label: "Studio" },
               { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
@@ -175,7 +181,7 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : "Prospection"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : activeWorkspace === "pilotage" ? "Pilotage" : "Prospection"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{mainItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
