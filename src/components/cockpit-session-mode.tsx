@@ -33,7 +33,7 @@ import {
   Phone, Mail, Check, SkipForward, X, Flame, MessageCircle,
   CalendarClock, AlertTriangle, Briefcase, EyeOff, Snowflake, Copy, Trophy,
   ArrowRight, ExternalLink, Handshake, PhoneOff, RotateCcw, ThumbsDown,
-  Wand2, Link2, Loader2,
+  Wand2, Link2, Loader2, Search, ListChecks, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -332,6 +332,9 @@ export function CockpitSessionMode({
             )}
           </div>
 
+          {/* ─── AVANT D'APPELER — check-list 90 s ─── */}
+          <PreCallChecklist key={current.prospect.id} company={current.prospect.company} />
+
           {/* ─── APPELER ─── */}
           {phone ? (
             <Button size="lg" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
@@ -392,6 +395,59 @@ export function CockpitSessionMode({
         </button>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Check-list d'avant-appel (90 s sur le prospect) ───
+// Remontée via key={prospect.id} → l'état se réinitialise à chaque prospect.
+function PreCallChecklist({ company }: { company: string | null }) {
+  const items = [
+    { key: "scan", label: "J'ai regardé sa présence en ligne (site ? avis ? position Google ?)" },
+    { key: "accroche", label: "Mon accroche parle de LUI, pas de moi (basée sur ce que j'ai vu)" },
+    { key: "objectif", label: "Objectif de l'appel : décrocher le RDV / la maquette — pas vendre au téléphone" },
+    { key: "brief", label: "J'ai lu le contexte / brief du prospect" },
+    { key: "objection", label: "J'ai anticipé l'objection la plus probable, réponse prête" },
+    { key: "creneaux", label: "J'ai 2 créneaux de RDV prêts à proposer" },
+  ];
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [open, setOpen] = useState(true);
+  const done = items.filter((i) => checked[i.key]).length;
+  const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(company || "")}`;
+  return (
+    <div className="rounded-lg border p-3 space-y-2">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full">
+        <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground inline-flex items-center gap-1">
+          <ListChecks className="size-3" /> Avant d'appeler — 90 s
+        </span>
+        <span className="text-[10px] text-muted-foreground tabular-nums inline-flex items-center gap-1">
+          {done}/{items.length}
+          <ChevronDown className={cn("size-3 transition", open && "rotate-180")} />
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-1.5 pt-1">
+          {company && (
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 w-full" asChild>
+              <a href={googleUrl} target="_blank" rel="noopener noreferrer">
+                <Search className="size-3" /> Voir sa présence en ligne (Google)
+              </a>
+            </Button>
+          )}
+          {items.map((i) => (
+            <button key={i.key} type="button" onClick={() => setChecked((c) => ({ ...c, [i.key]: !c[i.key] }))}
+              className="flex items-start gap-2 w-full text-left group">
+              <span className={cn("mt-0.5 size-4 rounded border flex items-center justify-center shrink-0 transition",
+                checked[i.key] ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40 group-hover:border-muted-foreground")}>
+                {checked[i.key] && <Check className="size-3" />}
+              </span>
+              <span className={cn("text-xs leading-snug", checked[i.key] ? "text-muted-foreground line-through" : "text-foreground/90")}>
+                {i.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
