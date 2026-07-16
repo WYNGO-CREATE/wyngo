@@ -47,9 +47,18 @@ Aujourd'hui, votre site agit comme une magnifique vitrine d'une boutique dans la
 Quand on ne vous connaît pas personnellement via le bouche-à-oreille, vous n'existez pas en ligne. Concrètement, vous avez des clients qui sortent leur carte bleue tous les jours pour vos services, mais ils finissent chez vos concurrents simplement parce qu'ils sont plus visibles que vous. »
 
 
+→ OPTION C — Il a un site correct mais introuvable sur Google (l'approche "La boutique dans l'impasse")
+
+« J'ai regardé votre site, il est correct. Mais j'ai fait un test tout simple : j'ai tapé sur Google "[votre métier] + Toulouse"… et vous n'apparaissez nulle part.
+
+C'est comme avoir une belle boutique, mais dans une impasse où personne ne passe. Vous existez, mais chaque jour des dizaines de personnes cherchent exactement ce que vous faites — et c'est vos concurrents qu'elles trouvent, pas vous. C'est précisément ce que je viens corriger : vous rendre visible là où ça compte. »
+
+
 PHASE 3 — La Vision de l'Entrepreneur
 
-« Ma vision en fondant Wyngo, c'était d'en finir avec les sites "cartes de visite" qui coûtent de l'argent et ne font rien. Mon cabinet construit des commerciaux digitaux qui travaillent 24h/24 pour vous ramener du chiffre d'affaires. »
+« Ma vision en fondant Wyngo, c'était d'en finir avec les sites "cartes de visite" qui coûtent de l'argent et ne font rien. Mon cabinet construit des commerciaux digitaux qui travaillent 24h/24 pour vous ramener du chiffre d'affaires. Mon obsession, c'est une seule chose : vous faire arriver en tête quand vos clients vous cherchent sur Google.
+
+Et il y a une urgence que peu voient venir : Google passe aux réponses par intelligence artificielle. Demain, l'IA ne recommandera qu'une poignée d'entreprises par recherche. Pour en faire partie, il faut un site conçu pour ça — et c'est exactement ce qu'on fait. »
 
 → Silence de 1 à 2 secondes.
 
@@ -65,11 +74,17 @@ Vous la regardez tranquillement. Si ça vous fait l'effet 'Wahou' et que vous vo
 Ça vous paraît juste de fonctionner comme ça ? »
 
 
-PHASE 5 — L'Engagement en douceur
+PHASE 5 — L'Engagement en douceur (VERROUILLER le prochain pas)
 
 → S'il dit oui :
 
-« Super. Pour que je puisse vraiment frapper juste avec cette maquette, j'ai juste besoin de vous poser 2 ou 3 questions rapides sur le profil exact des clients que vous voulez attirer en priorité. On fait ça maintenant ou je vous rappelle à un moment plus calme ? »`,
+« Super. Concrètement voilà comment on procède : on bloque 20 minutes ensemble pour que je cerne votre activité et le profil exact des clients que vous voulez attirer — c'est ce qui me permet de frapper juste sur la maquette.
+
+Et si le courant passe, l'étape d'après c'est notre marque de fabrique, ce qu'aucune agence ne fait : je viens une demi-journée chez vous, sur place, pour vraiment capter votre univers, vos clients, votre ambiance. Un site qui vous ressemble, ça se comprend sur le terrain, pas derrière un écran.
+
+Pour ce premier échange, vous êtes plutôt disponible [PROPOSER JOUR A — ex. mardi matin] ou [JOUR B — ex. jeudi après-midi] ? »
+
+→ RÈGLE D'OR DU CLOSE : propose TOUJOURS 2 créneaux précis. Jamais "quand ça vous arrange" (= flou = ça ne se fait jamais). Il choisit, tu confirmes la date à voix haute, tu raccroches. L'objectif de l'appel est atteint : le prochain pas est calé.`,
 };
 
 export const REFERENCE_OBJECTIONS: SeedScript[] = [
@@ -108,6 +123,18 @@ export const REFERENCE_OBJECTIONS: SeedScript[] = [
     title: "« Rappelez-moi dans 3 mois »",
     category: "timing",
     content: `« Pas de problème, je note. Juste une question avant qu'on raccroche : qu'est-ce qui aura changé dans 3 mois ? Parce que si c'est une question d'agenda, on prend juste 15 minutes la semaine prochaine. Si c'est une question budget, on peut aussi en parler maintenant — on n'est pas obligés de démarrer tout de suite. Qu'est-ce qui se cache vraiment derrière les 3 mois ? »`,
+  },
+  {
+    kind: "objection",
+    title: "« Le bouche-à-oreille me suffit »",
+    category: "besoin",
+    content: `« C'est une super base, ça prouve que vos clients sont contents. Mais le bouche-à-oreille a une limite : il ne touche que les gens qui vous connaissent déjà. Tous ceux qui cherchent votre métier sur Google sans vous connaître — eux, ils tombent sur vos concurrents. Un bon site, c'est votre bouche-à-oreille qui tourne 24h/24, même auprès de gens qui n'ont jamais entendu parler de vous. »`,
+  },
+  {
+    kind: "objection",
+    title: "« Je m'en occupe moi-même / on me l'a déjà fait »",
+    category: "concurrent",
+    content: `« Et c'est tout à votre honneur d'avoir lancé quelque chose. La vraie question, ce n'est pas "qui l'a fait", c'est : est-ce qu'il vous ramène des clients, ou est-ce qu'il est juste "en ligne" ? Aujourd'hui, faire un site, tout le monde peut. Faire un site qui vous met en tête sur Google et qui transforme les visiteurs en clients, c'est un autre métier — c'est le mien. Laissez-moi vous le prouver avec une maquette, gratuitement, et vous comparez. »`,
   },
   {
     kind: "objection",

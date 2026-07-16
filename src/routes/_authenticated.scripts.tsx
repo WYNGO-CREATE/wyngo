@@ -91,7 +91,11 @@ function ScriptsPage() {
   const importReference = async () => {
     if (!user) return;
     setImporting(true);
-    const rows = [REFERENCE_CALL_SCRIPT, ...REFERENCE_OBJECTIONS].map((s, i) => ({
+    const refRows = [REFERENCE_CALL_SCRIPT, ...REFERENCE_OBJECTIONS];
+    // Idempotent : on retire d'abord les entrées du référentiel déjà importées
+    // (match par titre) pour rafraîchir sans créer de doublon — les scripts perso ne sont pas touchés.
+    await supabase.from("call_scripts").delete().eq("owner_id", user.id).in("title", refRows.map((s) => s.title));
+    const rows = refRows.map((s, i) => ({
       owner_id: user.id,
       kind: s.kind,
       title: s.title,
@@ -103,7 +107,7 @@ function ScriptsPage() {
     const { error } = await supabase.from("call_scripts").insert(rows);
     setImporting(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Script de référence + 7 objections importés");
+    toast.success(`Script de référence + ${REFERENCE_OBJECTIONS.length} objections importés`);
     qc.invalidateQueries({ queryKey: ["call-scripts"] });
   };
 
