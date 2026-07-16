@@ -7,8 +7,9 @@
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,11 +42,80 @@ const prospectName = (p: Appt["prospects"]) => {
   return x.company || `${x.first_name || ""} ${x.last_name || ""}`.trim() || null;
 };
 
+const DECL_BASE = "🔔 Déclaration mensuelle";
+const DECL_TITLE_10 = `${DECL_BASE} — dans 10 jours`;
+const DECL_TITLE_1 = `${DECL_BASE} — dernier jour !`;
+
 function AgendaPage() {
   const qc = useQueryClient();
+  const { user, role } = useAuth();
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
   const [open, setOpen] = useState(false);
+
+  // Rappel automatique "Déclaration mensuelle" : échéance = fin de mois, avec
+  // notifications Google Agenda 10 jours ET 1 jour avant. Généré pour les 12
+  // prochains mois, sans doublon. Repli local si Google non connecté.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const now = new Date();
+      // v3 : DEUX événements séparés par mois, chacun placé le jour même du
+      // rappel avec une notif à 0 min (le matin) → Google la déclenche toujours.
+      const DECL_TAG = "[decl-v3]";
+      const fmtFr = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+      // Une occurrence à créer : un événement daté avec son titre.
+      type Occ = { title: string; at: Date; notes: string };
+      const occs: Occ[] = [];
+      for (let i = 0; i < 12; i++) {
+        const deadline = new Date(now.getFullYear(), now.getMonth() + i + 1, 0); // dernier jour du mois
+        const mkAt = (offsetDays: number) => { const d = new Date(deadline); d.setDate(d.getDate() - offsetDays); d.setHours(9, 0, 0, 0); return d; };
+        const j10 = mkAt(10), j1 = mkAt(1);
+        const dl = fmtFr(deadline);
+        if (j10.getTime() >= now.getTime())
+          occs.push({ title: DECL_TITLE_10, at: j10, notes: `Dans 10 jours : déclaration du CA à faire avant le ${dl} (URSSAF / impôts). Récap prêt dans Facturation → Déclarations. ${DECL_TAG}` });
+        if (j1.getTime() >= now.getTime())
+          occs.push({ title: DECL_TITLE_1, at: j1, notes: `Dernier rappel : déclaration du CA à faire avant demain (${dl}) ! Récap prêt dans Facturation → Déclarations. ${DECL_TAG}` });
+      }
+      if (occs.length === 0) return;
+
+      // Nettoie les anciens rappels (formats précédents) sans le tag v3.
+      const { data: existing } = await supabase
+        .from("appointments").select("id, title, scheduled_at, notes").ilike("title", `${DECL_BASE}%`);
+      const stale = (existing || []).filter((e: { notes: string | null }) => !String(e.notes || "").includes(DECL_TAG));
+      for (const s of stale) {
+        if (cancelled) return;
+        await supabase.functions.invoke("calendar-delete-event", { body: { appointment_id: s.id } }).catch(() => {});
+      }
+      // Clés déjà présentes (titre + jour) pour éviter les doublons.
+      const fresh = (existing || []).filter((e: { notes: string | null }) => String(e.notes || "").includes(DECL_TAG));
+      const have = new Set(fresh.map((e: { title: string; scheduled_at: string }) => `${e.title}|${e.scheduled_at.slice(0, 10)}`));
+      const missing = occs.filter((o) => !have.has(`${o.title}|${o.at.toISOString().slice(0, 10)}`));
+      if (missing.length === 0 || cancelled) return;
+
+      let googleOk = true;
+      const localFallback: Occ[] = [];
+      for (const o of missing) {
+        if (cancelled) return;
+        if (googleOk) {
+          const end = new Date(o.at); end.setMinutes(15);
+          const { data, error } = await supabase.functions.invoke("calendar-create-event", {
+            body: { title: o.title, start_iso: o.at.toISOString(), end_iso: end.toISOString(), notes: o.notes, reminders_minutes: [0] },
+          });
+          if (error || (data as { error?: string })?.error) { googleOk = false; localFallback.push(o); }
+        } else localFallback.push(o);
+      }
+      if (localFallback.length > 0 && !cancelled) {
+        await supabase.from("appointments").insert(localFallback.map((o) => ({
+          owner_id: user.id, title: o.title, scheduled_at: o.at.toISOString(),
+          duration_min: 15, is_video: false, status: "planifie", notes: o.notes,
+        })));
+      }
+      qc.invalidateQueries({ queryKey: ["agenda-month"] });
+    })();
+    return () => { cancelled = true; };
+  }, [user, qc]);
 
   // Calendly : sync des réservations (si jeton configuré)
   const { data: calStatus } = useQuery({
@@ -127,7 +197,7 @@ function AgendaPage() {
           <p className="text-sm text-muted-foreground">Tes rendez-vous, synchronisés Google Agenda — reliés à tes prospects.</p>
         </div>
         <div className="flex items-center gap-2">
-          {calStatus?.configured && (
+          {role === "admin" && calStatus?.configured && (
             <Button variant="outline" className="gap-1.5" disabled={syncCalendly.isPending} onClick={() => syncCalendly.mutate()}>
               {syncCalendly.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Synchroniser Calendly
             </Button>

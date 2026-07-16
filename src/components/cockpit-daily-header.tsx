@@ -76,6 +76,7 @@ export function CockpitDailyHeader({
   const today = new Date();
   const hour = today.getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const firstName = (user?.user_metadata?.full_name || "").trim().split(/\s+/)[0] || "";
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card overflow-hidden">
@@ -87,7 +88,7 @@ export function CockpitDailyHeader({
               {format(today, "EEEE d MMMM yyyy", { locale: fr })}
             </p>
             <h1 className="text-2xl md:text-3xl font-bold mt-1">
-              {greeting}, voici ta journée
+              {greeting}{firstName ? ` ${firstName}` : ""}, voici ta journée
             </h1>
           </div>
 
