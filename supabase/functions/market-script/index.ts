@@ -104,6 +104,34 @@ Rends UNIQUEMENT le script, sans préambule ni commentaire.`;
   return d.content?.[0]?.text?.trim() || "";
 }
 
+// Extrait un métier PROPRE (1-3 mots, façon Google Maps) depuis ce que contient
+// l'enrichissement — que ce soit déjà « notaire » ou une longue description.
+async function cleanTrade(raw: string): Promise<string> {
+  const r = raw.trim();
+  // Déjà court et sans ponctuation de phrase = c'est un métier, on garde tel quel.
+  if (r.length <= 32 && !/[.,;:()]/.test(r)) return r;
+  const key = Deno.env.get("ANTHROPIC_API_KEY");
+  const fallback = () => r.replace(/[.,;:()].*/s, "").split(/\s+/).slice(0, 3).join(" ").trim() || r.slice(0, 30);
+  if (!key) return fallback();
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 20,
+        messages: [{ role: "user", content: `Donne UNIQUEMENT le métier / type d'établissement en 1 à 3 mots, en minuscule et au singulier, tel qu'on le taperait sur Google Maps (ex : "notaire", "coiffeur", "avocat", "restaurant", "plombier"). Aucune autre parole. Description : ${r}` }],
+      }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      const t = (d.content?.[0]?.text || "").trim().toLowerCase().replace(/["'.]/g, "");
+      if (t && t.length >= 3 && t.length <= 40) return t;
+    }
+  } catch { /* fallback ci-dessous */ }
+  return fallback();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -119,14 +147,17 @@ Deno.serve(async (req) => {
     const { data: prospect, error: pErr } = await userClient.from("prospects").select("*").eq("id", prospect_id).single();
     if (pErr || !prospect) return new Response(JSON.stringify({ error: "Prospect introuvable" }), { status: 404, headers: cors });
 
-    const metier = String(prospect.brief_activity || prospect.industry || "").trim();
+    const rawMetier = String(prospect.brief_activity || prospect.industry || "").trim();
     const ville = String(prospect.location || "").trim();
-    if (!metier || !ville) {
+    if (!rawMetier || !ville) {
       return new Response(JSON.stringify({
         competitors: [], script: null,
         warning: "Métier ou ville manquant sur la fiche du prospect. Complète « activité » et « ville » pour lancer l'analyse marché.",
       }), { status: 200, headers: cors });
     }
+
+    // Métier propre pour la recherche Google (gère les fiches enrichies en longue description).
+    const metier = await cleanTrade(rawMetier);
 
     const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
     if (!placesKey) return new Response(JSON.stringify({ error: "GOOGLE_PLACES_API_KEY non configurée" }), { status: 500, headers: cors });
