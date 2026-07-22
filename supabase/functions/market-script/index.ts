@@ -38,15 +38,17 @@ function host(url: string | null | undefined): string | null {
 async function isLive(url: string): Promise<boolean> {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 6000);
+    const t = setTimeout(() => ctrl.abort(), 4500);
     const r = await fetch(url, {
       method: "GET",
       redirect: "follow",
       signal: ctrl.signal,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; WyngoBot/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36" },
     });
     clearTimeout(t);
-    return r.status < 400;
+    // Une réponse HTTP (même 401/403/404 : le site bloque le bot mais EXISTE) = domaine vivant.
+    // Google Places a déjà validé l'établissement + son site. Seuls erreur réseau / DNS / timeout = mort.
+    return r.status < 500;
   } catch { return false; }
 }
 
@@ -60,7 +62,7 @@ async function generateScript(args: {
     .map((c, i) => `${i + 1}. ${c.name} — ${c.reviews} avis Google${c.rating ? ` (${c.rating}/5)` : ""} — site en ligne : ${c.website}`)
     .join("\n");
 
-  const prompt = `Tu es le meilleur formateur de vente téléphonique de France. Tu rédiges un SCRIPT D'APPEL de prospection 100% personnalisé pour UN prospect précis, pour le cabinet Wyngo (création de sites web sur-mesure + référencement local, basé à Toulouse). Le script doit être long, dense, prêt à être lu au téléphone, avec un ton parlé, calme, sûr et humain.
+  const prompt = `Tu es le meilleur formateur de vente téléphonique de France. Tu rédiges un SCRIPT D'APPEL de prospection 100% personnalisé pour UN prospect précis, pour le cabinet Wyngo (création de sites web sur-mesure + référencement local, basé à Toulouse). Le script doit être efficace, dense et prêt à être lu au téléphone (concis, sans remplissage — vise l'essentiel qui convainc), avec un ton parlé, calme, sûr et humain.
 
 RÈGLES ABSOLUES (non négociables) :
 - Tu n'utilises QUE les concurrents listés ci-dessous. Ils sont RÉELS et vérifiés. Tu n'inventes JAMAIS un nom, un chiffre, une référence ou une statistique.
@@ -95,7 +97,7 @@ Rends UNIQUEMENT le script, sans préambule ni commentaire.`;
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 3000, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
   const d = await res.json();
@@ -142,7 +144,8 @@ Deno.serve(async (req) => {
     if (!pr.ok) return new Response(JSON.stringify({ error: `Places ${pr.status}` }), { status: 502, headers: cors });
     const places = (await pr.json()).places || [];
 
-    const villeN = strip(ville);
+    // Mots significatifs de la ville (gère « 31000 Toulouse », « Toulouse, Occitanie », villes en 2 mots…)
+    const villeWords = strip(ville).replace(/[^a-zà-ÿ\s]/gi, " ").split(/\s+/).filter((w) => w.length > 2);
     const prospectHost = host(prospect.website);
     const prospectName = strip(prospect.company || "");
 
@@ -151,7 +154,10 @@ Deno.serve(async (req) => {
       displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; userRatingCount?: number; rating?: number;
     }>)
       .filter((p) => !!p.websiteUri)
-      .filter((p) => strip(p.formattedAddress || "").includes(villeN))
+      .filter((p) => {
+        const a = strip(p.formattedAddress || "");
+        return villeWords.length === 0 || villeWords.some((w) => a.includes(w));
+      })
       .filter((p) => {
         const h = host(p.websiteUri);
         const n = strip(p.displayName?.text || "");
@@ -169,7 +175,7 @@ Deno.serve(async (req) => {
     });
 
     // Vérif (c) : site vraiment en ligne — vérifs EN PARALLÈLE sur les 8 meilleurs (rapide, pas de timeout), on garde les 4 premiers qui répondent
-    const top = deduped.slice(0, 8);
+    const top = deduped.slice(0, 6);
     const liveFlags = await Promise.all(top.map((p) => isLive(p.websiteUri!)));
     const verified: Competitor[] = top
       .filter((_, i) => liveFlags[i])
