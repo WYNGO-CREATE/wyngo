@@ -242,13 +242,15 @@ function MarketPanel({ prospectId }: { prospectId: string }) {
     competitors?: { name: string; website: string; reviews: number }[];
     script?: string | null;
     warning?: string;
+    query?: string;
+    error?: string;
   } | null>(null);
   const run = async () => {
     setLoading(true);
     setRes(null);
     const { data, error } = await supabase.functions.invoke("market-script", { body: { prospect_id: prospectId } });
     setLoading(false);
-    if (error) { toast.error("Analyse impossible", { description: error.message }); return; }
+    if (error) { setRes({ error: error.message || "Analyse impossible (erreur serveur)" }); toast.error("Analyse impossible", { description: error.message }); return; }
     setRes(data);
     if (data?.warning) toast.info(data.warning);
   };
@@ -263,10 +265,18 @@ function MarketPanel({ prospectId }: { prospectId: string }) {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
         {loading ? "Analyse du marché en cours…" : res ? "Relancer l'analyse" : "Analyser le marché & générer le script"}
       </Button>
-      {res && comps.length === 0 && (
-        <p className="text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-md px-3 py-2">
-          {res.warning || "Aucun concurrent vérifié trouvé. Vérifie que ce prospect a bien un métier (activité) ET une ville renseignés sur sa fiche."}
+      {res?.error && (
+        <p className="text-sm text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-md px-3 py-2">
+          Erreur : {res.error}
         </p>
+      )}
+      {res && !res.error && comps.length === 0 && (
+        <p className="text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-md px-3 py-2">
+          {res.warning || "Aucun concurrent vérifié trouvé pour cette recherche."}
+        </p>
+      )}
+      {res?.query && (
+        <p className="text-[11px] text-muted-foreground">Recherche effectuée : « {res.query} »</p>
       )}
       {comps.length > 0 && (
         <div className="space-y-1.5">
