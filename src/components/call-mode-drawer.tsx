@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Phone, Copy, Check, MessageSquareWarning, Sparkles, Search } from "lucide-react";
+import { Phone, Copy, Check, MessageSquareWarning, Sparkles, Search, Loader2, Wand2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { renderTemplate } from "@/lib/render-template";
 
@@ -206,6 +206,7 @@ export function CallModeDrawer({
         </SheetHeader>
 
         <div className="px-6 py-5">
+          {prospect && <MarketPanel prospectId={prospect.id} />}
           {scripts.length === 0 ? (
             <EmptyHint />
           ) : filtered.length === 0 ? (
@@ -231,6 +232,65 @@ export function CallModeDrawer({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+// Analyse marché (concurrents réels vérifiés) + script sur-mesure, dans le Mode appel.
+function MarketPanel({ prospectId }: { prospectId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [res, setRes] = useState<{
+    competitors?: { name: string; website: string; reviews: number }[];
+    script?: string | null;
+    warning?: string;
+  } | null>(null);
+  const run = async () => {
+    setLoading(true);
+    setRes(null);
+    const { data, error } = await supabase.functions.invoke("market-script", { body: { prospect_id: prospectId } });
+    setLoading(false);
+    if (error) { toast.error("Analyse impossible", { description: error.message }); return; }
+    setRes(data);
+    if (data?.warning) toast.info(data.warning);
+  };
+  const comps = res?.competitors || [];
+  return (
+    <div className="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/40 dark:bg-violet-950/20 p-4 mb-5 space-y-2.5">
+      <p className="text-xs uppercase tracking-wide font-semibold text-violet-700 dark:text-violet-400 flex items-center gap-1.5">
+        <Search className="h-3.5 w-3.5" /> Analyse marché + script sur-mesure
+      </p>
+      <Button onClick={run} disabled={loading}
+        className="w-full gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+        {loading ? "Analyse du marché en cours…" : res ? "Relancer l'analyse" : "Analyser le marché & générer le script"}
+      </Button>
+      {res?.warning && comps.length === 0 && (
+        <p className="text-xs text-amber-700 dark:text-amber-400">{res.warning}</p>
+      )}
+      {comps.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">Concurrents dominants — réels, sites vérifiés en direct :</p>
+          {comps.map((c) => (
+            <a key={c.website} href={c.website} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 text-sm rounded border bg-background/60 px-3 py-2 hover:border-violet-300">
+              <span className="font-medium truncate">{c.name}</span>
+              <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1 text-xs">{c.reviews} avis <ExternalLink className="h-3 w-3" /></span>
+            </a>
+          ))}
+        </div>
+      )}
+      {res?.script && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">Script sur-mesure</p>
+            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1"
+              onClick={() => navigator.clipboard.writeText(res.script!).then(() => toast.success("Script copié")).catch(() => toast.error("Copie impossible"))}>
+              <Copy className="h-3 w-3" /> Copier
+            </Button>
+          </div>
+          <div className="max-h-96 overflow-auto rounded border bg-background/60 p-3 text-sm leading-relaxed whitespace-pre-wrap">{res.script}</div>
+        </div>
+      )}
+    </div>
   );
 }
 
