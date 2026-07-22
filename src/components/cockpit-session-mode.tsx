@@ -431,8 +431,10 @@ function MarketScriptPanel({ prospectId }: { prospectId: string }) {
         {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Wand2 className="size-3.5" />}
         {loading ? "Analyse du marché en cours…" : res ? "Relancer l'analyse" : "Analyser le marché & générer le script"}
       </Button>
-      {res?.warning && comps.length === 0 && (
-        <p className="text-xs text-amber-700 dark:text-amber-400">{res.warning}</p>
+      {res && comps.length === 0 && (
+        <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded px-2 py-1.5">
+          {res.warning || "Aucun concurrent vérifié trouvé. Vérifie que ce prospect a un métier et une ville renseignés."}
+        </p>
       )}
       {comps.length > 0 && (
         <div className="space-y-1.5">
