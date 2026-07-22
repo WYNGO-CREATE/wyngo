@@ -335,6 +335,9 @@ export function CockpitSessionMode({
           {/* ─── AVANT D'APPELER — check-list 90 s ─── */}
           <PreCallChecklist key={current.prospect.id} company={current.prospect.company} />
 
+          {/* ─── ANALYSE MARCHÉ + SCRIPT SUR-MESURE ─── */}
+          <MarketScriptPanel key={"ms-" + current.prospect.id} prospectId={current.prospect.id} />
+
           {/* ─── APPELER ─── */}
           {phone ? (
             <Button size="lg" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white h-12"
@@ -395,6 +398,67 @@ export function CockpitSessionMode({
         </button>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Analyse marché (concurrents réels vérifiés) + script sur-mesure ───
+type MarketRes = {
+  competitors?: { name: string; website: string; rating: number | null; reviews: number }[];
+  script?: string | null;
+  warning?: string;
+  error?: string;
+};
+function MarketScriptPanel({ prospectId }: { prospectId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [res, setRes] = useState<MarketRes | null>(null);
+  const run = async () => {
+    setLoading(true);
+    setRes(null);
+    const { data, error } = await supabase.functions.invoke("market-script", { body: { prospect_id: prospectId } });
+    setLoading(false);
+    if (error) { toast.error("Analyse impossible", { description: error.message }); return; }
+    setRes(data as MarketRes);
+    if ((data as MarketRes)?.warning) toast.info((data as MarketRes).warning!);
+  };
+  const comps = res?.competitors || [];
+  return (
+    <div className="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/40 dark:bg-violet-950/20 p-3 space-y-2">
+      <p className="text-[10px] uppercase tracking-wider font-semibold text-violet-700 dark:text-violet-400 inline-flex items-center gap-1">
+        <Search className="size-3" /> Analyse marché + script sur-mesure
+      </p>
+      <Button size="sm" onClick={run} disabled={loading}
+        className="w-full gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white h-8 text-xs">
+        {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Wand2 className="size-3.5" />}
+        {loading ? "Analyse du marché en cours…" : res ? "Relancer l'analyse" : "Analyser le marché & générer le script"}
+      </Button>
+      {res?.warning && comps.length === 0 && (
+        <p className="text-xs text-amber-700 dark:text-amber-400">{res.warning}</p>
+      )}
+      {comps.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] text-muted-foreground">Concurrents dominants — réels, sites vérifiés en direct :</p>
+          {comps.map((c) => (
+            <a key={c.website} href={c.website} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 text-xs rounded border bg-background/60 px-2 py-1.5 hover:border-violet-300">
+              <span className="font-medium truncate">{c.name}</span>
+              <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1">{c.reviews} avis <ExternalLink className="size-3" /></span>
+            </a>
+          ))}
+        </div>
+      )}
+      {res?.script && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Script sur-mesure — {res.script.length.toLocaleString("fr-FR")} car.</p>
+            <Button size="sm" variant="ghost" className="h-6 text-[11px] gap-1"
+              onClick={() => navigator.clipboard.writeText(res.script!).then(() => toast.success("Script copié")).catch(() => toast.error("Copie impossible"))}>
+              <Copy className="size-3" /> Copier
+            </Button>
+          </div>
+          <div className="max-h-72 overflow-auto rounded border bg-background/60 p-2.5 text-[12px] leading-relaxed whitespace-pre-wrap">{res.script}</div>
+        </div>
+      )}
+    </div>
   );
 }
 
