@@ -20,6 +20,7 @@ import { Route as AuthenticatedTableauRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated.studio'
 import { Route as AuthenticatedScriptsRouteImport } from './routes/_authenticated.scripts'
 import { Route as AuthenticatedRelancesRouteImport } from './routes/_authenticated.relances'
+import { Route as AuthenticatedRedactionRouteImport } from './routes/_authenticated.redaction'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated.pipeline'
 import { Route as AuthenticatedPilotageRouteImport } from './routes/_authenticated.pilotage'
@@ -28,13 +29,16 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedFroidsRouteImport } from './routes/_authenticated.froids'
 import { Route as AuthenticatedFacturationRouteImport } from './routes/_authenticated.facturation'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated.equipe'
+import { Route as AuthenticatedChassePremiumRouteImport } from './routes/_authenticated.chasse-premium'
 import { Route as AuthenticatedChasseRouteImport } from './routes/_authenticated.chasse'
 import { Route as AuthenticatedApolloRouteImport } from './routes/_authenticated.apollo'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated.agenda'
 import { Route as AuthenticatedProspectsIndexRouteImport } from './routes/_authenticated.prospects.index'
 import { Route as AuthenticatedProspectsIdRouteImport } from './routes/_authenticated.prospects.$id'
 import { Route as AuthenticatedFacturationReglagesRouteImport } from './routes/_authenticated.facturation.reglages'
-import { Route as AuthenticatedStudioSiteIdRouteImport } from './routes/_authenticated.studio.site.$id'
+import { Route as AuthenticatedFacturationDeclarationsRouteImport } from './routes/_authenticated.facturation.declarations'
+import { Route as AuthenticatedFacturationContratsRouteImport } from './routes/_authenticated.facturation.contrats'
+import { Route as AuthenticatedStudioSiteIdRouteImport } from './routes/_authenticated.studio_.site.$id'
 import { Route as AuthenticatedFacturationDocumentIdRouteImport } from './routes/_authenticated.facturation.document.$id'
 
 const SignupRoute = SignupRouteImport.update({
@@ -91,6 +95,11 @@ const AuthenticatedRelancesRoute = AuthenticatedRelancesRouteImport.update({
   path: '/relances',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRedactionRoute = AuthenticatedRedactionRouteImport.update({
+  id: '/redaction',
+  path: '/redaction',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -132,6 +141,12 @@ const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
   path: '/equipe',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChassePremiumRoute =
+  AuthenticatedChassePremiumRouteImport.update({
+    id: '/chasse-premium',
+    path: '/chasse-premium',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedChasseRoute = AuthenticatedChasseRouteImport.update({
   id: '/chasse',
   path: '/chasse',
@@ -165,11 +180,23 @@ const AuthenticatedFacturationReglagesRoute =
     path: '/reglages',
     getParentRoute: () => AuthenticatedFacturationRoute,
   } as any)
+const AuthenticatedFacturationDeclarationsRoute =
+  AuthenticatedFacturationDeclarationsRouteImport.update({
+    id: '/declarations',
+    path: '/declarations',
+    getParentRoute: () => AuthenticatedFacturationRoute,
+  } as any)
+const AuthenticatedFacturationContratsRoute =
+  AuthenticatedFacturationContratsRouteImport.update({
+    id: '/contrats',
+    path: '/contrats',
+    getParentRoute: () => AuthenticatedFacturationRoute,
+  } as any)
 const AuthenticatedStudioSiteIdRoute =
   AuthenticatedStudioSiteIdRouteImport.update({
-    id: '/site/$id',
-    path: '/site/$id',
-    getParentRoute: () => AuthenticatedStudioRoute,
+    id: '/studio_/site/$id',
+    path: '/studio/site/$id',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFacturationDocumentIdRoute =
   AuthenticatedFacturationDocumentIdRouteImport.update({
@@ -185,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
+  '/chasse-premium': typeof AuthenticatedChassePremiumRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/facturation': typeof AuthenticatedFacturationRouteWithChildren
   '/froids': typeof AuthenticatedFroidsRoute
@@ -193,13 +221,16 @@ export interface FileRoutesByFullPath {
   '/pilotage': typeof AuthenticatedPilotageRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/redaction': typeof AuthenticatedRedactionRoute
   '/relances': typeof AuthenticatedRelancesRoute
   '/scripts': typeof AuthenticatedScriptsRoute
-  '/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/studio': typeof AuthenticatedStudioRoute
   '/tableau': typeof AuthenticatedTableauRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/auth/gmail-callback': typeof AuthGmailCallbackRoute
+  '/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
+  '/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
   '/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/prospects/': typeof AuthenticatedProspectsIndexRoute
@@ -212,6 +243,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
+  '/chasse-premium': typeof AuthenticatedChassePremiumRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/facturation': typeof AuthenticatedFacturationRouteWithChildren
   '/froids': typeof AuthenticatedFroidsRoute
@@ -220,14 +252,17 @@ export interface FileRoutesByTo {
   '/pilotage': typeof AuthenticatedPilotageRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/redaction': typeof AuthenticatedRedactionRoute
   '/relances': typeof AuthenticatedRelancesRoute
   '/scripts': typeof AuthenticatedScriptsRoute
-  '/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/studio': typeof AuthenticatedStudioRoute
   '/tableau': typeof AuthenticatedTableauRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/workflows': typeof AuthenticatedWorkflowsRoute
   '/auth/gmail-callback': typeof AuthGmailCallbackRoute
   '/': typeof AuthenticatedIndexRoute
+  '/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
+  '/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
   '/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/prospects': typeof AuthenticatedProspectsIndexRoute
@@ -242,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/apollo': typeof AuthenticatedApolloRoute
   '/_authenticated/chasse': typeof AuthenticatedChasseRoute
+  '/_authenticated/chasse-premium': typeof AuthenticatedChassePremiumRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/facturation': typeof AuthenticatedFacturationRouteWithChildren
   '/_authenticated/froids': typeof AuthenticatedFroidsRoute
@@ -250,19 +286,22 @@ export interface FileRoutesById {
   '/_authenticated/pilotage': typeof AuthenticatedPilotageRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/_authenticated/redaction': typeof AuthenticatedRedactionRoute
   '/_authenticated/relances': typeof AuthenticatedRelancesRoute
   '/_authenticated/scripts': typeof AuthenticatedScriptsRoute
-  '/_authenticated/studio': typeof AuthenticatedStudioRouteWithChildren
+  '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/_authenticated/tableau': typeof AuthenticatedTableauRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/workflows': typeof AuthenticatedWorkflowsRoute
   '/auth/gmail-callback': typeof AuthGmailCallbackRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
+  '/_authenticated/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
   '/_authenticated/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/_authenticated/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/_authenticated/prospects/': typeof AuthenticatedProspectsIndexRoute
   '/_authenticated/facturation/document/$id': typeof AuthenticatedFacturationDocumentIdRoute
-  '/_authenticated/studio/site/$id': typeof AuthenticatedStudioSiteIdRoute
+  '/_authenticated/studio_/site/$id': typeof AuthenticatedStudioSiteIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -273,6 +312,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/apollo'
     | '/chasse'
+    | '/chasse-premium'
     | '/equipe'
     | '/facturation'
     | '/froids'
@@ -281,6 +321,7 @@ export interface FileRouteTypes {
     | '/pilotage'
     | '/pipeline'
     | '/profil'
+    | '/redaction'
     | '/relances'
     | '/scripts'
     | '/studio'
@@ -288,6 +329,8 @@ export interface FileRouteTypes {
     | '/templates'
     | '/workflows'
     | '/auth/gmail-callback'
+    | '/facturation/contrats'
+    | '/facturation/declarations'
     | '/facturation/reglages'
     | '/prospects/$id'
     | '/prospects/'
@@ -300,6 +343,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/apollo'
     | '/chasse'
+    | '/chasse-premium'
     | '/equipe'
     | '/facturation'
     | '/froids'
@@ -308,6 +352,7 @@ export interface FileRouteTypes {
     | '/pilotage'
     | '/pipeline'
     | '/profil'
+    | '/redaction'
     | '/relances'
     | '/scripts'
     | '/studio'
@@ -316,6 +361,8 @@ export interface FileRouteTypes {
     | '/workflows'
     | '/auth/gmail-callback'
     | '/'
+    | '/facturation/contrats'
+    | '/facturation/declarations'
     | '/facturation/reglages'
     | '/prospects/$id'
     | '/prospects'
@@ -329,6 +376,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agenda'
     | '/_authenticated/apollo'
     | '/_authenticated/chasse'
+    | '/_authenticated/chasse-premium'
     | '/_authenticated/equipe'
     | '/_authenticated/facturation'
     | '/_authenticated/froids'
@@ -337,6 +385,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pilotage'
     | '/_authenticated/pipeline'
     | '/_authenticated/profil'
+    | '/_authenticated/redaction'
     | '/_authenticated/relances'
     | '/_authenticated/scripts'
     | '/_authenticated/studio'
@@ -345,11 +394,13 @@ export interface FileRouteTypes {
     | '/_authenticated/workflows'
     | '/auth/gmail-callback'
     | '/_authenticated/'
+    | '/_authenticated/facturation/contrats'
+    | '/_authenticated/facturation/declarations'
     | '/_authenticated/facturation/reglages'
     | '/_authenticated/prospects/$id'
     | '/_authenticated/prospects/'
     | '/_authenticated/facturation/document/$id'
-    | '/_authenticated/studio/site/$id'
+    | '/_authenticated/studio_/site/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -438,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelancesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/redaction': {
+      id: '/_authenticated/redaction'
+      path: '/redaction'
+      fullPath: '/redaction'
+      preLoaderRoute: typeof AuthenticatedRedactionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profil': {
       id: '/_authenticated/profil'
       path: '/profil'
@@ -494,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/chasse-premium': {
+      id: '/_authenticated/chasse-premium'
+      path: '/chasse-premium'
+      fullPath: '/chasse-premium'
+      preLoaderRoute: typeof AuthenticatedChassePremiumRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/chasse': {
       id: '/_authenticated/chasse'
       path: '/chasse'
@@ -536,12 +601,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFacturationReglagesRouteImport
       parentRoute: typeof AuthenticatedFacturationRoute
     }
-    '/_authenticated/studio/site/$id': {
-      id: '/_authenticated/studio/site/$id'
-      path: '/site/$id'
+    '/_authenticated/facturation/declarations': {
+      id: '/_authenticated/facturation/declarations'
+      path: '/declarations'
+      fullPath: '/facturation/declarations'
+      preLoaderRoute: typeof AuthenticatedFacturationDeclarationsRouteImport
+      parentRoute: typeof AuthenticatedFacturationRoute
+    }
+    '/_authenticated/facturation/contrats': {
+      id: '/_authenticated/facturation/contrats'
+      path: '/contrats'
+      fullPath: '/facturation/contrats'
+      preLoaderRoute: typeof AuthenticatedFacturationContratsRouteImport
+      parentRoute: typeof AuthenticatedFacturationRoute
+    }
+    '/_authenticated/studio_/site/$id': {
+      id: '/_authenticated/studio_/site/$id'
+      path: '/studio/site/$id'
       fullPath: '/studio/site/$id'
       preLoaderRoute: typeof AuthenticatedStudioSiteIdRouteImport
-      parentRoute: typeof AuthenticatedStudioRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/facturation/document/$id': {
       id: '/_authenticated/facturation/document/$id'
@@ -554,12 +633,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedFacturationRouteChildren {
+  AuthenticatedFacturationContratsRoute: typeof AuthenticatedFacturationContratsRoute
+  AuthenticatedFacturationDeclarationsRoute: typeof AuthenticatedFacturationDeclarationsRoute
   AuthenticatedFacturationReglagesRoute: typeof AuthenticatedFacturationReglagesRoute
   AuthenticatedFacturationDocumentIdRoute: typeof AuthenticatedFacturationDocumentIdRoute
 }
 
 const AuthenticatedFacturationRouteChildren: AuthenticatedFacturationRouteChildren =
   {
+    AuthenticatedFacturationContratsRoute:
+      AuthenticatedFacturationContratsRoute,
+    AuthenticatedFacturationDeclarationsRoute:
+      AuthenticatedFacturationDeclarationsRoute,
     AuthenticatedFacturationReglagesRoute:
       AuthenticatedFacturationReglagesRoute,
     AuthenticatedFacturationDocumentIdRoute:
@@ -571,21 +656,11 @@ const AuthenticatedFacturationRouteWithChildren =
     AuthenticatedFacturationRouteChildren,
   )
 
-interface AuthenticatedStudioRouteChildren {
-  AuthenticatedStudioSiteIdRoute: typeof AuthenticatedStudioSiteIdRoute
-}
-
-const AuthenticatedStudioRouteChildren: AuthenticatedStudioRouteChildren = {
-  AuthenticatedStudioSiteIdRoute: AuthenticatedStudioSiteIdRoute,
-}
-
-const AuthenticatedStudioRouteWithChildren =
-  AuthenticatedStudioRoute._addFileChildren(AuthenticatedStudioRouteChildren)
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedApolloRoute: typeof AuthenticatedApolloRoute
   AuthenticatedChasseRoute: typeof AuthenticatedChasseRoute
+  AuthenticatedChassePremiumRoute: typeof AuthenticatedChassePremiumRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFacturationRoute: typeof AuthenticatedFacturationRouteWithChildren
   AuthenticatedFroidsRoute: typeof AuthenticatedFroidsRoute
@@ -594,21 +669,24 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPilotageRoute: typeof AuthenticatedPilotageRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedRedactionRoute: typeof AuthenticatedRedactionRoute
   AuthenticatedRelancesRoute: typeof AuthenticatedRelancesRoute
   AuthenticatedScriptsRoute: typeof AuthenticatedScriptsRoute
-  AuthenticatedStudioRoute: typeof AuthenticatedStudioRouteWithChildren
+  AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
   AuthenticatedTableauRoute: typeof AuthenticatedTableauRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedWorkflowsRoute: typeof AuthenticatedWorkflowsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedProspectsIdRoute: typeof AuthenticatedProspectsIdRoute
   AuthenticatedProspectsIndexRoute: typeof AuthenticatedProspectsIndexRoute
+  AuthenticatedStudioSiteIdRoute: typeof AuthenticatedStudioSiteIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedApolloRoute: AuthenticatedApolloRoute,
   AuthenticatedChasseRoute: AuthenticatedChasseRoute,
+  AuthenticatedChassePremiumRoute: AuthenticatedChassePremiumRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFacturationRoute: AuthenticatedFacturationRouteWithChildren,
   AuthenticatedFroidsRoute: AuthenticatedFroidsRoute,
@@ -617,15 +695,17 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPilotageRoute: AuthenticatedPilotageRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedRedactionRoute: AuthenticatedRedactionRoute,
   AuthenticatedRelancesRoute: AuthenticatedRelancesRoute,
   AuthenticatedScriptsRoute: AuthenticatedScriptsRoute,
-  AuthenticatedStudioRoute: AuthenticatedStudioRouteWithChildren,
+  AuthenticatedStudioRoute: AuthenticatedStudioRoute,
   AuthenticatedTableauRoute: AuthenticatedTableauRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedWorkflowsRoute: AuthenticatedWorkflowsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedProspectsIdRoute: AuthenticatedProspectsIdRoute,
   AuthenticatedProspectsIndexRoute: AuthenticatedProspectsIndexRoute,
+  AuthenticatedStudioSiteIdRoute: AuthenticatedStudioSiteIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

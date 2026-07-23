@@ -16,6 +16,10 @@ import {
   Target,
   Rocket,
   Receipt,
+  FileBarChart,
+  FileSignature,
+  Radar,
+  Crown,
 } from "lucide-react";
 import {
   Sidebar,
@@ -100,6 +104,7 @@ export function AppSidebar() {
     { title: "Génération d'emails", url: "/templates", icon: Sparkles, badge: 0 },
     { title: "Scripts d'appel", url: "/scripts", icon: Headphones, badge: 0 },
     { title: "Chasse aux prospects", url: "/chasse", icon: Target, badge: 0 },
+    { title: "Chasse Premium", url: "/chasse-premium", icon: Crown, badge: 0 },
   ];
 
   const studioItems: NavItem[] = [
@@ -108,6 +113,8 @@ export function AppSidebar() {
 
   const facturationItems: NavItem[] = [
     { title: "Tableau de bord", url: "/facturation", icon: LayoutDashboard, badge: 0 },
+    { title: "Contrats", url: "/facturation/contrats", icon: FileSignature, badge: 0 },
+    { title: "Déclarations", url: "/facturation/declarations", icon: FileBarChart, badge: 0 },
     { title: "Réglages", url: "/facturation/reglages", icon: UserCog, badge: 0 },
   ];
 
@@ -124,6 +131,7 @@ export function AppSidebar() {
   // Items "compte", communs aux deux univers
   const accountItems: NavItem[] = [];
   if (role === "admin") accountItems.push({ title: "Équipe", url: "/equipe", icon: UserCog, badge: 0 });
+  accountItems.push({ title: "Le Radar Tech", url: "/redaction", icon: Radar, badge: 0 });
   accountItems.push({ title: "Mon profil", url: "/profil", icon: User, badge: 0 });
 
   const renderItem = (item: NavItem) => (
