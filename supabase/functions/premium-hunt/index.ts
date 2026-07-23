@@ -61,26 +61,53 @@ function establishmentScore(reviews: number | null, rating: number | null, eff: 
   return Math.min(100, s);
 }
 
-async function auditSite(url: string): Promise<{ score: number; reasons: string[] }> {
+// Audit technique approfondi (15+ contrôles + temps de chargement). Sort une note
+// 0-100 (haut = bon site) ET une liste critique de PROBLÈMES actionnables.
+async function auditSite(url: string): Promise<{ score: number; problems: string[]; loadMs: number | null }> {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 5500);
+    const t = setTimeout(() => ctrl.abort(), 9000);
+    const t0 = Date.now();
     const r = await fetch(url, { redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" } });
+    const loadMs = Date.now() - t0;
     clearTimeout(t);
-    if (r.status >= 500) return { score: 8, reasons: ["site en erreur serveur"] };
+    if (r.status >= 500) return { score: 6, problems: ["site en erreur serveur (500)"], loadMs };
     const finalUrl = r.url || url;
-    const html = (await r.text()).slice(0, 200000);
-    let score = 0; const bad: string[] = [];
-    if (finalUrl.startsWith("https://")) score += 20; else bad.push("pas de HTTPS (site non sécurisé)");
-    if (/<meta[^>]+name=["']viewport["']/i.test(html)) score += 20; else bad.push("pas adapté au mobile");
+    const enc = (r.headers.get("content-encoding") || "").toLowerCase();
+    const html = (await r.text()).slice(0, 400000);
+    const H = html.toLowerCase();
+    let score = 0; const P: string[] = [];
+    const add = (pts: number, ok: boolean, problem: string) => { if (ok) score += pts; else P.push(problem); };
+
+    // Sécurité & perf
+    add(16, finalUrl.startsWith("https://"), "pas de HTTPS — site non sécurisé (Google pénalise + cadenas “non sécurisé” chez le visiteur)");
+    add(10, loadMs < 2500, `site lent (${(loadMs / 1000).toFixed(1)} s de chargement — les visiteurs partent)`);
+    add(4, enc.includes("gzip") || enc.includes("br"), "pas de compression (pages plus lourdes)");
+    // Mobile
+    add(14, /<meta[^>]+name=["']viewport["']/i.test(html), "pas optimisé mobile (viewport absent) — cassé sur téléphone");
+    // SEO on-page
     const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").trim();
-    if (title.length >= 10) score += 15; else bad.push("titre SEO absent");
-    if (/<meta[^>]+name=["']description["'][^>]*content=["'][^"']{20,}/i.test(html)) score += 15; else bad.push("pas de meta description");
-    if (/application\/ld\+json/i.test(html)) score += 15; else bad.push("aucune donnée structurée (SEO/IA)");
+    add(9, title.length >= 10, "titre de page (SEO) absent ou trop court");
+    add(9, /<meta[^>]+name=["']description["'][^>]*content=["'][^"']{20,}/i.test(html), "meta description absente — Google affiche un extrait au hasard");
+    add(5, /<h1[\s>]/i.test(html), "aucun titre H1 (structure SEO faible)");
+    add(4, /rel=["']canonical["']/i.test(html), "pas de balise canonical (risque de contenu dupliqué)");
+    add(3, /\blang=["'][a-z]/i.test(html), "attribut de langue manquant");
+    // Données structurées / IA
+    add(10, /application\/ld\+json/i.test(html), "aucune donnée structurée (schema) — invisible pour l’IA de Google (AI Overviews)");
+    add(4, /property=["']og:/i.test(html), "pas de balises de partage (Open Graph) — vilain aperçu sur réseaux/WhatsApp");
+    // Accessibilité / qualité
+    const imgs = (html.match(/<img\b/gi) || []).length;
+    const alts = (html.match(/<img\b[^>]*\balt=/gi) || []).length;
+    add(5, imgs === 0 || alts / Math.max(1, imgs) >= 0.6, "beaucoup d’images sans texte alternatif (SEO + accessibilité)");
+    add(2, /<link[^>]+rel=["'][^"']*icon/i.test(html), "pas de favicon");
     const textLen = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
-    if (textLen >= 800) score += 15; else bad.push("contenu très pauvre");
-    return { score: Math.min(100, score), reasons: bad };
-  } catch { return { score: 0, reasons: ["site injoignable"] }; }
+    add(10, textLen >= 900, "contenu très pauvre (peu de texte pour Google)");
+    // Techno datée
+    const outdated = /wix\.com|jimdo|pagesjaunes|1&1|ionos-website|jquery-1\.|jquery\/1\.|<font\b|<marquee|<center\b|bgcolor=/i.test(html);
+    add(5, !outdated, "technologie/mise en page datée (Wix, vieux jQuery, balises obsolètes)");
+
+    return { score: Math.max(0, Math.min(100, score)), problems: P, loadMs };
+  } catch { return { score: 0, problems: ["site injoignable ou trop lent"], loadMs: null }; }
 }
 
 async function placesSearch(key: string, query: string): Promise<any[]> {
@@ -170,7 +197,7 @@ Deno.serve(async (req) => {
       const cpCand = extractCP(c.adresse || "") || cpHint;
 
       const [audit, pap] = await Promise.all([
-        c.website ? auditSite(c.website) : Promise.resolve({ score: 0, reasons: ["aucun site web"] }),
+        c.website ? auditSite(c.website) : Promise.resolve({ score: 0, problems: ["aucun site web"], loadMs: null }),
         pappersKey ? pappersLookup(pappersKey, c.nom, cpCand) : Promise.resolve(null),
       ]);
 
@@ -183,13 +210,8 @@ Deno.serve(async (req) => {
       if (eff >= 1) reasons.push(`${eff} salarié${eff > 1 ? "s" : ""}`);
       if (age != null) reasons.push(`établie depuis ${age} ans`);
 
-      // Faiblesse = qualité du site (ce qu'on vient corriger)
-      let weakness: number;
-      if (!c.website) { weakness = 82; reasons.push("aucun site web"); }
-      else {
-        weakness = 100 - audit.score;
-        for (const b of audit.reasons.slice(0, 3)) reasons.push(b);
-      }
+      const problemes = c.website ? audit.problems : ["aucun site web"];
+      const weakness = c.website ? Math.min(100, 100 - audit.score) : 82;
 
       let opportunity = Math.round((establishment * weakness) / 100);
       if (c.isB2B) opportunity = Math.min(100, Math.round(opportunity * 1.15));
@@ -199,8 +221,10 @@ Deno.serve(async (req) => {
         website: c.website, avis: c.avis, note: c.note, effectif: eff, anciennete: age,
         siren: pap?.siren ?? null, dirigeant: pap?.dirigeant ?? null,
         site_score: c.website ? audit.score : 0,
+        load_ms: audit.loadMs ?? null,
+        problemes: [...new Set(problemes)].slice(0, 8),
         etablissement: establishment, faiblesse: weakness, opportunite: opportunity, b2b: c.isB2B,
-        raisons: [...new Set(reasons)].slice(0, 6),
+        raisons: [...new Set(reasons)].slice(0, 4),
       };
     }));
 
