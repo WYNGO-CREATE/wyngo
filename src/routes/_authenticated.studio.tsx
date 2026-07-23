@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioPage,
-  head: () => ({ meta: [{ title: "Wyngo Studio — Production des sites" }] }),
+  head: () => ({ meta: [{ title: "Wyngo Studio — Suivi client & espace client" }] }),
 });
 
 const SUPABASE_FN = "https://mwkkgubvdswmdaiswepl.supabase.co/functions/v1";
@@ -45,42 +45,6 @@ function slugify(s: string): string {
   return (s || "site")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "site";
-}
-
-// Site de départ propre et éditable (quand il n'y a pas encore de maquette).
-// Auto-suffisant (CSS inline) → s'affiche partout, modifiable par l'IA.
-function starterHtml(name: string): string {
-  const n = (name || "Votre entreprise").replace(/[<>]/g, "");
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>${n}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0f172a;line-height:1.6}
-.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 6%;border-bottom:1px solid #eef1f5}
-.nav b{font-size:20px}.nav a{margin-left:22px;color:#475569;text-decoration:none;font-size:14px}
-.hero{padding:90px 6%;text-align:center;background:linear-gradient(160deg,#f8fafc,#eef2ff)}
-.hero h1{font-size:44px;line-height:1.15;max-width:760px;margin:0 auto 16px}
-.hero p{font-size:18px;color:#475569;max-width:560px;margin:0 auto 28px}
-.btn{display:inline-block;background:#1B4BE3;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:600}
-.sec{padding:70px 6%;max-width:1080px;margin:0 auto}.sec h2{font-size:30px;text-align:center;margin-bottom:40px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
-.card{border:1px solid #eef1f5;border-radius:16px;padding:26px}.card h3{font-size:19px;margin-bottom:8px}.card p{color:#64748b;font-size:15px}
-.cta{background:#0f172a;color:#fff;text-align:center;padding:70px 6%}.cta h2{font-size:30px;margin-bottom:14px}.cta .btn{background:#1B4BE3;margin-top:8px}
-.foot{padding:30px 6%;text-align:center;color:#94a3b8;font-size:13px}
-</style></head><body>
-<div class="nav"><b>${n}</b><div><a href="#services">Services</a><a href="#contact">Contact</a></div></div>
-<header class="hero">
-  <h1>${n}, votre partenaire de confiance</h1>
-  <p>Un savoir-faire local, des prestations de qualité et un accompagnement sur mesure pour chacun de vos projets.</p>
-  <a class="btn" href="#contact">Demander un devis</a>
-</header>
-<section class="sec" id="services"><h2>Nos services</h2><div class="grid">
-  <div class="card"><h3>Prestation 1</h3><p>Décrivez ici votre première offre phare et ce qui la rend unique.</p></div>
-  <div class="card"><h3>Prestation 2</h3><p>Mettez en avant un deuxième service que vos clients recherchent.</p></div>
-  <div class="card"><h3>Prestation 3</h3><p>Un troisième atout : rapidité, garantie, proximité…</p></div>
-</div></section>
-<section class="cta" id="contact"><h2>Parlons de votre projet</h2><p>Réponse sous 24h, devis gratuit.</p><a class="btn" href="tel:+33">Nous appeler</a></section>
-<div class="foot">© ${n} — Tous droits réservés · Site réalisé par Wyngo</div>
-</body></html>`;
 }
 
 type Client = { id: string; first_name: string; last_name: string; company: string | null; email: string | null; status: string };
@@ -180,9 +144,10 @@ function StudioPage() {
       const preview = previews?.get(client.id);
       const company = client.company || `${client.first_name} ${client.last_name}`.trim();
       const slug = `${slugify(company)}-${Math.random().toString(36).slice(2, 6)}`;
-      // On charge le HTML de la maquette tout de suite (sinon l'éditeur est vide).
-      // Pas de maquette → site de départ propre, prêt à éditer.
-      let html = starterHtml(company);
+      // Le Studio ne FABRIQUE plus le site (c'est le développeur qui s'en charge) :
+      // on ne génère aucun HTML de départ. On reprend seulement la maquette
+      // commerciale si elle existe, pour que le client la retrouve dans son espace.
+      let html: string | null = null;
       const url = preview?.html_url || (preview?.slug ? `${APP_BASE}/p/${preview.slug}` : null);
       if (url) { try { const r = await fetch(url); if (r.ok) { const t = await r.text(); if (t.trim()) html = t; } } catch { /* garde le starter */ } }
       const { data, error } = await supabase.from("client_sites").insert({
@@ -197,7 +162,7 @@ function StudioPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["studio-sites"] });
-      toast.success("Site ajouté à la production 🚀 — prêt à éditer");
+      toast.success("Client ajouté au suivi 🚀 — son espace client est actif");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -220,7 +185,7 @@ function StudioPage() {
         prospect_id: prospect.id, owner_id: user!.id, preview_id: null,
         title: company, slug, status: "draft", production_stage: "design",
         portal_token: crypto.randomUUID().replace(/-/g, ""),
-        html: starterHtml("Boulangerie Martin"),
+        html: null,
         deadline: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       }).select("id").single();
       if (sErr) throw sErr;
@@ -229,7 +194,7 @@ function StudioPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["studio-clients"] });
       qc.invalidateQueries({ queryKey: ["studio-sites"] });
-      toast.success("Chantier de démo créé 🎬 — teste Éditer, Portail, Messages, Rapport !");
+      toast.success("Chantier de démo créé 🎬 — teste Portail, Messages et Rapport !");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -306,7 +271,7 @@ function StudioPage() {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">Wyngo Studio</h1>
-            <p className="text-sm text-muted-foreground">Pilote la fabrication de chaque site — de la maquette au suivi, sans rien oublier.</p>
+            <p className="text-sm text-muted-foreground">Suis chaque client et son espace dédié : avancement, échéances, blocages, messages et rapports. La réalisation technique du site est assurée par le développeur.</p>
           </div>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={createDemo.isPending}
             onClick={() => createDemo.mutate()} title="Créer un chantier de démonstration complet">
@@ -397,7 +362,6 @@ function StudioPage() {
                       onEditBlocker={(b) => updateSite.mutate({ id: s.id, patch: { blocker: b || null } })}
                       onReport={() => setReportSite(s)}
                       onMessages={() => setMsgSite(s)}
-                      onEdit={() => navigate({ to: "/studio/site/$id", params: { id: s.id } })}
                       onDelete={() => { if (confirm(`Supprimer le chantier « ${s.title || clientName(s.prospect_id)} » ?`)) deleteSite.mutate(s); }}
                     />
                   ))}
@@ -505,12 +469,12 @@ function MessagesDialog({ site, clientName, onClose }: { site: Site; clientName:
 // ─── Carte chantier ───────────────────────────────────────────────────
 function SiteCard({
   site, name, dragging, onDragStart, onDragEnd, previewUrl, unread,
-  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onMessages, onEdit, onDelete,
+  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onMessages, onDelete,
 }: {
   site: Site; name: string; dragging: boolean;
   onDragStart: () => void; onDragEnd: () => void; previewUrl: string | null; unread: number;
   onCopyPortal: () => void; onEditDeadline: (d: string) => void; onEditBlocker: (b: string) => void;
-  onReport: () => void; onMessages: () => void; onEdit: () => void; onDelete: () => void;
+  onReport: () => void; onMessages: () => void; onDelete: () => void;
 }) {
   const [editBlk, setEditBlk] = useState(false);
   const [blk, setBlk] = useState(site.blocker || "");
@@ -587,9 +551,6 @@ function SiteCard({
 
       {/* Actions */}
       <div className="flex flex-wrap gap-1 pt-0.5">
-        <Button size="sm" variant="secondary" className="h-6 text-[10px] px-2 gap-1" onClick={onEdit}>
-          <Wand2 className="size-2.5" /> Éditer
-        </Button>
         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onCopyPortal} title="Copier le lien du portail client">
           <Link2 className="size-2.5" /> Portail
         </Button>

@@ -20,6 +20,7 @@ import {
   FileSignature,
   Radar,
   Crown,
+  Crosshair,
 } from "lucide-react";
 import {
   Sidebar,
@@ -84,8 +85,9 @@ export function AppSidebar() {
   type NavItem = { title: string; url: string; icon: typeof Users; badge: number };
 
   // ── Univers : Pilotage · Prospection · Studio · Facturation · Agenda ──
-  const activeWorkspace: "prospection" | "studio" | "facturation" | "agenda" | "pilotage" =
-    currentPath.startsWith("/studio") ? "studio"
+  const activeWorkspace: "prospection" | "chasse" | "studio" | "facturation" | "agenda" | "pilotage" =
+    currentPath.startsWith("/chasse") ? "chasse"
+    : currentPath.startsWith("/studio") ? "studio"
     : currentPath.startsWith("/facturation") ? "facturation"
     : currentPath.startsWith("/agenda") ? "agenda"
     : currentPath.startsWith("/pilotage") ? "pilotage"
@@ -103,6 +105,10 @@ export function AppSidebar() {
     { title: "À faire aujourd'hui", url: "/relances", icon: CalendarClock, badge: dueCount },
     { title: "Génération d'emails", url: "/templates", icon: Sparkles, badge: 0 },
     { title: "Scripts d'appel", url: "/scripts", icon: Headphones, badge: 0 },
+  ];
+
+  // Univers « Chasse » : les deux moteurs de prospection à froid.
+  const chasseItems: NavItem[] = [
     { title: "Chasse aux prospects", url: "/chasse", icon: Target, badge: 0 },
     { title: "Chasse Premium", url: "/chasse-premium", icon: Crown, badge: 0 },
   ];
@@ -122,7 +128,8 @@ export function AppSidebar() {
     { title: "Mes rendez-vous", url: "/agenda", icon: CalendarDays, badge: 0 },
   ];
 
-  const mainItems = activeWorkspace === "studio" ? studioItems
+  const mainItems = activeWorkspace === "chasse" ? chasseItems
+    : activeWorkspace === "studio" ? studioItems
     : activeWorkspace === "facturation" ? facturationItems
     : activeWorkspace === "agenda" ? agendaItems
     : activeWorkspace === "pilotage" ? pilotageItems
@@ -173,6 +180,7 @@ export function AppSidebar() {
             {([
               { ws: "pilotage", to: "/pilotage", icon: BarChart3, label: "Pilotage" },
               { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
+              { ws: "chasse", to: "/chasse", icon: Crosshair, label: "Chasse" },
               { ws: "studio", to: "/studio", icon: Rocket, label: "Studio" },
               { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
               { ws: "agenda", to: "/agenda", icon: CalendarDays, label: "Agenda" },
@@ -189,7 +197,8 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : activeWorkspace === "pilotage" ? "Pilotage" : "Prospection"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{activeWorkspace === "chasse" ? "Chasse"
+            : activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : activeWorkspace === "pilotage" ? "Pilotage" : "Prospection"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{mainItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>

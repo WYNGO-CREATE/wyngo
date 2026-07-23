@@ -127,22 +127,22 @@ export type SearchOpts = {
 // répond 429 : sans garde-fou, on croit à tort que l'entreprise est introuvable
 // (bug observé : enrichissement OK en local, vide en production).
 // D'où : file d'attente (max 4 requêtes simultanées) + reprises espacées.
-const MAX_PARALLELE = 4;
-let enCours = 0;
-const fileAttente: Array<() => void> = [];
-
-async function creneau<T>(fn: () => Promise<T>): Promise<T> {
-  if (enCours >= MAX_PARALLELE) await new Promise<void>((r) => fileAttente.push(r));
-  enCours++;
-  try {
-    return await fn();
-  } finally {
-    enCours--;
-    fileAttente.shift()?.();
-  }
-}
+// On CADENCE les départs (un toutes les ~160 ms ≈ 6 req/s) plutôt que de lancer
+// 6 requêtes d'un coup : on reste sous le seuil au lieu de déclencher des 429
+// puis d'attendre les reprises, ce qui était bien plus lent.
+const ESPACEMENT_MS = 160;
+let prochainDepart = 0;
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function creneau<T>(fn: () => Promise<T>): Promise<T> {
+  const maintenant = Date.now();
+  const depart = Math.max(maintenant, prochainDepart);
+  prochainDepart = depart + ESPACEMENT_MS;
+  const attente = depart - maintenant;
+  if (attente > 0) await pause(attente);
+  return await fn();
+}
 
 export async function searchEntreprises(o: SearchOpts): Promise<{ results: EntrepriseInfo[]; total: number; pages: number }> {
   const u = new URL(BASE);
@@ -231,8 +231,8 @@ async function lookupProgressif(
   const villeN = normTok(ville || "");
 
   const toks = distinctiveTokens(clean, secteur, ville);
-  // Du plus précis au plus large : nom complet → mots distinctifs → 2 mots → 1 mot.
-  const queries = [clean, toks.join(" "), toks.slice(0, 2).join(" "), toks[0] || ""]
+  // Du plus précis au plus large : nom complet → mots distinctifs → 1 mot.
+  const queries = [clean, toks.join(" "), toks[0] || ""]
     .map((q) => q.trim()).filter((q, i, a) => q && a.indexOf(q) === i);
 
   // ⚠️ Les filtres géographiques de l'API ne sont pas fiables à 100 % : une
@@ -269,10 +269,15 @@ async function lookupProgressif(
   };
   const retenir = (r: EntrepriseInfo) => ({ ...r, confiance: confiance(r) });
 
+  // Budget de requêtes : la chasse enrichit des dizaines de prospects, chaque
+  // appel compte. 3 tentatives suffisent à couvrir les cas réels.
+  let budget = 3;
+
   for (const q of queries) {
     const large = q !== clean;
     for (const scope of [cp ? { codePostal: cp } : null, dept ? { departement: dept } : null]) {
       if (!scope) continue;
+      if (budget-- <= 0) return null;
       const { results } = await searchEntreprises({ q, ...scope, perPage: 10 });
       const valides = results.filter((r) => hasTok(r) && geoOk(r, large));
       if (valides.length === 0) continue;

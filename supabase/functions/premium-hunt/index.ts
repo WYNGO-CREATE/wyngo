@@ -89,17 +89,50 @@ function sweepCenters(c: { lat: number; lng: number }, radiusKm: number): { lat:
   return pts;
 }
 
-// Géocodage de la ville de départ via Places (même clé, pas d'API en plus).
-async function geocode(key: string, city: string): Promise<{ lat: number; lng: number } | null> {
+// Géocodage de la ville de départ. On passe d'abord par l'API officielle des
+// communes (geo.api.gouv.fr) : elle connaît les 35 000 communes françaises,
+// y compris les plus petits villages, et renvoie le nom officiel exact.
+// Google Places ne sert que de filet de sécurité (lieu-dit, quartier, saisie
+// approximative…).
+async function geocode(key: string, city: string, cp: string | null): Promise<{ lat: number; lng: number; nom: string } | null> {
+  // Un code postal couvre souvent PLUSIEURS communes (32600 = L'Isle-Jourdain,
+  // Auradé, Ségoufielle…) et la recherche par nom est floue (« Y » renvoyait
+  // Yutz). On privilégie donc le nom exact saisi, puis la commune la plus
+  // peuplée — jamais « la première de la liste ».
+  const pick = (l: any, voulu: string) => {
+    if (!Array.isArray(l) || l.length === 0) return null;
+    const n = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+    const exacts = voulu ? l.filter((c: any) => n(c.nom) === n(voulu)) : [];
+    const pool = exacts.length ? exacts : l;
+    pool.sort((a: any, b: any) => (b.population || 0) - (a.population || 0));
+    const c = pool[0];
+    const co = c?.centre?.coordinates;
+    return co ? { lat: co[1], lng: co[0], nom: c.nom as string } : null;
+  };
+  // 1. Par code postal si fourni (le plus fiable : lève les homonymes).
+  if (cp && /^\d{5}$/.test(cp)) {
+    try {
+      const r = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${cp}&fields=nom,centre,population`);
+      if (r.ok) { const g = pick(await r.json(), city); if (g) return g; }
+    } catch { /* on tente la suite */ }
+  }
+  // 2. Par nom de commune.
+  if (city) {
+    try {
+      const r = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(city)}&fields=nom,centre,population&boost=population&limit=8`);
+      if (r.ok) { const g = pick(await r.json(), city); if (g) return g; }
+    } catch { /* on tente Google */ }
+  }
+  // 3. Filet de sécurité : Google Places.
   try {
     const r = await fetch(`${PLACES_BASE}/places:searchText`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.location,places.formattedAddress" },
-      body: JSON.stringify({ textQuery: city, languageCode: "fr", maxResultCount: 1 }),
+      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.location,places.displayName" },
+      body: JSON.stringify({ textQuery: `${city} France`, languageCode: "fr", maxResultCount: 1 }),
     });
     if (!r.ok) return null;
-    const loc = (await r.json()).places?.[0]?.location;
-    return loc ? { lat: loc.latitude, lng: loc.longitude } : null;
+    const p = (await r.json()).places?.[0];
+    return p?.location ? { lat: p.location.latitude, lng: p.location.longitude, nom: p.displayName?.text || city } : null;
   } catch { return null; }
 }
 
@@ -111,7 +144,7 @@ type Problem = { titre: string; impact: string; gravite: "critique" | "majeur" |
 async function auditSite(url: string): Promise<{ score: number; problems: Problem[]; loadMs: number | null }> {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 9000);
+    const t = setTimeout(() => ctrl.abort(), 7000);
     const t0 = Date.now();
     const r = await fetch(url, { redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" } });
     const loadMs = Date.now() - t0;
@@ -176,7 +209,7 @@ async function auditSite(url: string): Promise<{ score: number; problems: Proble
 
     return { score: Math.max(0, Math.min(100, score)), problems: P, loadMs };
   } catch {
-    return { score: 0, problems: [{ titre: "Site injoignable ou trop lent", impact: "Le site n'a pas répondu en 9 s : pour un visiteur comme pour Google, il n'existe pas.", gravite: "critique" }], loadMs: null };
+    return { score: 0, problems: [{ titre: "Site injoignable ou trop lent", impact: "Le site n'a pas répondu en 7 s : pour un visiteur comme pour Google, il n'existe pas.", gravite: "critique" }], loadMs: null };
   }
 }
 
@@ -286,7 +319,8 @@ Deno.serve(async (req) => {
     const R = Math.min(Math.max(Number(radiusKm) || 30, 5), 60);
 
     // 1. Géocodage du point de départ
-    const center = await geocode(placesKey, `${city}, France`);
+    const geo = await geocode(placesKey, city, cpHint);
+    const center = geo;
     if (!center) {
       return new Response(JSON.stringify({ candidates: [], count: 0, warning: `Ville « ${city} » introuvable. Essaie « Ville » ou « CP Ville ».` }), { status: 200, headers: cors });
     }
@@ -298,8 +332,10 @@ Deno.serve(async (req) => {
     const seen = new Set<string>();
     const targetSectors = sectors.slice(0, 8).map(String);
 
-    for (const sector of targetSectors) {
-      const isB2B = B2B_HINTS.some((h) => strip(sector).includes(h));
+    // Tous les métiers × tous les points de l'hexagone sont lancés EN PARALLÈLE
+    // (avant, les métiers s'enchaînaient l'un après l'autre : 3 métiers = 3× le
+    // temps). Google Places encaisse sans problème ce niveau de parallélisme.
+    const parSecteur = await Promise.all(targetSectors.map(async (sector) => {
       const perCenter = await Promise.all(centers.map(async (pt) => {
         const out: any[] = [];
         let token: string | undefined = undefined;
@@ -312,8 +348,12 @@ Deno.serve(async (req) => {
         }
         return out;
       }));
+      return { sector, places: perCenter.flat() };
+    }));
 
-      for (const p of perCenter.flat()) {
+    for (const { sector, places } of parSecteur) {
+      const isB2B = B2B_HINTS.some((h) => strip(sector).includes(h));
+      for (const p of places) {
         const nom = p.displayName?.text || "";
         const website = p.websiteUri || null;
         // Chasse Premium = uniquement les entreprises qui ONT déjà un site.
@@ -348,15 +388,35 @@ Deno.serve(async (req) => {
     found.sort((a, b) => (b.avis ?? 0) - (a.avis ?? 0));
     const toAnalyze = found.slice(0, deepN);
 
-    // 3. Analyse par candidat (parallèle) : audit site + Pappers + scores
-    const analyzed = await Promise.all(toAnalyze.map(async (c) => {
-      const reasons: string[] = [];
-      const cpCand = extractCP(c.adresse || "") || cpHint;
+    // 3. AUDIT TECHNIQUE de tous les candidats, en parallèle.
+    const audits = await Promise.all(toAnalyze.map((c) => auditSite(c.website)));
 
-      const [audit, info] = await Promise.all([
-        auditSite(c.website),
-        enrich(c.nom, cpCand, c.secteur, c.ville, pappersKey),
-      ]);
+    // 4. Pré-classement SANS données légales, pour savoir où concentrer l'effort.
+    //    L'enrichissement légal est cadencé (limite de débit de l'API publique) :
+    //    l'appliquer à 30 prospects coûte ~15 s. On le réserve donc aux
+    //    meilleures pistes — celles qu'on va réellement appeler. Les autres
+    //    gardent leurs données Google, qui suffisent à les situer.
+    const ENRICH_MAX = 18;
+    const prelim = toAnalyze.map((c, i) => {
+      const audit = audits[i];
+      const base = establishmentScore(c.avis, c.note, 0, null) * (100 - audit.score) / 100;
+      return { c, audit, rang: c.isB2B ? base * 1.15 : base };
+    });
+    const aEnrichir = new Set(
+      [...prelim].sort((a, b) => b.rang - a.rang).slice(0, ENRICH_MAX).map((p) => p.c.nom),
+    );
+
+    const infos = new Map<string, EntrepriseInfo | null>();
+    await Promise.all(prelim.map(async ({ c }) => {
+      if (!aEnrichir.has(c.nom)) return;
+      const cpCand = extractCP(c.adresse || "") || cpHint;
+      infos.set(c.nom, await enrich(c.nom, cpCand, c.secteur, c.ville, pappersKey));
+    }));
+
+    // 5. Scores définitifs et mise en forme.
+    const analyzed = prelim.map(({ c, audit }) => {
+      const reasons: string[] = [];
+      const info = infos.get(c.nom) ?? null;
 
       const eff = info?.effectif ?? 0;
       const age = info?.anciennete ?? null;
@@ -408,13 +468,13 @@ Deno.serve(async (req) => {
         etablissement: establishment, faiblesse: weakness, opportunite: opportunity, b2b: c.isB2B,
         raisons: [...new Set(reasons)].slice(0, 5),
       };
-    }));
+    });
 
     analyzed.sort((a, b) => b.opportunite - a.opportunite);
     const villes = [...new Set(found.map((f) => f.ville).filter(Boolean))];
     return new Response(JSON.stringify({
       candidates: analyzed, count: analyzed.length, scanned: found.length,
-      city, radius_km: R, villes_couvertes: villes.length, villes: villes.slice(0, 40),
+      city: geo?.nom || city, radius_km: R, villes_couvertes: villes.length, villes: villes.slice(0, 40),
     }), { status: 200, headers: cors });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: cors });
