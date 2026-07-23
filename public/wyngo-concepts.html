@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyngo — Directions design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Archivo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; }
+  .hero { width:100%; height:100vh; position:relative; overflow:hidden; }
+  .tag { position:absolute; top:24px; left:24px; font:600 11px/1 Inter,sans-serif; letter-spacing:.14em; text-transform:uppercase; padding:7px 12px; border-radius:100px; z-index:5; }
+
+  /* ============ A · SWISS / ÉDITORIAL CLAIR ============ */
+  .A { background:#FBFAF7; color:#141410; }
+  .A .nav { display:flex; justify-content:space-between; align-items:center; padding:34px 64px; border-bottom:1px solid #1414100f; }
+  .A .wm { font:600 19px Inter,sans-serif; letter-spacing:-.02em; }
+  .A .nav .links { display:flex; gap:34px; font:500 13.5px Inter,sans-serif; color:#14141099; }
+  .A .body { padding:0 64px; max-width:1180px; }
+  .A .ey { margin-top:90px; font:600 12px Inter,sans-serif; letter-spacing:.16em; text-transform:uppercase; color:#B03A1A; }
+  .A h1 { margin-top:26px; font:600 80px/1.02 Inter,sans-serif; letter-spacing:-.035em; max-width:14ch; }
+  .A h1 .mut { color:#14141055; }
+  .A .sub { margin-top:30px; font:400 19px/1.6 Inter,sans-serif; color:#141410aa; max-width:46ch; }
+  .A .cta { margin-top:42px; display:inline-flex; align-items:center; gap:10px; background:#141410; color:#FBFAF7; font:500 14px Inter,sans-serif; letter-spacing:.02em; padding:16px 26px; border-radius:2px; }
+  .A .meta { position:absolute; left:64px; bottom:40px; right:64px; display:flex; justify-content:space-between; border-top:1px solid #1414100f; padding-top:18px; font:500 12.5px Inter,sans-serif; color:#14141080; letter-spacing:.02em; }
+
+  /* ============ B · CABINET / QUIET LUXURY (chaud, clair) ============ */
+  .B { background:#EFE9DD; color:#1C1A14; }
+  .B .nav { display:flex; justify-content:space-between; align-items:center; padding:38px 70px; }
+  .B .wm { font:500 16px Inter,sans-serif; letter-spacing:.22em; text-transform:uppercase; }
+  .B .nav .links { display:flex; gap:40px; font:400 14px 'EB Garamond',serif; font-size:16px; color:#1C1A14bb; }
+  .B .wrap { display:grid; grid-template-columns:1fr 1fr; gap:60px; padding:70px 70px 0; align-items:start; }
+  .B .idx { font:500 12px Inter,sans-serif; letter-spacing:.2em; text-transform:uppercase; color:#7A2E2E; border-top:1px solid #1C1A1425; padding-top:18px; }
+  .B h1 { font:400 62px/1.12 'EB Garamond',serif; letter-spacing:-.01em; margin-top:8px; }
+  .B h1 em { font-style:italic; color:#3A4A38; }
+  .B .col p { font:400 18px/1.7 'EB Garamond',serif; font-size:19px; color:#1C1A14cc; max-width:42ch; }
+  .B .col .lead { margin-top:84px; }
+  .B .cta { margin-top:30px; display:inline-flex; align-items:center; gap:10px; font:500 13px Inter,sans-serif; letter-spacing:.04em; text-transform:uppercase; border:1px solid #1C1A14; padding:15px 26px; border-radius:0; }
+  .B .rule { position:absolute; left:70px; right:70px; bottom:46px; border-top:1px solid #1C1A1425; padding-top:16px; display:flex; gap:40px; font:400 15px 'EB Garamond',serif; color:#1C1A1499; }
+
+  /* ============ C · STUDIO / BRUTALISTE RAFFINÉ (blanc, audacieux) ============ */
+  .C { background:#F4F4F1; color:#0B0B0B; }
+  .C .grid { position:absolute; inset:0; background-image:linear-gradient(#0b0b0b08 1px,transparent 1px),linear-gradient(90deg,#0b0b0b08 1px,transparent 1px); background-size:25% 100%,100% 0; }
+  .C .nav { position:relative; display:flex; justify-content:space-between; align-items:center; padding:30px 50px; border-bottom:1.5px solid #0B0B0B; }
+  .C .wm { font:900 22px Archivo,sans-serif; letter-spacing:-.02em; }
+  .C .nav .links { display:flex; gap:30px; font:600 12px Inter,sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+  .C .body { position:relative; padding:54px 50px 0; }
+  .C .lab { font:500 12px 'Inter',sans-serif; letter-spacing:.05em; text-transform:uppercase; color:#0B0B0B; display:flex; gap:16px; }
+  .C .lab b { color:#FF3B00; font-weight:700; }
+  .C h1 { font:800 116px/.92 Archivo,sans-serif; letter-spacing:-.04em; text-transform:uppercase; margin-top:26px; }
+  .C h1 .o { -webkit-text-stroke:1.6px #0B0B0B; color:transparent; }
+  .C .row { margin-top:40px; display:flex; justify-content:space-between; align-items:flex-end; border-top:1.5px solid #0B0B0B; padding-top:22px; }
+  .C .row p { font:400 16px/1.55 Inter,sans-serif; max-width:40ch; color:#0B0B0Bcc; }
+  .C .cta { background:#FF3B00; color:#fff; font:700 13px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; padding:17px 30px; }
+</style>
+</head>
+<body>
+
+<section class="hero A">
+  <span class="tag" style="background:#141410;color:#FBFAF7;">Direction A — Swiss / éditorial clair</span>
+  <div class="nav">
+    <div class="wm">Wyngo</div>
+    <div class="links"><span>Méthode</span><span>Études de cas</span><span>Contact</span><span style="color:#141410;">Réserver →</span></div>
+  </div>
+  <div class="body">
+    <div class="ey">Cabinet · présence digitale</div>
+    <h1>Votre présence en ligne, traitée comme <span class="mut">un actif.</span></h1>
+    <p class="sub">Nous concevons des sites qui travaillent — trouvés sur Google, pensés pour convertir, suivis chaque mois. Pas une vitrine de plus.</p>
+    <a class="cta">Soumettre une candidature →</a>
+  </div>
+  <div class="meta"><span>Sélection trimestrielle · 9 entrepreneurs</span><span>Toulouse — France</span></div>
+</section>
+
+<section class="hero B">
+  <span class="tag" style="background:#3A4A38;color:#EFE9DD;">Direction B — Cabinet / quiet luxury</span>
+  <div class="nav">
+    <div class="wm">Wyngo</div>
+    <div class="links"><span>Le cabinet</span><span>Méthode</span><span>Cas</span><span style="color:#1C1A14;">Prendre rendez-vous</span></div>
+  </div>
+  <div class="wrap">
+    <div class="col">
+      <div class="idx">01 — Cabinet de stratégie digitale</div>
+      <h1>Un cabinet,<br>pas <em>une agence.</em></h1>
+      <a class="cta">Demander un entretien</a>
+    </div>
+    <div class="col">
+      <p class="lead">Wyngo accompagne un nombre restreint de fondateurs qui considèrent leur présence en ligne comme un actif stratégique — conçu, mesuré, et entretenu dans la durée.</p>
+    </div>
+  </div>
+  <div class="rule"><span>Sélection trimestrielle</span><span>9 entrepreneurs · 47 candidatures</span><span>Ancré à Toulouse</span></div>
+</section>
+
+<section class="hero C">
+  <span class="tag" style="background:#FF3B00;color:#fff;">Direction C — Studio / brutaliste raffiné</span>
+  <div class="grid"></div>
+  <div class="nav">
+    <div class="wm">WYNGO®</div>
+    <div class="links"><span>Work</span><span>Studio</span><span>Contact</span></div>
+  </div>
+  <div class="body">
+    <div class="lab"><span><b>●</b> Cabinet digital</span><span>Est. Toulouse</span><span>Sélection / 9 par trimestre</span></div>
+    <h1>Des sites<br>qui <span class="o">travaillent.</span></h1>
+    <div class="row">
+      <p>On ne livre pas une vitrine. On construit un outil de croissance — référencé, taillé pour convertir, suivi mois après mois.</p>
+      <a class="cta">Candidater →</a>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -354,14 +354,19 @@ export type Database = {
       }
       client_sites: {
         Row: {
+          blocker: string | null
           created_at: string
           custom_domain: string | null
+          deadline: string | null
           domain_status: string | null
           html: string | null
           html_path: string | null
           id: string
+          maquette_validated_at: string | null
           owner_id: string
+          portal_token: string | null
           preview_id: string | null
+          production_stage: string
           prospect_id: string
           published_at: string | null
           slug: string | null
@@ -370,14 +375,19 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          blocker?: string | null
           created_at?: string
           custom_domain?: string | null
+          deadline?: string | null
           domain_status?: string | null
           html?: string | null
           html_path?: string | null
           id?: string
+          maquette_validated_at?: string | null
           owner_id: string
+          portal_token?: string | null
           preview_id?: string | null
+          production_stage?: string
           prospect_id: string
           published_at?: string | null
           slug?: string | null
@@ -386,14 +396,19 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          blocker?: string | null
           created_at?: string
           custom_domain?: string | null
+          deadline?: string | null
           domain_status?: string | null
           html?: string | null
           html_path?: string | null
           id?: string
+          maquette_validated_at?: string | null
           owner_id?: string
+          portal_token?: string | null
           preview_id?: string | null
+          production_stage?: string
           prospect_id?: string
           published_at?: string | null
           slug?: string | null
@@ -411,6 +426,98 @@ export type Database = {
           },
           {
             foreignKeyName: "client_sites_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          body: Json
+          client_address: string | null
+          client_city: string | null
+          client_email: string | null
+          client_is_pro: boolean
+          client_name: string | null
+          client_postal_code: string | null
+          client_siret: string | null
+          created_at: string
+          id: string
+          kind: string
+          number: string | null
+          owner_id: string
+          params: Json
+          prospect_id: string | null
+          refused_at: string | null
+          sent_at: string | null
+          share_token: string
+          signed_at: string | null
+          signed_by_name: string | null
+          signer_ip: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          viewed_at: string | null
+        }
+        Insert: {
+          body?: Json
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_is_pro?: boolean
+          client_name?: string | null
+          client_postal_code?: string | null
+          client_siret?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          number?: string | null
+          owner_id: string
+          params?: Json
+          prospect_id?: string | null
+          refused_at?: string | null
+          sent_at?: string | null
+          share_token?: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          signer_ip?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          body?: Json
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_is_pro?: boolean
+          client_name?: string | null
+          client_postal_code?: string | null
+          client_siret?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          number?: string | null
+          owner_id?: string
+          params?: Json
+          prospect_id?: string | null
+          refused_at?: string | null
+          sent_at?: string | null
+          share_token?: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          signer_ip?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_prospect_id_fkey"
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
@@ -794,6 +901,39 @@ export type Database = {
           },
         ]
       }
+      monthly_declarations: {
+        Row: {
+          ca_encaisse: number | null
+          ca_facture: number | null
+          declared_at: string
+          id: string
+          notes: string | null
+          owner_id: string
+          period: string
+          tva: number | null
+        }
+        Insert: {
+          ca_encaisse?: number | null
+          ca_facture?: number | null
+          declared_at?: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          period: string
+          tva?: number | null
+        }
+        Update: {
+          ca_encaisse?: number | null
+          ca_facture?: number | null
+          declared_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          period?: string
+          tva?: number | null
+        }
+        Relationships: []
+      }
       pitch_decks: {
         Row: {
           created_at: string
@@ -837,6 +977,44 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_messages: {
+        Row: {
+          author: string
+          body: string
+          created_at: string
+          id: string
+          owner_id: string
+          read_by_agency: boolean
+          site_id: string
+        }
+        Insert: {
+          author: string
+          body: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          read_by_agency?: boolean
+          site_id: string
+        }
+        Update: {
+          author?: string
+          body?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          read_by_agency?: boolean
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_messages_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "client_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1084,6 +1262,7 @@ export type Database = {
           company_domain: string | null
           company_size: string | null
           created_at: string
+          custom_status: string | null
           email: string | null
           first_name: string
           id: string
@@ -1121,6 +1300,7 @@ export type Database = {
           company_domain?: string | null
           company_size?: string | null
           created_at?: string
+          custom_status?: string | null
           email?: string | null
           first_name: string
           id?: string
@@ -1158,6 +1338,7 @@ export type Database = {
           company_domain?: string | null
           company_size?: string | null
           created_at?: string
+          custom_status?: string | null
           email?: string | null
           first_name?: string
           id?: string
@@ -1184,6 +1365,166 @@ export type Database = {
           website_status?: string | null
         }
         Relationships: []
+      }
+      radar_articles: {
+        Row: {
+          author: string
+          body: string | null
+          category: string | null
+          cover_url: string | null
+          created_at: string
+          featured: boolean
+          id: string
+          kicker: string | null
+          published_at: string | null
+          seo_description: string | null
+          slug: string
+          standfirst: string | null
+          status: string
+          title: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author?: string
+          body?: string | null
+          category?: string | null
+          cover_url?: string | null
+          created_at?: string
+          featured?: boolean
+          id?: string
+          kicker?: string | null
+          published_at?: string | null
+          seo_description?: string | null
+          slug: string
+          standfirst?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author?: string
+          body?: string | null
+          category?: string | null
+          cover_url?: string | null
+          created_at?: string
+          featured?: boolean
+          id?: string
+          kicker?: string | null
+          published_at?: string | null
+          seo_description?: string | null
+          slug?: string
+          standfirst?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: []
+      }
+      site_metrics: {
+        Row: {
+          created_at: string
+          google_position: number | null
+          google_rating: number | null
+          id: string
+          leads: number | null
+          notes: string | null
+          owner_id: string
+          period: string
+          report_token: string | null
+          sent_at: string | null
+          site_id: string
+          unique_visitors: number | null
+          updated_at: string
+          visits: number | null
+        }
+        Insert: {
+          created_at?: string
+          google_position?: number | null
+          google_rating?: number | null
+          id?: string
+          leads?: number | null
+          notes?: string | null
+          owner_id: string
+          period: string
+          report_token?: string | null
+          sent_at?: string | null
+          site_id: string
+          unique_visitors?: number | null
+          updated_at?: string
+          visits?: number | null
+        }
+        Update: {
+          created_at?: string
+          google_position?: number | null
+          google_rating?: number | null
+          id?: string
+          leads?: number | null
+          notes?: string | null
+          owner_id?: string
+          period?: string
+          report_token?: string | null
+          sent_at?: string | null
+          site_id?: string
+          unique_visitors?: number | null
+          updated_at?: string
+          visits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_metrics_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "client_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_pages: {
+        Row: {
+          created_at: string
+          html: string | null
+          id: string
+          owner_id: string
+          position: number
+          site_id: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html?: string | null
+          id?: string
+          owner_id: string
+          position?: number
+          site_id: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html?: string | null
+          id?: string
+          owner_id?: string
+          position?: number
+          site_id?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_pages_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "client_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1436,6 +1777,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_team_member: { Args: { _uid?: string }; Returns: boolean }
       leaderboard_month: {
         Args: never
         Returns: {
@@ -1454,6 +1796,7 @@ export type Database = {
           prospect_id: string
         }[]
       }
+      radar_bump_views: { Args: { a_slug: string }; Returns: undefined }
       search_prospects: {
         Args: { _limit?: number; _q: string }
         Returns: {

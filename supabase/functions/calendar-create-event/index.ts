@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) return json({ error: "Non authentifié" }, 401);
     const userId = userData.user.id;
 
-    const { prospect_id, title, client_email, start_iso, end_iso, notes, is_video, location } = await req.json();
+    const { prospect_id, title, client_email, start_iso, end_iso, notes, is_video, location, reminders_minutes } = await req.json();
     if (!title || !start_iso || !end_iso) return json({ error: "missing", message: "Champs manquants (titre, dates)." });
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -87,7 +87,9 @@ Deno.serve(async (req) => {
       description: notes || undefined,
       start: { dateTime: start_iso, timeZone: "Europe/Paris" },
       end: { dateTime: end_iso, timeZone: "Europe/Paris" },
-      reminders: { useDefault: true },
+      reminders: Array.isArray(reminders_minutes) && reminders_minutes.length > 0
+        ? { useDefault: false, overrides: reminders_minutes.slice(0, 5).map((m: number) => ({ method: "popup", minutes: Math.max(0, Math.round(m)) })) }
+        : { useDefault: true },
     };
     if (location && !is_video) event.location = location;
     if (client_email) event.attendees = [{ email: client_email }];
@@ -119,6 +121,16 @@ Deno.serve(async (req) => {
 
     const ev = await gRes.json();
     const meet_link = ev.hangoutLink || ev.conferenceData?.entryPoints?.find((e: { entryPointType?: string; uri?: string }) => e.entryPointType === "video")?.uri || null;
+    // Relit l'événement pour confirmer les rappels réellement enregistrés côté Google.
+    let savedReminders: unknown = ev.reminders ?? null;
+    try {
+      const readBack = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${ev.id}?fields=reminders`,
+        { headers: { Authorization: `Bearer ${access_token}` } },
+      );
+      if (readBack.ok) savedReminders = (await readBack.json()).reminders ?? savedReminders;
+    } catch (_e) { /* best-effort */ }
+    console.log("[calendar] reminders sent", JSON.stringify(event.reminders), "saved", JSON.stringify(savedReminders));
 
     // Enregistre le RDV
     const durationMin = Math.max(5, Math.round((new Date(end_iso).getTime() - new Date(start_iso).getTime()) / 60000));
@@ -141,7 +153,7 @@ Deno.serve(async (req) => {
       }).then(() => {}, () => {});
     }
 
-    return json({ ok: true, event_link: ev.htmlLink, meet_link });
+    return json({ ok: true, event_link: ev.htmlLink, meet_link, reminders: savedReminders });
   } catch (e) {
     console.error("[calendar-create-event] uncaught", e);
     return json({ error: "server_error", message: String(e) });

@@ -40,6 +40,9 @@ Tu RENVOIES LE DOCUMENT HTML COMPLET MODIFIÉ, du <!doctype html> au </html> fin
 
 RÈGLES ABSOLUES :
 - Applique EXACTEMENT ce que demande l'instruction. Fais toujours de ton mieux pour réaliser la demande, même approximative — ne refuse jamais.
+- Si l'instruction CONTIENT DU CODE (HTML, CSS, JS, balise <script>, widget, iframe, snippet…), INTÈGRE-le tel quel dans la page, à l'endroit demandé (ou le plus pertinent), sans le réécrire ni le censurer. Adapte juste l'indentation/le style pour qu'il s'intègre proprement.
+- LIENS VERS UNE AUTRE PAGE DU SITE : pour qu'un bouton/lien mène à une autre page (ex: page Produits, Contact), utilise href="page:slug" (ex: href="page:produits", href="page:accueil"). Ce format est réécrit automatiquement vers la bonne URL à la publication. N'invente jamais d'URL absolue.
+- PHOTOS : pour tout emplacement photo (produit, visuel…), crée un vrai <img class="wy-photo" src="WY_PHOTO" alt="description"> (garde le src littéral WY_PHOTO, jamais d'URL inventée). Un <img class="wy-photo"> distinct par photo, pour que l'utilisateur dépose ensuite chaque image au bon endroit via l'onglet Photos.
 - Conserve TOUT le reste à l'identique : structure, styles, sections, images (mêmes URLs src), scripts. Ne touche QUE ce qui est concerné.
 - Ne raccourcis JAMAIS, pas de "...", pas de résumé. Renvoie l'INTÉGRALITÉ du HTML.
 - N'invente pas d'infos fausses (téléphone, adresse réels…). Si une info manque, garde un placeholder neutre.
@@ -175,30 +178,43 @@ async function tryRewrite(original: string, instruction: string): Promise<{ html
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const { site_id, instruction } = await req.json();
-    if (!site_id || !instruction?.trim()) return json({ ok: false, error: "site_id et instruction requis" }, 400);
+    const { site_id, instruction, html: providedHtml } = await req.json();
+    if (!instruction?.trim()) return json({ ok: false, error: "instruction requise" }, 400);
 
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
     const { data: u } = await userClient.auth.getUser();
     const uid = u?.user?.id;
     if (!uid) return json({ ok: false, error: "Non authentifié" }, 401);
+    // Espace partagé : tout membre de l'équipe peut éditer
+    const { data: roleRow } = await userClient.from("user_roles").select("user_id").eq("user_id", uid).limit(1).maybeSingle();
+    if (!roleRow) return json({ ok: false, error: "Accès refusé" }, 403);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: site } = await admin.from("client_sites").select("id, html, prospect_id, owner_id").eq("id", site_id).maybeSingle();
-    if (!site) return json({ ok: false, error: "Site introuvable" }, 404);
-    if (site.owner_id !== uid) return json({ ok: false, error: "Accès refusé" }, 403);
 
-    let html: string | null = site.html;
+    // Mode "stateless" : on édite un HTML fourni (ex. une sous-page) et on
+    // renvoie sans écrire en base — le front persiste sur la bonne page.
+    let html: string | null = providedHtml ?? null;
     if (!html) {
-      const { data: prev } = await admin.from("prospect_previews").select("html_url").eq("prospect_id", site.prospect_id).order("generated_at", { ascending: false }).limit(1).maybeSingle();
-      if (prev?.html_url) { try { const r = await fetch(prev.html_url); if (r.ok) html = await r.text(); } catch { /* */ } }
+      if (!site_id) return json({ ok: false, error: "site_id requis" }, 400);
+      const { data: site } = await admin.from("client_sites").select("id, html, prospect_id").eq("id", site_id).maybeSingle();
+      if (!site) return json({ ok: false, error: "Site introuvable" }, 404);
+      html = site.html;
+      if (!html) {
+        const { data: prev } = await admin.from("prospect_previews").select("html_url").eq("prospect_id", site.prospect_id).order("generated_at", { ascending: false }).limit(1).maybeSingle();
+        if (prev?.html_url) { try { const r = await fetch(prev.html_url); if (r.ok) html = await r.text(); } catch { /* */ } }
+      }
     }
-    if (!html) return json({ ok: false, error: "Pas de maquette à éditer pour ce site." }, 422);
+    if (!html) return json({ ok: false, error: "Pas de contenu à éditer." }, 422);
     const original = html;
 
-    const save = async (newHtml: string, summary: string, via: string) => {
-      await admin.from("client_sites").update({ html: newHtml, updated_at: new Date().toISOString() }).eq("id", site_id);
+    const PHOTO_PLACEHOLDER = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20300'%3E%3Crect%20width='400'%20height='300'%20fill='%23ececec'/%3E%3Ctext%20x='200'%20y='158'%20font-family='sans-serif'%20font-size='20'%20fill='%23a0a0a0'%20text-anchor='middle'%3EPhoto%3C/text%3E%3C/svg%3E";
+    const save = async (newHtmlRaw: string, summary: string, via: string) => {
+      const newHtml = newHtmlRaw.replace(/WY_PHOTO/g, PHOTO_PLACEHOLDER);
+      // On n'écrit en base que si on a édité l'accueil (pas de html fourni).
+      if (!providedHtml && site_id) {
+        await admin.from("client_sites").update({ html: newHtml, updated_at: new Date().toISOString() }).eq("id", site_id);
+      }
       return json({ ok: true, html: newHtml, applied: 1, skipped: 0, summary: summary || "Site mis à jour", via });
     };
 

@@ -303,8 +303,7 @@ function CockpitPage() {
         .from("prospects")
         .select("id, first_name, last_name, company, email, phone, status, updated_at")
         .in("id", Array.from(coldMap.keys()))
-        .not("status", "in", "(converti,perdu)")
-        .eq("owner_id", user!.id);
+        .not("status", "in", "(converti,perdu)");
       return (data || [])
         .map((p) => ({ ...p, last_contact_at: coldMap.get(p.id)! }))
         .sort((a, b) => a.last_contact_at.localeCompare(b.last_contact_at))

@@ -146,6 +146,7 @@ function ChassePage() {
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
   const [effectif, setEffectif] = useState("01");
+  const [targetCount, setTargetCount] = useState(100); // nb de prospects visés par chasse
 
   // Results — persistés dans localStorage pour ne pas perdre l'historique
   // entre les navigations. Les nouvelles recherches AJOUTENT (dédup par SIREN)
@@ -197,7 +198,6 @@ function ChassePage() {
       const { data } = await (supabase as any)
         .from("prospects")
         .select("siret")
-        .eq("owner_id", user!.id)
         .not("siret", "is", null);
       return new Set(
         ((data || []) as Array<{ siret: string | null }>)
@@ -218,7 +218,7 @@ function ChassePage() {
             ville: ville || undefined,
             code_postal: codePostal || undefined,
             tranche_effectif: effectif || undefined,
-            par_page: 50,
+            max_results: targetCount,
           },
         },
       });
@@ -236,7 +236,7 @@ function ChassePage() {
         website_status: "unknown" as WebsiteStatus,
         website_score: 0,
         website_url: e.site_web,
-        google_phone: null,
+        google_phone: e.telephone || null,
         google_address: null,
         google_rating: null,
         scraped_email: null,
@@ -336,7 +336,7 @@ function ChassePage() {
                   website_status: status,
                   website_score: score,
                   website_url: url,
-                  google_phone: place?.phone || null,
+                  google_phone: place?.phone || item.telephone || null,
                   google_address: place?.address || null,
                   google_rating: place?.rating || null,
                   scraped_email: scrapedEmail,
@@ -568,7 +568,7 @@ function ChassePage() {
               <Label htmlFor="naf">Activité (corps de métier)</Label>
               <select
                 id="naf"
-                className="w-full text-sm border rounded-md px-2 py-2 bg-background"
+                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                 value={codeNaf}
                 onChange={(e) => setCodeNaf(e.target.value)}
               >
@@ -606,7 +606,7 @@ function ChassePage() {
               <Label htmlFor="effectif">Effectif</Label>
               <select
                 id="effectif"
-                className="w-full text-sm border rounded-md px-2 py-2 bg-background"
+                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                 value={effectif}
                 onChange={(e) => setEffectif(e.target.value)}
               >
@@ -635,6 +635,21 @@ function ChassePage() {
                 value={codePostal}
                 onChange={(e) => setCodePostal(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="count">Nombre de prospects</Label>
+              <select
+                id="count"
+                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+                value={targetCount}
+                onChange={(e) => setTargetCount(Number(e.target.value))}
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={150}>150</option>
+                <option value={200}>200</option>
+                <option value={300}>300 (max)</option>
+              </select>
             </div>
           </div>
           <div className="flex justify-end">

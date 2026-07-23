@@ -97,11 +97,15 @@ const SUPABASE_PROJECT_ID = "mwkkgubvdswmdaiswepl";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13a2tndWJ2ZHN3bWRhaXN3ZXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODU1MjksImV4cCI6MjA5NDk2MTUyOX0.voOfEzx1Cy4ERDpH_T1EBmjeCHBqREgOUZFuLp4Or-A";
 
-async function serveDevis(token: string, request: Request): Promise<Response> {
+// Proxy générique des pages publiques rendues par une edge function
+// (devis-public, client-portal, monthly-report). GET = rendu HTML,
+// POST = action JSON. Supabase casse le content-type des edge functions →
+// on réémet avec les bons headers.
+async function serveTokenPage(fnName: string, token: string, request: Request): Promise<Response> {
   const clean = token.replace(/[^a-z0-9\-]/gi, "");
   if (!clean) return new Response("Lien invalide", { status: 400 });
 
-  const fnUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/devis-public?token=${clean}`;
+  const fnUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/${fnName}?token=${clean}`;
   const isPost = request.method === "POST";
   const upstream = await fetch(fnUrl, {
     method: isPost ? "POST" : "GET",
@@ -137,7 +141,7 @@ async function serveDevis(token: string, request: Request): Promise<Response> {
 
 async function servePreview(slug: string): Promise<Response> {
   // Nettoyage défensif : pas de slash, pas de traversée
-  const clean = slug.replace(/[^a-z0-9\-]/gi, "");
+  const clean = slug.replace(/[^a-z0-9_\-]/gi, ""); // underscore autorisé : sous-pages slug__page
   if (!clean) {
     return new Response("Slug manquant", { status: 400 });
   }
@@ -182,7 +186,25 @@ export default {
       // Route page publique de signature de devis
       if (url.pathname.startsWith("/devis/")) {
         const token = url.pathname.slice("/devis/".length);
-        return await serveDevis(token, request);
+        return await serveTokenPage("devis-public", token, request);
+      }
+
+      // Route page publique de signature de contrat
+      if (url.pathname.startsWith("/contrat/")) {
+        const token = url.pathname.slice("/contrat/".length);
+        return await serveTokenPage("contract-public", token, request);
+      }
+
+      // Route portail client (suivi de projet + messages)
+      if (url.pathname.startsWith("/portail/")) {
+        const token = url.pathname.slice("/portail/".length);
+        return await serveTokenPage("client-portal", token, request);
+      }
+
+      // Route rapport mensuel public
+      if (url.pathname.startsWith("/rapport/")) {
+        const token = url.pathname.slice("/rapport/".length);
+        return await serveTokenPage("monthly-report", token, request);
       }
 
       const handler = await getServerEntry();

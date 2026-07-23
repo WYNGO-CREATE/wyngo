@@ -9,11 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Euro, Clock, TrendingUp, Target, CalendarClock, CheckCircle2, FileText, Bell, MapPin, AlertTriangle } from "lucide-react";
+import { BarChart3, Euro, Clock, TrendingUp, Target, CalendarClock, CheckCircle2, FileText, Bell, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ProspectsMap } from "@/components/prospects-map";
 
 export const Route = createFileRoute("/_authenticated/pilotage")({
   component: PilotagePage,
@@ -215,14 +214,6 @@ function PilotagePage() {
           })}
         </CardContent>
       </Card>
-
-      {/* Carte des prospects & clients */}
-      {prospectsData.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-violet-600" /> Carte des prospects & clients</CardTitle></CardHeader>
-          <CardContent><ProspectsMap prospects={prospectsData} /></CardContent>
-        </Card>
-      )}
 
       {/* À venir */}
       <div className="grid sm:grid-cols-2 gap-3">

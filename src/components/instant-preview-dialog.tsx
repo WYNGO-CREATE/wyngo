@@ -376,7 +376,6 @@ export function InstantPreviewDialog({
             {result.copy_preview && (
               <div className="text-xs text-muted-foreground border-l-2 border-amber-300 pl-3 italic">
                 <strong className="not-italic text-foreground">{result.copy_preview.hero_title}</strong> — {result.copy_preview.hero_tagline}
-                {result.model && <span className="ml-1 not-italic">· {result.model}</span>}
               </div>
             )}
           </div>

@@ -12,10 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, PhoneCall, CalendarClock, History, Check, MessageSquare, Trash2, UserCog, Headphones, Globe, ExternalLink, Sparkles, Wand2 } from "lucide-react";
+import { ArrowLeft, PhoneCall, CalendarClock, History, Check, MessageSquare, Trash2, UserCog, Headphones, Globe, ExternalLink, Sparkles, Wand2, Stethoscope } from "lucide-react";
 // CallModeDrawer déplacé : Mode appel centralisé sur /scripts (CallLauncherForProspect)
 // PitchGeneratorDialog déplacé vers la page "Génération d'emails" (centralisé)
 import { InstantPreviewDialog } from "@/components/instant-preview-dialog";
+import { PresenceAuditDialog } from "@/components/presence-audit-dialog";
 import { PreviewBriefCard } from "@/components/preview-brief-card";
 import { ProspectBriefingCard } from "@/components/prospect-briefing-card";
 import { ProspectEmailCard } from "@/components/prospect-email-card";
@@ -100,8 +101,8 @@ function ProspectDetail() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async (status: ProspectStatus) => {
-      const { error } = await supabase.from("prospects").update({ status }).eq("id", id);
+    mutationFn: async (patch: { status?: ProspectStatus; custom_status?: string | null }) => {
+      const { error } = await supabase.from("prospects").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -110,6 +111,11 @@ function ProspectDetail() {
       toast.success("Statut mis à jour");
     },
   });
+
+  // Statuts personnalisés mémorisés (partagés avec la page Prospects via localStorage)
+  const customStatuses: string[] = (() => {
+    try { return JSON.parse(localStorage.getItem("wyngo-custom-status") || "[]"); } catch { return []; }
+  })();
 
   const reassign = useMutation({
     mutationFn: async (newOwner: string) => {
@@ -317,6 +323,13 @@ function ProspectDetail() {
               Aperçu Instantané
             </Button>
           </InstantPreviewDialog>
+          {/* 🩺 DIAGNOSTIC : crée le besoin (montre les failles) avant l'Aperçu (la solution). */}
+          <PresenceAuditDialog prospectId={prospect.id}>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Stethoscope className="h-4 w-4" />
+              Diagnostic
+            </Button>
+          </PresenceAuditDialog>
           {/* La génération d'emails IA est désormais centralisée dans la
               page "Génération d'emails" (/templates). On retire le bouton
               de la fiche prospect pour dissocier GÉNÉRATION (page dédiée,
@@ -334,16 +347,53 @@ function ProspectDetail() {
               </SelectContent>
             </Select>
           )}
-          <Select value={prospect.status} onValueChange={(v) => updateStatus.mutate(v as ProspectStatus)}>
-            <SelectTrigger className={cn("w-[160px] border", STATUS_VARIANTS[prospect.status as ProspectStatus])}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PROSPECT_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap gap-1.5">
+            {PROSPECT_STATUSES.map((s) => {
+              const active = !prospect.custom_status && prospect.status === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => updateStatus.mutate({ status: s, custom_status: null })}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-sm font-medium border transition",
+                    active ? cn(STATUS_VARIANTS[s], "shadow-sm") : "bg-background text-muted-foreground border-input hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              );
+            })}
+            {Array.from(new Set([...customStatuses, ...(prospect.custom_status ? [prospect.custom_status] : [])])).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => updateStatus.mutate({ custom_status: c })}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-sm font-medium border transition",
+                  prospect.custom_status === c ? "bg-violet-100 text-violet-700 border-violet-300 shadow-sm" : "bg-background text-muted-foreground border-input hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {c}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                const n = window.prompt("Nom du nouveau statut ?");
+                if (n && n.trim()) {
+                  try {
+                    const cur: string[] = JSON.parse(localStorage.getItem("wyngo-custom-status") || "[]");
+                    localStorage.setItem("wyngo-custom-status", JSON.stringify(Array.from(new Set([...cur, n.trim()]))));
+                  } catch { /* ignore */ }
+                  updateStatus.mutate({ custom_status: n.trim() });
+                }
+              }}
+              className="px-3 py-1.5 rounded-full text-sm font-medium border border-dashed text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            >
+              ＋ Nouveau
+            </button>
+          </div>
         </div>
       </div>
 

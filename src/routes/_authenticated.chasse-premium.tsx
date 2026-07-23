@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Crown, Loader2, Search, Plus, ExternalLink, Check, X, Star } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TRADES } from "@/lib/trades-catalog";
 
 export const Route = createFileRoute("/_authenticated/chasse-premium")({
   component: ChassePremium,
@@ -25,15 +26,12 @@ type Candidate = {
   website: string | null; avis: number | null; note: number | null;
   effectif: number; anciennete: number | null; siren: string | null;
   dirigeant: { prenom: string; nom: string; qualite: string } | null;
-  site_score: number; etablissement: number; faiblesse: number; opportunite: number; b2b: boolean;
-  raisons: string[];
+  site_score: number; load_ms: number | null; etablissement: number; faiblesse: number; opportunite: number; b2b: boolean;
+  raisons: string[]; problemes: string[];
 };
 
-const SECTOR_CHIPS = [
-  "avocat", "notaire", "expert-comptable", "dentiste", "médecin", "kiné", "opticien",
-  "agence immobilière", "architecte", "cuisiniste", "pisciniste", "garage automobile",
-  "restaurant", "hôtel", "cabinet conseil", "agence de communication", "PME industrielle",
-];
+// Terme de recherche propre pour Google, à partir d'un métier du catalogue.
+const cleanQuery = (label: string) => label.split(/[-–/]/)[0].trim();
 
 function ChassePremium() {
   const [sectorInput, setSectorInput] = useState("");
@@ -44,18 +42,26 @@ function ChassePremium() {
   const [added, setAdded] = useState<Set<string>>(new Set());
 
   const addSector = (s: string) => {
-    const v = s.trim().toLowerCase();
+    const v = cleanQuery(s).toLowerCase();
     if (v && !sectors.includes(v)) setSectors((p) => [...p, v]);
     setSectorInput("");
   };
   const removeSector = (s: string) => setSectors((p) => p.filter((x) => x !== s));
+
+  // Suggestions issues du catalogue des 257 métiers (recherche live).
+  const q = sectorInput.trim().toLowerCase();
+  const matches = q.length >= 2
+    ? TRADES.filter((t) => t.label.toLowerCase().includes(q) || t.sector.toLowerCase().includes(q))
+        .filter((t) => !sectors.includes(cleanQuery(t.label).toLowerCase()))
+        .slice(0, 10)
+    : [];
 
   const run = async () => {
     if (sectors.length === 0) { toast.error("Ajoute au moins un secteur."); return; }
     if (!location.trim()) { toast.error("Indique une ville (ou ville + code postal)."); return; }
     setLoading(true); setRes(null); setAdded(new Set());
     const { data, error } = await supabase.functions.invoke("premium-hunt", {
-      body: { sectors, location: location.trim(), limit: 14 },
+      body: { sectors, location: location.trim(), limit: 20 },
     });
     setLoading(false);
     if (error) { toast.error("Chasse impossible", { description: error.message }); return; }
@@ -100,14 +106,26 @@ function ChassePremium() {
       {/* Formulaire */}
       <Card>
         <CardContent className="p-5 space-y-4">
-          <div>
-            <label className="text-sm font-medium">Secteurs à cibler</label>
+          <div className="relative">
+            <label className="text-sm font-medium">Secteurs à cibler <span className="text-xs font-normal text-muted-foreground">· {TRADES.length} métiers dans le catalogue</span></label>
             <div className="flex gap-2 mt-1.5">
               <Input value={sectorInput} onChange={(e) => setSectorInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSector(sectorInput); } }}
-                placeholder="Ex : avocat, agence immobilière…" />
-              <Button variant="outline" onClick={() => addSector(sectorInput)}>Ajouter</Button>
+                placeholder="Tape un métier : notaire, cuisiniste, garage, PME industrie…" />
+              <Button variant="outline" onClick={() => addSector(sectorInput)} disabled={!sectorInput.trim()}>Ajouter</Button>
             </div>
+            {/* Suggestions live du catalogue */}
+            {matches.length > 0 && (
+              <div className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-md border bg-popover shadow-md">
+                {matches.map((t) => (
+                  <button key={t.id} onClick={() => addSector(t.label)}
+                    className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-accent">
+                    <span className="truncate">{t.label}</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{t.category}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {sectors.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {sectors.map((s) => (
@@ -117,14 +135,9 @@ function ChassePremium() {
                 ))}
               </div>
             )}
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {SECTOR_CHIPS.filter((s) => !sectors.includes(s)).slice(0, 12).map((s) => (
-                <button key={s} onClick={() => addSector(s)}
-                  className="text-xs rounded-full border px-2.5 py-1 text-muted-foreground hover:border-amber-400 hover:text-foreground transition">
-                  + {s}
-                </button>
-              ))}
-            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Astuce : ajoute plusieurs métiers pour ratisser large — la chasse les scanne tous et classe par opportunité. Tu peux aussi taper un métier libre non listé.
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium">Ville (ou ville + code postal)</label>
@@ -168,10 +181,32 @@ function ChassePremium() {
                     </div>
                     <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
                       {c.note != null && <span className="inline-flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {c.note}</span>}
-                      <span>Site : {c.site_score}/100</span>
+                      <span className={cn(c.site_score < 50 && "text-rose-600 font-medium", c.site_score >= 80 && "text-emerald-600")}>Site : {c.site_score}/100</span>
+                      {c.load_ms != null && <span className={cn(c.load_ms > 2500 && "text-rose-600")}>{(c.load_ms / 1000).toFixed(1)} s de chargement</span>}
                       {c.website && <a href={c.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-sky-600 hover:underline">site <ExternalLink className="h-3 w-3" /></a>}
                       {c.telephone && <span>{c.telephone}</span>}
                     </div>
+
+                    {/* Audit critique du site — le vrai retour actionnable */}
+                    {c.problemes.length > 0 ? (
+                      <div className="mt-3 rounded-md border border-rose-200 bg-rose-50/60 p-2.5">
+                        <p className="text-[11px] font-semibold text-rose-700 mb-1.5">
+                          {c.problemes.length} point{c.problemes.length > 1 ? "s" : ""} faible{c.problemes.length > 1 ? "s" : ""} du site — angle d'attaque
+                        </p>
+                        <ul className="space-y-1">
+                          {c.problemes.map((p, i) => (
+                            <li key={i} className="flex gap-1.5 text-[11px] text-rose-900/90 leading-snug">
+                              <span className="mt-[3px] h-1 w-1 shrink-0 rounded-full bg-rose-500" />
+                              <span>{p}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2.5 py-1.5">
+                        Site déjà solide — peu de leviers techniques. Classé en bas volontairement.
+                      </p>
+                    )}
                   </div>
                   <Button size="sm" variant={added.has(c.nom) ? "outline" : "default"} disabled={added.has(c.nom)}
                     onClick={() => addProspect(c)} className="shrink-0 gap-1">

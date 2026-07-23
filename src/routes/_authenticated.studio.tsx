@@ -1,37 +1,45 @@
 /**
- * ─── Wyngo Studio — Production des sites clients (CRM #2) ──────────────
+ * ─── Wyngo Studio — Pipeline de production des sites clients (CRM #2) ──
  *
  * Backend PARTAGÉ avec Wyngo. Studio lit les prospects "convertis" (les
- * clients) et permet de transformer leur maquette approuvée (Aperçu
- * Instantané) en site à produire puis à mettre en ligne.
+ * clients) et pilote la fabrication de leur site, de la maquette au suivi.
  *
- * V1 (sans domaine perso, géré plus tard) :
- *   - File "À produire" : clients convertis qui n'ont pas encore de site
- *   - Bouton "Créer le site" → crée la ligne client_sites depuis la maquette
- *   - "En production" : sites créés, avec lien vers la maquette + statut
- *
- * Le déploiement réel (domaine perso, SSL) viendra ensuite — le client
- * achètera son domaine et on branchera Cloudflare for SaaS à ce moment-là.
+ *   #4  Pipeline : Brief → Maquette → Validation client → En ligne → Suivi
+ *       Chaque site porte une échéance + un éventuel point bloquant.
+ *       Drag & drop d'une colonne à l'autre = changement d'étape.
+ *   #5  Portail client : un lien public par site (suivi + validation maquette).
+ *   #3  Rapport mensuel : saisie des métriques + génération/envoi du rapport.
  */
 
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Wand2, ExternalLink, Globe, Hammer, CheckCircle2, Clock, PlusCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Rocket, Wand2, ExternalLink, Globe, Hammer, CheckCircle2, PlusCircle,
+  ClipboardList, Eye, HeartPulse, Link2, BarChart3, AlertTriangle, CalendarClock, MessageSquare, GripVertical,
+  Sparkles, Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const APP_URL = "https://wyngo.bold-unit-739e.workers.dev";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioPage,
   head: () => ({ meta: [{ title: "Wyngo Studio — Production des sites" }] }),
 });
+
+const SUPABASE_FN = "https://mwkkgubvdswmdaiswepl.supabase.co/functions/v1";
+const APP_BASE = typeof window !== "undefined" ? window.location.origin : "";
 
 function slugify(s: string): string {
   return (s || "site")
@@ -39,29 +47,88 @@ function slugify(s: string): string {
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "site";
 }
 
-type Client = { id: string; first_name: string; last_name: string; company: string | null; status: string };
+// Site de départ propre et éditable (quand il n'y a pas encore de maquette).
+// Auto-suffisant (CSS inline) → s'affiche partout, modifiable par l'IA.
+function starterHtml(name: string): string {
+  const n = (name || "Votre entreprise").replace(/[<>]/g, "");
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${n}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0f172a;line-height:1.6}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 6%;border-bottom:1px solid #eef1f5}
+.nav b{font-size:20px}.nav a{margin-left:22px;color:#475569;text-decoration:none;font-size:14px}
+.hero{padding:90px 6%;text-align:center;background:linear-gradient(160deg,#f8fafc,#eef2ff)}
+.hero h1{font-size:44px;line-height:1.15;max-width:760px;margin:0 auto 16px}
+.hero p{font-size:18px;color:#475569;max-width:560px;margin:0 auto 28px}
+.btn{display:inline-block;background:#1B4BE3;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:600}
+.sec{padding:70px 6%;max-width:1080px;margin:0 auto}.sec h2{font-size:30px;text-align:center;margin-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.card{border:1px solid #eef1f5;border-radius:16px;padding:26px}.card h3{font-size:19px;margin-bottom:8px}.card p{color:#64748b;font-size:15px}
+.cta{background:#0f172a;color:#fff;text-align:center;padding:70px 6%}.cta h2{font-size:30px;margin-bottom:14px}.cta .btn{background:#1B4BE3;margin-top:8px}
+.foot{padding:30px 6%;text-align:center;color:#94a3b8;font-size:13px}
+</style></head><body>
+<div class="nav"><b>${n}</b><div><a href="#services">Services</a><a href="#contact">Contact</a></div></div>
+<header class="hero">
+  <h1>${n}, votre partenaire de confiance</h1>
+  <p>Un savoir-faire local, des prestations de qualité et un accompagnement sur mesure pour chacun de vos projets.</p>
+  <a class="btn" href="#contact">Demander un devis</a>
+</header>
+<section class="sec" id="services"><h2>Nos services</h2><div class="grid">
+  <div class="card"><h3>Prestation 1</h3><p>Décrivez ici votre première offre phare et ce qui la rend unique.</p></div>
+  <div class="card"><h3>Prestation 2</h3><p>Mettez en avant un deuxième service que vos clients recherchent.</p></div>
+  <div class="card"><h3>Prestation 3</h3><p>Un troisième atout : rapidité, garantie, proximité…</p></div>
+</div></section>
+<section class="cta" id="contact"><h2>Parlons de votre projet</h2><p>Réponse sous 24h, devis gratuit.</p><a class="btn" href="tel:+33">Nous appeler</a></section>
+<div class="foot">© ${n} — Tous droits réservés · Site réalisé par Wyngo</div>
+</body></html>`;
+}
+
+type Client = { id: string; first_name: string; last_name: string; company: string | null; email: string | null; status: string };
 type Preview = { prospect_id: string; slug: string; html_url: string | null; generated_at: string };
-type Site = { id: string; prospect_id: string; title: string | null; slug: string | null; status: string; custom_domain: string | null; created_at: string };
+type Site = {
+  id: string; prospect_id: string; title: string | null; slug: string | null;
+  status: string; custom_domain: string | null; created_at: string;
+  production_stage: string; deadline: string | null; blocker: string | null;
+  maquette_validated_at: string | null; portal_token: string | null;
+};
+
+const STAGES = [
+  { key: "brief", label: "Brief & infos", icon: ClipboardList, tone: "amber" },
+  { key: "design", label: "Maquette", icon: Wand2, tone: "violet" },
+  { key: "review", label: "Validation client", icon: Eye, tone: "sky" },
+  { key: "live", label: "En ligne", icon: Globe, tone: "emerald" },
+  { key: "care", label: "Suivi", icon: HeartPulse, tone: "rose" },
+] as const;
+
+const STAGE_TONE: Record<string, string> = {
+  amber: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+  violet: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
+  sky: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20",
+  emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  rose: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
+};
 
 function StudioPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overCol, setOverCol] = useState<string | null>(null);
+  const [reportSite, setReportSite] = useState<Site | null>(null);
+  const [msgSite, setMsgSite] = useState<Site | null>(null);
 
-  // Clients convertis (la source : Wyngo)
   const { data: clients } = useQuery({
     queryKey: ["studio-clients", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<Client[]> => {
       const { data } = await supabase.from("prospects")
-        .select("id, first_name, last_name, company, status")
-        .eq("owner_id", user!.id).eq("status", "converti")
+        .select("id, first_name, last_name, company, email, status")
+        .eq("status", "converti")
         .order("updated_at", { ascending: false });
       return (data as Client[]) || [];
     },
   });
 
-  // Maquettes existantes (prospect_id → la plus récente)
   const { data: previews } = useQuery({
     queryKey: ["studio-previews", user?.id],
     enabled: !!user,
@@ -75,15 +142,28 @@ function StudioPage() {
     },
   });
 
-  // Sites déjà créés dans Studio
   const { data: sites } = useQuery({
     queryKey: ["studio-sites", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<Site[]> => {
       const { data } = await supabase.from("client_sites")
-        .select("id, prospect_id, title, slug, status, custom_domain, created_at")
+        .select("id, prospect_id, title, slug, status, custom_domain, created_at, production_stage, deadline, blocker, maquette_validated_at, portal_token")
         .order("created_at", { ascending: false });
       return (data as Site[]) || [];
+    },
+  });
+
+  // Messages client non lus, par site (badge sur la carte)
+  const { data: unread } = useQuery({
+    queryKey: ["portal-unread", user?.id],
+    enabled: !!user,
+    refetchInterval: 30_000,
+    queryFn: async (): Promise<Map<string, number>> => {
+      const { data } = await supabase.from("portal_messages")
+        .select("site_id").eq("author", "client").eq("read_by_agency", false);
+      const m = new Map<string, number>();
+      for (const r of (data as { site_id: string }[]) || []) m.set(r.site_id, (m.get(r.site_id) || 0) + 1);
+      return m;
     },
   });
 
@@ -100,22 +180,100 @@ function StudioPage() {
       const preview = previews?.get(client.id);
       const company = client.company || `${client.first_name} ${client.last_name}`.trim();
       const slug = `${slugify(company)}-${Math.random().toString(36).slice(2, 6)}`;
+      // On charge le HTML de la maquette tout de suite (sinon l'éditeur est vide).
+      // Pas de maquette → site de départ propre, prêt à éditer.
+      let html = starterHtml(company);
+      const url = preview?.html_url || (preview?.slug ? `${APP_BASE}/p/${preview.slug}` : null);
+      if (url) { try { const r = await fetch(url); if (r.ok) { const t = await r.text(); if (t.trim()) html = t; } } catch { /* garde le starter */ } }
       const { data, error } = await supabase.from("client_sites").insert({
-        prospect_id: client.id, owner_id: user!.id,
-        preview_id: null, // on ne lie pas l'id ici (la maquette est retrouvée par prospect)
+        prospect_id: client.id, owner_id: user!.id, preview_id: null,
         title: company, slug, status: "draft",
-        html_path: preview?.html_url || null,
+        production_stage: "brief",
+        portal_token: crypto.randomUUID().replace(/-/g, ""),
+        html, html_path: preview?.html_url || null,
       }).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (siteId) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["studio-sites"] });
-      toast.success("Site créé — ouverture de l'éditeur 🚀");
-      navigate({ to: "/studio/site/$id", params: { id: siteId } });
+      toast.success("Site ajouté à la production 🚀 — prêt à éditer");
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Crée un chantier de démonstration complet (client fictif + site prêt à
+  // éditer + portail actif). Reproductible à volonté, supprimable d'un clic.
+  const createDemo = useMutation({
+    mutationFn: async () => {
+      const stamp = new Date().toLocaleDateString("fr-FR");
+      const company = `🎬 Démo — Boulangerie Martin`;
+      const { data: prospect, error: pErr } = await supabase.from("prospects").insert({
+        owner_id: user!.id, first_name: "Julien", last_name: "Martin",
+        company, email: "demo@wyngo.fr", phone: "06 12 34 56 78",
+        status: "converti", source: "demo", location: "Toulouse",
+        notes: `Chantier de démonstration créé le ${stamp}.`,
+      }).select("id").single();
+      if (pErr) throw pErr;
+      const slug = `demo-martin-${Math.random().toString(36).slice(2, 6)}`;
+      const { data: site, error: sErr } = await supabase.from("client_sites").insert({
+        prospect_id: prospect.id, owner_id: user!.id, preview_id: null,
+        title: company, slug, status: "draft", production_stage: "design",
+        portal_token: crypto.randomUUID().replace(/-/g, ""),
+        html: starterHtml("Boulangerie Martin"),
+        deadline: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      }).select("id").single();
+      if (sErr) throw sErr;
+      return site.id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["studio-clients"] });
+      qc.invalidateQueries({ queryKey: ["studio-sites"] });
+      toast.success("Chantier de démo créé 🎬 — teste Éditer, Portail, Messages, Rapport !");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteSite = useMutation({
+    mutationFn: async (s: Site) => {
+      const isDemo = (s.title || "").startsWith("🎬 Démo");
+      const { error } = await supabase.from("client_sites").delete().eq("id", s.id);
+      if (error) throw error;
+      // Si c'est un client de démo, on supprime aussi le prospect fictif.
+      if (isDemo && s.prospect_id) {
+        const { data: c } = await supabase.from("prospects").select("source").eq("id", s.prospect_id).maybeSingle();
+        if (c?.source === "demo") await supabase.from("prospects").delete().eq("id", s.prospect_id);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["studio-clients"] });
+      qc.invalidateQueries({ queryKey: ["studio-sites"] });
+      toast.success("Chantier supprimé");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const updateSite = useMutation({
+    mutationFn: async (p: { id: string; patch: Partial<Site> }) => {
+      const { error } = await supabase.from("client_sites").update(p.patch).eq("id", p.id);
+      if (error) throw error;
+    },
+    onMutate: async (p) => {
+      await qc.cancelQueries({ queryKey: ["studio-sites"] });
+      const prev = qc.getQueryData<Site[]>(["studio-sites", user?.id]);
+      qc.setQueryData<Site[]>(["studio-sites", user?.id], (old) =>
+        (old || []).map((s) => (s.id === p.id ? { ...s, ...p.patch } : s)));
+      return { prev };
+    },
+    onError: (_e, _p, ctx) => { if (ctx?.prev) qc.setQueryData(["studio-sites", user?.id], ctx.prev); },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["studio-sites"] }),
+  });
+
+  const moveTo = (id: string, stage: string) => {
+    const patch: Partial<Site> = { production_stage: stage };
+    if (stage === "live") patch.status = "published";
+    updateSite.mutate({ id, patch });
+  };
 
   const clientName = (id: string) => {
     const c = clients?.find((x) => x.id === id);
@@ -123,40 +281,53 @@ function StudioPage() {
   };
   const previewUrl = (id: string) => {
     const p = previews?.get(id);
-    return p?.html_url || (p?.slug ? `${APP_URL}/p/${p.slug}` : null);
+    return p?.html_url || (p?.slug ? `${APP_BASE}/p/${p.slug}` : null);
+  };
+  const portalUrl = (s: Site) => (s.portal_token ? `${APP_BASE}/portail/${s.portal_token}` : null);
+
+  const copyPortal = async (s: Site) => {
+    const url = portalUrl(s);
+    if (!url) return;
+    try { await navigator.clipboard.writeText(url); toast.success("Lien du portail copié — à envoyer au client 📋"); }
+    catch { toast.error("Copie impossible — " + url); }
   };
 
+  const byStage = (stage: string) => (sites || []).filter((s) => (s.production_stage || "brief") === stage);
+
+  const counts = STAGES.map((st) => byStage(st.key).length);
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-[1200px] mx-auto space-y-6">
       {/* Header */}
       <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-5 md:p-6">
         <div className="flex items-center gap-3">
           <div className="size-11 rounded-xl bg-primary/15 flex items-center justify-center">
             <Rocket className="size-6 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold">Wyngo Studio</h1>
-            <p className="text-sm text-muted-foreground">Transforme tes clients signés en sites en ligne — de la maquette au déploiement.</p>
+            <p className="text-sm text-muted-foreground">Pilote la fabrication de chaque site — de la maquette au suivi, sans rien oublier.</p>
           </div>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={createDemo.isPending}
+            onClick={() => createDemo.mutate()} title="Créer un chantier de démonstration complet">
+            <Sparkles className="size-3.5" /> Chantier de démo
+          </Button>
         </div>
-        <div className="grid grid-cols-3 gap-3 mt-5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-5">
           <Stat icon={Hammer} label="À produire" value={toProduce.length} tone="amber" />
-          <Stat icon={Clock} label="En production" value={(sites || []).filter((s) => s.status === "draft").length} tone="sky" />
-          <Stat icon={CheckCircle2} label="En ligne" value={(sites || []).filter((s) => s.status === "published").length} tone="emerald" />
+          {STAGES.map((st, i) => (
+            <Stat key={st.key} icon={st.icon} label={st.label} value={counts[i]} tone={st.tone} />
+          ))}
         </div>
       </div>
 
-      {/* À produire */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <Hammer className="size-4" /> À produire ({toProduce.length})
-        </h2>
-        {toProduce.length === 0 ? (
-          <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Aucun client en attente de production. Les prospects passés <b>Converti</b> dans Wyngo apparaissent ici automatiquement.
-          </CardContent></Card>
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-3">
+      {/* À produire — clients signés sans site */}
+      {toProduce.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Hammer className="size-4" /> À lancer ({toProduce.length})
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {toProduce.map((c) => {
               const hasPreview = !!previews?.get(c.id);
               return (
@@ -169,89 +340,414 @@ function StudioPage() {
                     {hasPreview ? (
                       <a href={previewUrl(c.id)!} target="_blank" rel="noreferrer"
                         className="text-xs text-primary inline-flex items-center gap-1 hover:underline">
-                        <Wand2 className="size-3" /> Voir la maquette approuvée <ExternalLink className="size-3" />
+                        <Wand2 className="size-3" /> Maquette prête <ExternalLink className="size-3" />
                       </a>
                     ) : (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">⚠️ Pas encore de maquette — génère un Aperçu sur sa fiche d'abord.</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">⚠️ Pas de maquette — tu peux quand même lancer la production.</p>
                     )}
-                    <Button size="sm" className="w-full gap-1.5" disabled={createSite.isPending || !hasPreview}
-                      onClick={() => createSite.mutate(c)} title={!hasPreview ? "Génère d'abord une maquette (Aperçu) sur la fiche" : undefined}>
-                      <PlusCircle className="size-3.5" /> Créer le site
+                    <Button size="sm" className="w-full gap-1.5" disabled={createSite.isPending}
+                      onClick={() => createSite.mutate(c)}>
+                      <PlusCircle className="size-3.5" /> Lancer la production
                     </Button>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* En production */}
+      {/* Pipeline de production */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-          <Globe className="size-4" /> Sites ({(sites || []).length})
+          <Rocket className="size-4" /> Chantiers en cours
         </h2>
         {(sites || []).length === 0 ? (
-          <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Aucun site créé pour l'instant.
+          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Aucun chantier. Lance la production d'un client signé ci-dessus pour le voir apparaître ici.
           </CardContent></Card>
         ) : (
-          <div className="space-y-2">
-            {(sites || []).map((s) => (
-              <Card key={s.id}>
-                <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{s.title || clientName(s.prospect_id)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {s.custom_domain ? s.custom_domain : `${s.slug}.wyngo.site`}
-                      <span className="opacity-50"> · domaine perso à brancher plus tard</span>
-                    </p>
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))" }}>
+            {STAGES.map((st) => {
+              const items = byStage(st.key);
+              const Icon = st.icon;
+              return (
+                <div key={st.key}
+                  onDragOver={(e) => { e.preventDefault(); setOverCol(st.key); }}
+                  onDragLeave={() => setOverCol((c) => (c === st.key ? null : c))}
+                  onDrop={() => { if (dragId) moveTo(dragId, st.key); setDragId(null); setOverCol(null); }}
+                  className={cn("rounded-xl border bg-muted/30 p-2.5 flex flex-col gap-2.5 transition-colors min-h-[120px]",
+                    overCol === st.key && "ring-2 ring-primary/40 bg-primary/5")}>
+                  <div className={cn("flex items-center gap-1.5 px-1 py-1 rounded-md border text-xs font-semibold", STAGE_TONE[st.tone])}>
+                    <Icon className="size-3.5" /> {st.label}
+                    <span className="ml-auto tabular-nums opacity-70">{items.length}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={cn("border-0",
-                      s.status === "published" ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                      : "bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300")}>
-                      {s.status === "published" ? "En ligne" : "Brouillon"}
-                    </Badge>
-                    <Button size="sm" className="gap-1 text-xs" asChild>
-                      <Link to="/studio/site/$id" params={{ id: s.id }}>
-                        <Wand2 className="size-3" /> Éditer
-                      </Link>
-                    </Button>
-                    {previewUrl(s.prospect_id) && (
-                      <Button size="sm" variant="outline" className="gap-1 text-xs" asChild>
-                        <a href={previewUrl(s.prospect_id)!} target="_blank" rel="noreferrer">
-                          <ExternalLink className="size-3" /> Maquette
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  {items.map((s) => (
+                    <SiteCard
+                      key={s.id}
+                      site={s}
+                      name={s.title || clientName(s.prospect_id)}
+                      dragging={dragId === s.id}
+                      onDragStart={() => setDragId(s.id)}
+                      onDragEnd={() => { setDragId(null); setOverCol(null); }}
+                      previewUrl={previewUrl(s.prospect_id)}
+                      unread={unread?.get(s.id) || 0}
+                      onCopyPortal={() => copyPortal(s)}
+                      onEditDeadline={(d) => updateSite.mutate({ id: s.id, patch: { deadline: d || null } })}
+                      onEditBlocker={(b) => updateSite.mutate({ id: s.id, patch: { blocker: b || null } })}
+                      onReport={() => setReportSite(s)}
+                      onMessages={() => setMsgSite(s)}
+                      onEdit={() => navigate({ to: "/studio/site/$id", params: { id: s.id } })}
+                      onDelete={() => { if (confirm(`Supprimer le chantier « ${s.title || clientName(s.prospect_id)} » ?`)) deleteSite.mutate(s); }}
+                    />
+                  ))}
+                  {items.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground text-center py-3 opacity-60">—</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
 
-      <p className="text-xs text-center text-muted-foreground pt-2">
-        🔜 Prochaine étape : éditer le site + le mettre en ligne sur le domaine du client.
+      <p className="text-xs text-center text-muted-foreground pt-1">
+        Glisse une carte d'une colonne à l'autre pour faire avancer un chantier. Le client suit l'avancement en temps réel via son <b>portail</b>.
       </p>
+
+      {reportSite && (
+        <ReportDialog
+          site={reportSite}
+          clientName={reportSite.title || clientName(reportSite.prospect_id)}
+          clientEmail={clients?.find((c) => c.id === reportSite.prospect_id)?.email || null}
+          onClose={() => setReportSite(null)}
+        />
+      )}
+
+      {msgSite && (
+        <MessagesDialog
+          site={msgSite}
+          clientName={msgSite.title || clientName(msgSite.prospect_id)}
+          onClose={() => setMsgSite(null)}
+        />
+      )}
     </div>
   );
 }
 
+// ─── Fil de messages côté agence (#5) ──────────────────────────────────
+function MessagesDialog({ site, clientName, onClose }: { site: Site; clientName: string; onClose: () => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [text, setText] = useState("");
+
+  const { data: messages } = useQuery({
+    queryKey: ["portal-thread", site.id],
+    enabled: !!user,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("portal_messages")
+        .select("id, author, body, created_at").eq("site_id", site.id).order("created_at", { ascending: true });
+      // marque les messages client comme lus
+      await supabase.from("portal_messages").update({ read_by_agency: true })
+        .eq("site_id", site.id).eq("author", "client").eq("read_by_agency", false);
+      qc.invalidateQueries({ queryKey: ["portal-unread"] });
+      return (data as { id: string; author: string; body: string; created_at: string }[]) || [];
+    },
+  });
+
+  const reply = useMutation({
+    mutationFn: async () => {
+      const body = text.trim();
+      if (!body) return;
+      const { error } = await supabase.from("portal_messages").insert({
+        site_id: site.id, owner_id: user!.id, author: "agency", body, read_by_agency: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { setText(""); qc.invalidateQueries({ queryKey: ["portal-thread", site.id] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Link2 className="size-5 text-primary" /> Messages — {clientName}</DialogTitle>
+          <DialogDescription>Conversation du portail client. Vos réponses s'affichent côté client en temps réel.</DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[50vh] overflow-y-auto flex flex-col gap-2 py-1">
+          {(messages || []).length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Aucun message pour l'instant.</p>
+          ) : (messages || []).map((mm) => (
+            <div key={mm.id} className={cn("max-w-[82%] rounded-xl px-3 py-2 text-sm",
+              mm.author === "agency" ? "self-end bg-primary text-primary-foreground" : "self-start bg-muted")}>
+              {mm.body}
+              <div className={cn("text-[10px] mt-1", mm.author === "agency" ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                {mm.author === "agency" ? "Vous" : clientName} · {new Date(mm.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 items-end">
+          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={2}
+            placeholder="Votre réponse au client…" className="resize-none"
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) reply.mutate(); }} />
+          <Button onClick={() => reply.mutate()} disabled={reply.isPending || !text.trim()}>Envoyer</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Carte chantier ───────────────────────────────────────────────────
+function SiteCard({
+  site, name, dragging, onDragStart, onDragEnd, previewUrl, unread,
+  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onMessages, onEdit, onDelete,
+}: {
+  site: Site; name: string; dragging: boolean;
+  onDragStart: () => void; onDragEnd: () => void; previewUrl: string | null; unread: number;
+  onCopyPortal: () => void; onEditDeadline: (d: string) => void; onEditBlocker: (b: string) => void;
+  onReport: () => void; onMessages: () => void; onEdit: () => void; onDelete: () => void;
+}) {
+  const [editBlk, setEditBlk] = useState(false);
+  const [blk, setBlk] = useState(site.blocker || "");
+
+  // Échéance : en retard / bientôt / ok
+  const deadlineInfo = (() => {
+    if (!site.deadline) return null;
+    const d = new Date(site.deadline + "T00:00:00");
+    const days = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+    const fmt = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+    if (days < 0) return { fmt, cls: "text-rose-600 dark:text-rose-400 bg-rose-500/10", label: `En retard (${fmt})` };
+    if (days <= 3) return { fmt, cls: "text-amber-600 dark:text-amber-400 bg-amber-500/10", label: `J-${days} · ${fmt}` };
+    return { fmt, cls: "text-muted-foreground bg-muted", label: fmt };
+  })();
+
+  return (
+    <div
+      className={cn("rounded-lg border bg-card p-2.5 space-y-2 shadow-sm",
+        dragging && "opacity-40 ring-2 ring-primary")}>
+      {/* Poignée de drag dédiée — le reste de la carte reste cliquable */}
+      <div className="flex items-center gap-1.5">
+        <span draggable onDragStart={onDragStart} onDragEnd={onDragEnd}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground -ml-1 px-0.5 py-1 shrink-0"
+          title="Glisser pour changer d'étape">
+          <GripVertical className="size-4" />
+        </span>
+        <p className="font-semibold text-sm leading-tight truncate flex-1">{name}</p>
+        <button onClick={onDelete} title="Supprimer le chantier"
+          className="text-muted-foreground/40 hover:text-rose-500 shrink-0 p-0.5">
+          <Trash2 className="size-3.5" />
+        </button>
+      </div>
+
+      {site.maquette_validated_at && (
+        <Badge className="border-0 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] gap-1">
+          <CheckCircle2 className="size-2.5" /> Maquette validée
+        </Badge>
+      )}
+
+      {/* Échéance */}
+      <div className="flex items-center gap-1.5">
+        <CalendarClock className="size-3 text-muted-foreground shrink-0" />
+        <input type="date" value={site.deadline || ""}
+          onChange={(e) => onEditDeadline(e.target.value)}
+          className="text-[11px] bg-transparent border rounded px-1 py-0.5 w-full text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+      </div>
+      {deadlineInfo && (
+        <div className={cn("text-[10px] font-medium rounded px-1.5 py-0.5 inline-block", deadlineInfo.cls)}>
+          {deadlineInfo.label}
+        </div>
+      )}
+
+      {/* Point bloquant */}
+      {editBlk ? (
+        <div className="space-y-1">
+          <Textarea value={blk} onChange={(e) => setBlk(e.target.value)} rows={2}
+            placeholder="Ex : on attend les photos du client…"
+            className="text-[11px] min-h-0 py-1" />
+          <div className="flex gap-1">
+            <Button size="sm" className="h-6 text-[10px] px-2" onClick={() => { onEditBlocker(blk); setEditBlk(false); }}>OK</Button>
+            <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => { setBlk(site.blocker || ""); setEditBlk(false); }}>Annuler</Button>
+          </div>
+        </div>
+      ) : site.blocker ? (
+        <button onClick={() => setEditBlk(true)}
+          className="w-full text-left text-[11px] rounded px-1.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-start gap-1">
+          <AlertTriangle className="size-3 mt-0.5 shrink-0" /> <span className="line-clamp-2">{site.blocker}</span>
+        </button>
+      ) : (
+        <button onClick={() => setEditBlk(true)} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+          <AlertTriangle className="size-3" /> Signaler un blocage
+        </button>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-1 pt-0.5">
+        <Button size="sm" variant="secondary" className="h-6 text-[10px] px-2 gap-1" onClick={onEdit}>
+          <Wand2 className="size-2.5" /> Éditer
+        </Button>
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onCopyPortal} title="Copier le lien du portail client">
+          <Link2 className="size-2.5" /> Portail
+        </Button>
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 relative" onClick={onMessages} title="Messages du client">
+          <MessageSquare className="size-2.5" /> Messages
+          {unread > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">{unread}</span>
+          )}
+        </Button>
+        {site.production_stage === "live" || site.production_stage === "care" ? (
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onReport}>
+            <BarChart3 className="size-2.5" /> Rapport
+          </Button>
+        ) : null}
+        {previewUrl && (
+          <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 gap-1" asChild>
+            <a href={previewUrl} target="_blank" rel="noreferrer"><ExternalLink className="size-2.5" /> Voir</a>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Rapport mensuel (#3) ──────────────────────────────────────────────
+function ReportDialog({ site, clientName, clientEmail, onClose }: {
+  site: Site; clientName: string; clientEmail: string | null; onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const period = new Date().toISOString().slice(0, 7) + "-01"; // 1er du mois courant
+  const periodLabel = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+
+  const { data: existing } = useQuery({
+    queryKey: ["site-metrics", site.id, period],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("site_metrics")
+        .select("*").eq("site_id", site.id).eq("period", period).maybeSingle();
+      return data;
+    },
+  });
+
+  const [m, setM] = useState({ visits: "", unique_visitors: "", leads: "", google_rating: "", google_position: "", notes: "" });
+  const [email, setEmail] = useState(clientEmail || "");
+  useMemo(() => {
+    if (existing) setM({
+      visits: String(existing.visits ?? ""), unique_visitors: String(existing.unique_visitors ?? ""),
+      leads: String(existing.leads ?? ""), google_rating: String(existing.google_rating ?? ""),
+      google_position: String(existing.google_position ?? ""), notes: existing.notes ?? "",
+    });
+  }, [existing]);
+
+  const num = (v: string) => (v === "" ? null : Number(v));
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("site_metrics").upsert({
+        site_id: site.id, owner_id: user!.id, period,
+        visits: num(m.visits), unique_visitors: num(m.unique_visitors), leads: num(m.leads),
+        google_rating: num(m.google_rating), google_position: num(m.google_position), notes: m.notes || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "site_id,period" });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["site-metrics", site.id] }); toast.success("Métriques enregistrées"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const sendReport = useMutation({
+    mutationFn: async () => {
+      await save.mutateAsync();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_FN}/monthly-report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "send", site_id: site.id, period, to: email, base: APP_BASE }),
+      });
+      const out = await res.json();
+      if (!res.ok || out.error) throw new Error(out.error || "Envoi impossible");
+      return out as { url: string };
+    },
+    onSuccess: (out) => {
+      qc.invalidateQueries({ queryKey: ["site-metrics", site.id] });
+      toast.success("Rapport envoyé au client 📧", { description: out.url, duration: 8000 });
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const field = (key: keyof typeof m, label: string, ph: string, type = "number") => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input type={type} value={m[key]} placeholder={ph}
+        onChange={(e) => setM((s) => ({ ...s, [key]: e.target.value }))} className="h-9" />
+    </div>
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><BarChart3 className="size-5 text-primary" /> Rapport mensuel — {clientName}</DialogTitle>
+          <DialogDescription>Bilan de <b>{periodLabel}</b>. Renseigne les chiffres, le client reçoit un rapport clair et pro.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-3">
+          {field("visits", "Visites", "1 240")}
+          {field("unique_visitors", "Visiteurs uniques", "870")}
+          {field("leads", "Demandes reçues", "23")}
+          {field("google_position", "Position Google", "3")}
+          {field("google_rating", "Note Google", "4.7")}
+          <div className="space-y-1">
+            <Label className="text-xs">Email du client</Label>
+            <Input type="email" value={email} placeholder="client@exemple.fr"
+              onChange={(e) => setEmail(e.target.value)} className="h-9" />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Mot du mois (optionnel)</Label>
+          <Textarea value={m.notes} rows={2} placeholder="Ex : votre fiche a gagné 2 places sur Google ce mois-ci 👏"
+            onChange={(e) => setM((s) => ({ ...s, notes: e.target.value }))} />
+        </div>
+
+        <p className="text-[11px] text-muted-foreground">
+          💡 Branchement automatique (Google Analytics / Search Console / fiche Google) prévu ensuite — d'ici là ces chiffres se saisissent à la main une fois par mois.
+        </p>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>Enregistrer</Button>
+          <Button onClick={() => sendReport.mutate()} disabled={sendReport.isPending || !email}>
+            {sendReport.isPending ? "Envoi…" : "Générer & envoyer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Stat ──────────────────────────────────────────────────────────────
 const TONE: Record<string, string> = {
   amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  violet: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
   sky: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
   emerald: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  rose: "bg-rose-500/15 text-rose-600 dark:text-rose-400",
 };
 function Stat({ icon: Icon, label, value, tone }: { icon: React.ElementType; label: string; value: number; tone: string }) {
   return (
-    <div className="rounded-lg border bg-card/60 p-3 flex items-center gap-3">
-      <div className={cn("size-9 rounded-lg flex items-center justify-center", TONE[tone])}><Icon className="size-4" /></div>
-      <div>
-        <div className="text-xl font-bold tabular-nums leading-none">{value}</div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
+    <div className="rounded-lg border bg-card/60 p-2.5 flex items-center gap-2">
+      <div className={cn("size-8 rounded-lg flex items-center justify-center shrink-0", TONE[tone])}><Icon className="size-4" /></div>
+      <div className="min-w-0">
+        <div className="text-lg font-bold tabular-nums leading-none">{value}</div>
+        <div className="text-[9px] uppercase tracking-wider text-muted-foreground mt-1 truncate">{label}</div>
       </div>
     </div>
   );

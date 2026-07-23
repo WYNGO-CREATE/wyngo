@@ -144,7 +144,7 @@ export function GlobalSearch() {
         Rechercher…
         <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded">⌘K</kbd>
       </button>
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
         <CommandInput
           value={q}
           onValueChange={setQ}

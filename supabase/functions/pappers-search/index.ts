@@ -114,53 +114,15 @@ async function actionSearch(params: {
   q?: string;
   page?: number;
   par_page?: number;
+  max_results?: number; // objectif de résultats utiles (après filtrage géo) — pagination auto
   with_site_web?: boolean | null; // true = uniquement avec site, false = uniquement sans, null/undef = tous
 }) {
-  const apiParams: Record<string, string | number | undefined> = {
-    code_naf: params.code_naf,
-    code_postal: params.code_postal,
-    q: params.q,
-    page: params.page ?? 1,
-    par_page: Math.min(params.par_page ?? 20, 100),
-    precision: "exacte",
-    bases: "entreprises", // (vs "documents" ou "publications")
-  };
-  if (params.ville) apiParams["ville"] = params.ville;
-  if (params.tranche_effectif) apiParams["tranche_effectif"] = params.tranche_effectif;
+  // Objectif : nombre de prospects UTILES voulus (après rejet hors-zone).
+  // On pagine l'API Pappers (100/page) jusqu'à l'atteindre, avec garde-fou.
+  const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 300);
+  const PER_PAGE = 100;
+  const MAX_PAGES = 8; // 8 × 100 = 800 entreprises scannées max par chasse
 
-  const data = await callPappers("/recherche", apiParams);
-  const resultats = (data?.resultats as PappersEntreprise[]) || [];
-
-  const allMapped = resultats.map((r) => {
-    const principal = r.dirigeants?.[0];
-    return {
-      siren: r.siren,
-      siret: r.siege?.siret || null,
-      nom: r.nom_entreprise || r.denomination || "Sans nom",
-      code_naf: r.code_naf || null,
-      libelle_naf: r.libelle_code_naf || null,
-      ville: r.siege?.ville || null,
-      code_postal: r.siege?.code_postal || null,
-      adresse: r.siege?.adresse_ligne_1 || null,
-      tranche_effectif: r.tranche_effectif || r.effectif || null,
-      site_web: r.site_web || null,
-      email: r.email || null,
-      telephone: r.telephone || null,
-      date_creation: r.date_creation_formate || null,
-      dirigeant_principal: principal
-        ? {
-            prenom: principal.prenom || "",
-            nom: principal.nom || "",
-            qualite: principal.qualite || "",
-          }
-        : null,
-    };
-  });
-
-  // ═══ Filtrage défensif côté serveur (Pappers peut hallucinosor) ═══
-  // Même si l'API Pappers est censée filtrer, on REJETTE les résultats
-  // dont le siege ne matche PAS la ville/CP demandés. Le commercial doit
-  // pouvoir cibler une zone géographique de façon 100% fiable.
   function normalizeCity(s: string | null | undefined): string {
     if (!s) return "";
     return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
@@ -168,32 +130,94 @@ async function actionSearch(params: {
   const requestedVille = normalizeCity(params.ville);
   const requestedCp = (params.code_postal || "").trim();
 
-  const filtered = allMapped.filter((e) => {
-    if (requestedVille) {
-      const eVille = normalizeCity(e.ville);
-      if (!eVille || !eVille.includes(requestedVille)) return false;
-    }
-    if (requestedCp) {
-      const eCp = (e.code_postal || "").trim();
-      // Le CP de l'entreprise doit COMMENCER par le CP demandé
-      // (31000 demandé → 31000 OK, 31100 KO ; 75 demandé → 75001 OK)
-      if (!eCp || !eCp.startsWith(requestedCp)) return false;
-    }
-    return true;
-  });
+  function mapResultats(resultats: PappersEntreprise[]) {
+    return resultats.map((r) => {
+      const principal = r.dirigeants?.[0];
+      return {
+        siren: r.siren,
+        siret: r.siege?.siret || null,
+        nom: r.nom_entreprise || r.denomination || "Sans nom",
+        code_naf: r.code_naf || null,
+        libelle_naf: r.libelle_code_naf || null,
+        ville: r.siege?.ville || null,
+        code_postal: r.siege?.code_postal || null,
+        adresse: r.siege?.adresse_ligne_1 || null,
+        tranche_effectif: r.tranche_effectif || r.effectif || null,
+        site_web: r.site_web || null,
+        email: r.email || null,
+        telephone: r.telephone || null,
+        date_creation: r.date_creation_formate || null,
+        dirigeant_principal: principal
+          ? { prenom: principal.prenom || "", nom: principal.nom || "", qualite: principal.qualite || "" }
+          : null,
+      };
+    });
+  }
 
-  const rejected = allMapped.length - filtered.length;
+  // Filtrage défensif : on REJETTE les sieges hors de la ville/CP demandés
+  // (le commercial doit pouvoir cibler une zone de façon 100% fiable).
+  function geoFilter(list: ReturnType<typeof mapResultats>) {
+    return list.filter((e) => {
+      if (requestedVille) {
+        const eVille = normalizeCity(e.ville);
+        if (!eVille || !eVille.includes(requestedVille)) return false;
+      }
+      if (requestedCp) {
+        const eCp = (e.code_postal || "").trim();
+        if (!eCp || !eCp.startsWith(requestedCp)) return false;
+      }
+      return true;
+    });
+  }
+
+  const collected: ReturnType<typeof mapResultats> = [];
+  const seen = new Set<string>();
+  let totalApi = 0;
+  let rejected = 0;
+  let scannedPages = 0;
+  let page = params.page ?? 1;
+
+  for (let i = 0; i < MAX_PAGES && collected.length < target; i++, page++) {
+    const apiParams: Record<string, string | number | undefined> = {
+      code_naf: params.code_naf,
+      code_postal: params.code_postal,
+      q: params.q,
+      page,
+      par_page: PER_PAGE,
+      precision: "exacte",
+      bases: "entreprises",
+    };
+    if (params.ville) apiParams["ville"] = params.ville;
+    if (params.tranche_effectif) apiParams["tranche_effectif"] = params.tranche_effectif;
+
+    const data = await callPappers("/recherche", apiParams);
+    const resultats = (data?.resultats as PappersEntreprise[]) || [];
+    scannedPages++;
+    if (i === 0) totalApi = (data?.total as number) || 0;
+
+    const mapped = mapResultats(resultats);
+    const kept = geoFilter(mapped);
+    rejected += mapped.length - kept.length;
+    for (const e of kept) {
+      if (e.siren && seen.has(e.siren)) continue; // dédup inter-pages
+      if (e.siren) seen.add(e.siren);
+      collected.push(e);
+    }
+    if (resultats.length < PER_PAGE) break; // plus de pages disponibles
+  }
+
+  const entreprises = collected.slice(0, target);
 
   return {
     ok: true,
-    entreprises: filtered,
+    entreprises,
     pagination: {
-      page: (data?.page as number) || params.page || 1,
-      par_page: (data?.par_page as number) || params.par_page || 20,
-      total: (data?.total as number) || filtered.length,
+      page: params.page || 1,
+      par_page: PER_PAGE,
+      total: totalApi || entreprises.length,
     },
-    // Diagnostic pour debug — visible dans le toast côté UI si rejets
     rejected_out_of_zone: rejected,
+    scanned_pages: scannedPages,
   };
 }
 

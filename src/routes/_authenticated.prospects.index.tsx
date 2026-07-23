@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, AlertTriangle, Download, Upload, PhoneCall, PhoneOff, PhoneIncoming, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Search, AlertTriangle, Download, Upload, PhoneCall, PhoneOff, PhoneIncoming, Trash2, ChevronRight, List, LayoutGrid } from "lucide-react";
+import { ProspectsBoard } from "@/components/prospects-board";
 import { PROSPECT_STATUSES, STATUS_LABELS, STATUS_VARIANTS, SUGGESTION_TONE, suggestNextAction, type ProspectStatus } from "@/lib/crm";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,16 @@ function ProspectsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [callFilter, setCallFilter] = useState<"all" | "never" | "recent" | "stale">("all");
-  const [scope, setScope] = useState<"mine" | "team">("mine");
+  const [scope, setScope] = useState<"mine" | "team">("team");
+  const [view, setView] = useState<"list" | "board">("list");
+  const [customCols, setCustomCols] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("wyngo-custom-status") || "[]"); } catch { return []; }
+  });
+  const addCustomCol = (name: string) => setCustomCols((prev) => {
+    const next = Array.from(new Set([...prev, name]));
+    try { localStorage.setItem("wyngo-custom-status", JSON.stringify(next)); } catch { /* ignore */ }
+    return next;
+  });
   const [open, setOpen] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
   const [pendingPayload, setPendingPayload] = useState<any | null>(null);
@@ -91,11 +101,23 @@ function ProspectsPage() {
     queryKey: ["prospects", search, statusFilter, scope, user?.id, role],
     queryFn: async () => {
       let q = supabase.from("prospects").select("*").order("created_at", { ascending: false });
-      if (statusFilter !== "all") q = q.eq("status", statusFilter as ProspectStatus);
-      if (role !== "admin" || scope === "mine") q = q.eq("owner_id", user!.id);
+      if (statusFilter !== "all") {
+        if (statusFilter.startsWith("c:")) q = q.eq("custom_status", statusFilter.slice(2));
+        else q = q.eq("status", statusFilter as ProspectStatus);
+      }
+      if (scope === "mine") q = q.eq("owner_id", user!.id);
       if (search.trim()) {
-        const s = `%${search.trim()}%`;
-        q = q.or(`first_name.ilike.${s},last_name.ilike.${s},company.ilike.${s},email.ilike.${s}`);
+        // Recherche sur TOUS les champs texte de la fiche (pas seulement nom/société).
+        // On neutralise les caractères qui casseraient la syntaxe .or() de PostgREST.
+        const term = search.trim().replace(/[%,()*]/g, " ");
+        const s = `%${term}%`;
+        const cols = [
+          "first_name", "last_name", "company", "email", "phone", "website",
+          "location", "title", "siret", "source", "notes",
+          "activity", "business_brief", "target_client", "value_props",
+          "brief_activity", "brief_objective",
+        ];
+        q = q.or(cols.map((c) => `${c}.ilike.${s}`).join(","));
       }
       const { data, error } = await q;
       if (error) throw error;
@@ -330,8 +352,12 @@ function ProspectsPage() {
   }
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: ProspectStatus }) => {
-      const { error } = await supabase.from("prospects").update({ status }).eq("id", id);
+    mutationFn: async ({ id, status, custom_status }: { id: string; status?: ProspectStatus; custom_status?: string | null }) => {
+      const patch = {
+        ...(status !== undefined ? { status } : {}),
+        ...(custom_status !== undefined ? { custom_status } : {}),
+      };
+      const { error } = await supabase.from("prospects").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -340,6 +366,18 @@ function ProspectsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Déplacement d'un prospect dans le Kanban (statut intégré OU personnalisé)
+  const moveToColumn = (id: string, col: { type: "builtin" | "custom"; value: string }) => {
+    if (col.type === "builtin") updateStatus.mutate({ id, status: col.value as ProspectStatus, custom_status: null });
+    else updateStatus.mutate({ id, custom_status: col.value });
+  };
+
+  // Tous les statuts perso connus (créés + présents sur des prospects), pour les menus.
+  const customStatusList = Array.from(new Set([
+    ...customCols,
+    ...(((prospects as { custom_status?: string | null }[] | undefined) || []).map((p) => p.custom_status).filter(Boolean) as string[]),
+  ]));
 
   // Suppression d'un prospect (cascade : call_logs, follow_ups, messages, etc.
   // sont supprimés grâce aux FK ON DELETE CASCADE déclarées dans le schéma).
@@ -516,18 +554,30 @@ function ProspectsPage() {
               <SelectItem value="stale">📞 À rappeler (&gt; 14 j)</SelectItem>
             </SelectContent>
           </Select>
-          {role === "admin" && (
-            <Select value={scope} onValueChange={(v) => setScope(v as any)}>
-              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mine">Mes prospects</SelectItem>
-                <SelectItem value="team">Équipe entière</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+          <Select value={scope} onValueChange={(v) => setScope(v as any)}>
+            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="team">Équipe entière</SelectItem>
+              <SelectItem value="mine">Mes prospects</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex rounded-md border overflow-hidden">
+            <button type="button" onClick={() => setView("list")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-sm transition", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-accent")}><List className="h-4 w-4" /> Liste</button>
+            <button type="button" onClick={() => setView("board")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-sm border-l transition", view === "board" ? "bg-primary text-primary-foreground" : "hover:bg-accent")}><LayoutGrid className="h-4 w-4" /> Tableau</button>
+          </div>
         </CardContent>
       </Card>
 
+      {view === "board" && !isLoading && prospects && (
+        <ProspectsBoard
+          prospects={(prospects.filter((p) => callFilter === "all" || callBucket(p.id) === callFilter)) as any}
+          customCols={customCols}
+          onMove={moveToColumn}
+          onAddCol={addCustomCol}
+        />
+      )}
+
+      {view === "list" && (
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -692,16 +742,28 @@ function ProspectsPage() {
                     )}
                     <TableCell>
                       <Select
-                        value={p.status}
-                        onValueChange={(v) => updateStatus.mutate({ id: p.id, status: v as ProspectStatus })}
+                        value={p.custom_status || p.status}
+                        onValueChange={(v) => {
+                          if (v === "__add__") {
+                            const n = window.prompt("Nom du nouveau statut ?");
+                            if (n && n.trim()) { addCustomCol(n.trim()); updateStatus.mutate({ id: p.id, custom_status: n.trim() }); }
+                            return;
+                          }
+                          if ((PROSPECT_STATUSES as readonly string[]).includes(v)) updateStatus.mutate({ id: p.id, status: v as ProspectStatus, custom_status: null });
+                          else updateStatus.mutate({ id: p.id, custom_status: v });
+                        }}
                       >
-                        <SelectTrigger className={cn("w-[140px] border", STATUS_VARIANTS[p.status as ProspectStatus])}>
+                        <SelectTrigger className={cn("w-[150px] border", p.custom_status ? "border-violet-300 text-violet-700 bg-violet-50" : STATUS_VARIANTS[p.status as ProspectStatus])}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {PROSPECT_STATUSES.map((s) => (
                             <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
                           ))}
+                          {customStatusList.map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                          <SelectItem value="__add__">＋ Nouveau statut…</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -747,6 +809,7 @@ function ProspectsPage() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -131,6 +131,55 @@ ${tagline ? `<div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe U
 }
 
 /**
+ * ─── Gabarit d'email transactionnel premium (partagé) ─────────────────
+ * Utilisé pour les envois de devis, factures et contrats. Design sobre et
+ * professionnel : carte blanche, en-tête marque, bouton d'action net,
+ * pied de page discret. Police système (identique partout). Aucune flèche
+ * ni caractère décoratif fragile. `intro` et `contentHtml` sont du HTML déjà
+ * assaini par l'appelant ; `footerLines` sont des chaînes déjà échappées.
+ */
+export function transactionalEmail(opts: {
+  brand: string;
+  greetingName?: string | null;
+  intro: string;            // HTML sûr (paragraphe d'intro)
+  contentHtml?: string;     // bloc optionnel (ex. lignes d'un devis)
+  ctaUrl: string;
+  ctaLabel: string;
+  footerLines?: string[];   // déjà échappées
+  accent?: string;
+}): string {
+  const accent = opts.accent || "#1B4BE3";
+  const brand = escapeHtml(opts.brand || "Wyngo");
+  const greeting = opts.greetingName ? `Bonjour ${escapeHtml(opts.greetingName)},` : "Bonjour,";
+  const footer = (opts.footerLines || []).filter(Boolean).join("<br>");
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f4f6;"><tr><td align="center" style="padding:32px 14px;">
+  <table role="presentation" width="548" cellpadding="0" cellspacing="0" border="0" style="max-width:548px;width:100%;background:#ffffff;border:1px solid #ececf0;border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.06);">
+    <tr><td style="padding:28px 34px 0 34px;">
+      <div style="font-size:17px;font-weight:700;letter-spacing:.02em;color:#0f172a;">${brand}</div>
+      <div style="height:3px;width:34px;background:${accent};border-radius:3px;margin-top:9px;"></div>
+    </td></tr>
+    <tr><td style="padding:22px 34px 4px 34px;">
+      <p style="margin:0 0 14px;font-size:15px;color:#111827;">${greeting}</p>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#374151;">${opts.intro}</p>
+      ${opts.contentHtml || ""}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"><tr>
+        <td style="border-radius:12px;background:${accent};">
+          <a href="${escapeAttr(opts.ctaUrl)}" target="_blank" style="display:inline-block;padding:15px 34px;color:#ffffff;font-size:15px;font-weight:600;letter-spacing:.01em;text-decoration:none;border-radius:12px;">${escapeHtml(opts.ctaLabel)}</a>
+        </td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:20px 34px 24px 34px;">
+      <div style="border-top:1px solid #f1f2f4;padding-top:16px;font-size:12px;line-height:1.6;color:#98a2b3;">${footer}</div>
+    </td></tr>
+  </table>
+  <div style="font-size:11px;color:#c0c4cc;margin-top:16px;">Transmis avec Wyngo</div>
+</td></tr></table>
+</body></html>`;
+}
+
+/**
  * Construit la version texte plein de l'email (fallback pour clients qui ne lisent pas HTML).
  */
 export function buildEmailText(bodyText: string, sig: EmailSignatureData): string {
@@ -211,21 +260,26 @@ function base64UrlEncode(s: string): string {
     .replace(/=+$/, "");
 }
 
-/** Quoted-printable encoding pour MIME — gère accents et longues lignes proprement. */
+/** Quoted-printable encoding pour MIME — gère accents et longues lignes proprement.
+ *  Les retours à la ligne "soft" (=\r\n) ne coupent JAMAIS une séquence =XX :
+ *  on tokenise d'abord (chaque octet = 1 token littéral ou "=XX"), puis on
+ *  emballe les tokens sans dépasser 76 colonnes. Corrige la corruption des
+ *  caractères multi-octets (ex. « → » = =E2=86=92) découpés en plein milieu. */
 function qpEncode(text: string): string {
-  // On encode les caractères non-ASCII en =XX
-  const encoded = unescape(encodeURIComponent(text));
-  let out = "";
-  for (let i = 0; i < encoded.length; i++) {
-    const c = encoded.charCodeAt(i);
-    if (c === 13 || c === 10) {
-      out += encoded[i];
-    } else if (c < 32 || c === 61 || c > 126) {
-      out += "=" + c.toString(16).toUpperCase().padStart(2, "0");
-    } else {
-      out += encoded[i];
-    }
+  const bytes = unescape(encodeURIComponent(text));
+  const tokens: string[] = [];
+  for (let i = 0; i < bytes.length; i++) {
+    const c = bytes.charCodeAt(i);
+    if (c === 13 || c === 10) tokens.push(bytes[i]);           // CR / LF littéraux
+    else if (c < 32 || c === 61 || c > 126) tokens.push("=" + c.toString(16).toUpperCase().padStart(2, "0"));
+    else tokens.push(bytes[i]);
   }
-  // Soft line breaks tous les 76 chars (RFC requirement)
-  return out.replace(/(.{1,75})/g, "$1=\r\n").replace(/=\r\n$/, "");
+  let out = "";
+  let lineLen = 0;
+  for (const tk of tokens) {
+    if (tk === "\r" || tk === "\n") { out += tk; lineLen = 0; continue; }
+    if (lineLen + tk.length > 75) { out += "=\r\n"; lineLen = 0; }
+    out += tk; lineLen += tk.length;
+  }
+  return out;
 }

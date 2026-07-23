@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyngo — Cabinet de présence digitale</title>
+<link rel="canonical" href="https://wyngo.fr/">
+<meta name="robots" content="index, follow">
+<meta name="description" content="Wyngo — cabinet de présence digitale. Création de sites web professionnels, référencement Google et suivi mensuel pour les artisans, commerçants et TPE en France.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Wyngo">
+<meta property="og:title" content="Wyngo — Cabinet de présence digitale">
+<meta property="og:description" content="Sites web professionnels, référencement Google et suivi mensuel pour les artisans, commerçants et TPE.">
+<meta property="og:url" content="https://wyngo.fr/">
+<meta property="og:image" content="https://wyngo.fr/favicon.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Wyngo — Cabinet de présence digitale">
+<meta name="twitter:description" content="Sites web professionnels et référencement Google pour artisans, commerçants et TPE.">
+<meta name="twitter:image" content="https://wyngo.fr/favicon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Wyngo",
+  "alternateName": "Cabinet Wyngo",
+  "url": "https://wyngo.fr/",
+  "logo": "https://wyngo.fr/favicon.png",
+  "image": "https://wyngo.fr/favicon.png",
+  "description": "Wyngo est un cabinet de présence digitale : création de sites web professionnels, référencement Google et suivi mensuel pour les artisans, commerçants et TPE.",
+  "slogan": "Votre présence en ligne, traitée comme un actif.",
+  "email": "contact@wyngo.fr",
+  "areaServed": "FR",
+  "sameAs": [
+    "https://www.linkedin.com/company/wyngofr/"
+  ]
+}
+</script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F4EC; --bg2:#F0ECE0; --card:#FCFBF6; --ink:#141410; --mut:#14141099; --mut2:#14141066; --line:#14141021; --line2:#14141012;
+    --accent:#1B4BE3; --pad:72px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased;position:relative;}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.055;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  nav,header,section,footer{position:relative;z-index:1;}
+  .tone{background:var(--bg2);}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 var(--pad);}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--accent);color:#fff;}
+  .nav-links a{position:relative;transition:color .18s ease;}
+  .nav-links a:not(.nav-cta)::after{content:"";position:absolute;left:0;right:100%;bottom:-6px;height:2px;background:var(--accent);transition:right .22s cubic-bezier(.4,0,.2,1);}
+  .nav-links a:not(.nav-cta):hover{color:var(--accent);}
+  .nav-links a:not(.nav-cta):hover::after{right:0;}
+  .btn-ghost{transition:border-color .18s ease,color .18s ease;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .ey{font:600 12px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);}
+  .lab{font:600 12px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2);}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;background:#FBFAF7e6;backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);}
+  nav .row{display:flex;justify-content:space-between;align-items:center;height:72px;}
+  .wm{font:600 19px Inter,sans-serif;letter-spacing:-.02em;position:relative;display:inline-block;}
+  .wm::after{content:"";position:absolute;left:0;bottom:-6px;width:20px;height:2px;background:var(--accent);border-radius:2px;}
+  .nav-links{display:flex;gap:36px;align-items:center;font:500 13.5px Inter,sans-serif;color:var(--mut);}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{background:var(--ink);color:var(--bg)!important;padding:11px 18px;border-radius:2px;font-weight:500;}
+
+  /* HERO */
+  .hero{padding:96px 0 84px;border-bottom:1px solid var(--line2);position:relative;}
+  .hero h1{margin-top:26px;font:600 78px/1.02 Inter,sans-serif;letter-spacing:-.035em;max-width:15ch;}
+  .hero h1 .mut{color:var(--mut2);}
+  .hero .sub{margin-top:30px;font:400 19px/1.6 Inter,sans-serif;color:var(--mut);max-width:50ch;}
+  .hero .actions{margin-top:40px;display:flex;gap:16px;align-items:center;}
+  .btn{background:var(--ink);color:var(--bg);font:500 14px Inter,sans-serif;padding:16px 26px;border-radius:2px;display:inline-flex;gap:10px;align-items:center;transition:transform .15s ease;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn-ghost{background:none;color:var(--ink);border:1px solid var(--line);padding:15px 24px;border-radius:2px;font:500 14px Inter,sans-serif;}
+  .hero .meta{margin-top:64px;display:flex;justify-content:space-between;border-top:1px solid var(--line2);padding-top:18px;font:500 12.5px Inter,sans-serif;color:var(--mut2);letter-spacing:.02em;}
+  .hero .badge{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:100px;padding:8px 16px;font:500 12.5px Inter,sans-serif;color:var(--mut);background:var(--card);}
+  .hero .badge b{color:var(--ink);font-weight:600;}
+  .hero .badge .bdot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;}
+  .hero .badge .bdot.pulse{background:#16a34a;animation:bpulse 2.2s infinite;}
+  @keyframes bpulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.45)}70%{box-shadow:0 0 0 9px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+  .wmwrap{display:flex;align-items:baseline;gap:13px;}
+  .wm-tag{font:500 12px Inter,sans-serif;color:var(--mut2);letter-spacing:.01em;}
+  @media(max-width:880px){.wm-tag{display:none;}}
+  .hero .ey{margin-top:26px;}
+
+  /* RÉSUMÉ */
+  .sum{padding:96px 0;border-bottom:1px solid var(--line2);}
+  .sum h2{margin-top:18px;font:600 44px/1.08 Inter,sans-serif;letter-spacing:-.03em;max-width:18ch;}
+  .sumlead{margin-top:20px;font:400 18px/1.65 Inter,sans-serif;color:var(--mut);max-width:60ch;}
+  .sumrow{margin-top:52px;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;}
+  .sumstep{position:relative;padding-right:26px;}
+  .sumstep:not(:last-child)::after{content:"→";position:absolute;right:0;top:-2px;color:var(--accent);font-size:18px;opacity:.45;}
+  .sumstep .ss{font:600 13px Inter,sans-serif;color:var(--accent);letter-spacing:.1em;}
+  .sumstep b{display:block;margin-top:12px;font:600 19px Inter,sans-serif;letter-spacing:-.02em;}
+  .sumstep .sd{display:block;margin-top:8px;font:400 14.5px/1.6 Inter,sans-serif;color:var(--mut);}
+  @media(max-width:760px){.sum{padding:64px 0;}.sum h2{font-size:31px;}.sumrow{grid-template-columns:1fr;gap:24px;}.sumstep:not(:last-child)::after{display:none;}}
+
+  /* NUMBERS */
+  .nums{padding:88px 0;border-bottom:1px solid var(--line2);}
+  .nums .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:32px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .nums .cell{padding:44px 34px;border-right:1px solid var(--line2);}
+  .nums .cell:first-child{padding-left:0;}
+  .nums .cell:last-child{border-right:none;padding-right:0;}
+  .nums .n{font:600 64px Inter,sans-serif;letter-spacing:-.045em;line-height:1;}
+  .nums .n s{font-size:28px;color:var(--accent);text-decoration:none;margin-left:3px;font-weight:500;}
+  .nums .d{margin-top:16px;font:400 14px/1.5 Inter,sans-serif;color:var(--mut);}
+
+  /* SPLIT (pourquoi) */
+  .why{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .why .head{max-width:30ch;}
+  .why h2{margin-top:18px;font:600 42px/1.1 Inter,sans-serif;letter-spacing:-.03em;}
+  .why h2 .hl{color:var(--accent);}
+  .why .wlead{margin-top:20px;max-width:56ch;font:400 17px/1.65 Inter,sans-serif;color:var(--mut);}
+  .why .wlead b{color:var(--ink);font-weight:600;}
+  .why .cols{margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:72px;}
+  .why .col h3{font:600 15px Inter,sans-serif;letter-spacing:.02em;margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+  .why .col h3 .dot{width:7px;height:7px;border-radius:50%;}
+  .why .item{padding:20px 0;border-top:1px solid var(--line2);}
+  .why .item b{display:block;font:600 16px Inter,sans-serif;margin-bottom:6px;}
+  .why .item p{font:400 14.5px/1.6 Inter,sans-serif;color:var(--mut);}
+
+  /* MÉTHODE */
+  .method{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .method h2{margin-top:18px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;max-width:18ch;}
+  .method .steps{margin-top:56px;display:grid;grid-template-columns:repeat(4,1fr);gap:40px;}
+  .method .step .si{font:600 13px Inter,sans-serif;color:var(--accent);letter-spacing:.1em;}
+  .method .step h4{margin-top:16px;padding-top:16px;border-top:2px solid var(--accent);font:600 18px Inter,sans-serif;}
+  .method .step p{margin-top:10px;font:400 14.5px/1.6 Inter,sans-serif;color:var(--mut);}
+
+  /* CAS */
+  .cases{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .cases h2{margin-top:18px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;}
+  .cases .grid{margin-top:56px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);}
+  .cases .c{background:var(--card);padding:34px 30px 30px;}
+  .cases .c .tag{font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2);}
+  .cases .c h4{margin-top:16px;font:600 24px Inter,sans-serif;letter-spacing:-.02em;}
+  .cases .c .q{margin-top:8px;font:400 14.5px Inter,sans-serif;color:var(--mut);}
+  .cases .c .kpis{margin-top:28px;display:flex;gap:24px;border-top:1px solid var(--line2);padding-top:20px;}
+  .cases .c .kpi .kn{font:600 24px Inter,sans-serif;letter-spacing:-.03em;}
+  .cases .c .kpi .kl{margin-top:4px;font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2);}
+
+  /* CTA */
+  .cta-sec{padding:120px 0;border-bottom:1px solid var(--line2);}
+  .cta-sec h2{font:600 60px/1.04 Inter,sans-serif;letter-spacing:-.035em;max-width:16ch;}
+  .cta-sec h2 .mut{color:var(--mut2);}
+  .cta-sec .actions{margin-top:40px;display:flex;gap:16px;}
+
+  /* FOOTER */
+  footer{padding:64px 0 48px;}
+  footer .top{display:flex;justify-content:space-between;gap:40px;}
+  footer .bi{max-width:34ch;}
+  footer .bi p{margin-top:16px;font:400 14.5px/1.6 Inter,sans-serif;color:var(--mut);}
+  footer .cols{display:flex;gap:72px;}
+  footer .fc h5{font:600 11px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2);margin-bottom:16px;}
+  footer .fc a{display:block;font:500 14px Inter,sans-serif;color:var(--mut);margin-bottom:10px;}
+  footer .fc a:hover{color:var(--accent);}
+  footer .base{margin-top:56px;border-top:1px solid var(--line2);padding-top:20px;display:flex;justify-content:space-between;font:500 12.5px Inter,sans-serif;color:var(--mut2);}
+
+  /* AUDIENCE — à qui on s'adresse */
+  .aud{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .aud h2{margin-top:18px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;max-width:20ch;}
+  .aud .tabs{display:flex;flex-wrap:wrap;gap:14px 30px;margin-top:48px;border-bottom:1px solid var(--line);}
+  .aud .tab{background:none;border:none;cursor:pointer;padding:0 0 18px;font:600 16px Inter,sans-serif;color:var(--mut2);position:relative;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:baseline;gap:8px;transition:color .18s;}
+  .aud .tab .tn{font:600 11px Inter,sans-serif;letter-spacing:.06em;color:inherit;opacity:.7;}
+  .aud .tab:hover{color:var(--mut);}
+  .aud .tab.on{color:var(--ink);}
+  .aud .tab::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.4,0,.2,1);}
+  .aud .tab.on::after{transform:scaleX(1);}
+  .aud .panel{display:none;margin-top:48px;}
+  .aud .panel.on{display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:start;min-height:210px;animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .aud .panel .pn{font:600 12px Inter,sans-serif;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;}
+  .aud .panel h3{margin-top:14px;font:600 34px Inter,sans-serif;letter-spacing:-.025em;}
+  .aud .panel p{margin-top:18px;font:400 16.5px/1.7 Inter,sans-serif;color:var(--mut);max-width:46ch;}
+  .aud .panel p b{color:var(--ink);font-weight:600;}
+  .aud .chips{display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;padding-top:6px;}
+  .aud .chips span{font:500 14px Inter,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:100px;padding:10px 18px;}
+  .aud .custom label{display:block;font:600 12px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2);margin-bottom:10px;}
+  .aud .crow{display:flex;gap:10px;max-width:400px;}
+  .aud .crow input{flex:1;font:400 15px Inter,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:3px;padding:14px 16px;outline:none;transition:border-color .18s,box-shadow .18s;}
+  .aud .crow input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #1b4be31f;}
+  .aud .crow button{flex:none;width:52px;background:var(--ink);color:#fff;border:none;border-radius:3px;font-size:18px;cursor:pointer;transition:background .2s;}
+  .aud .crow button:hover{background:var(--accent);}
+  .aud .cdone{margin-top:16px;font:500 14.5px Inter,sans-serif;color:var(--accent);min-height:21px;}
+
+  /* DELIVERABLES — après votre commande */
+  .deliv{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .deliv h2{margin-top:18px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;max-width:18ch;}
+  .deliv .lead{margin-top:20px;font:400 17px/1.6 Inter,sans-serif;color:var(--mut);max-width:54ch;}
+  .deliv .grid{margin-top:52px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);}
+  .deliv .d{background:var(--card);padding:30px 28px;}
+  .deliv .d .di{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);font:600 15px Inter,sans-serif;margin-bottom:18px;}
+  .deliv .d h4{font:600 17px Inter,sans-serif;letter-spacing:-.01em;}
+  .deliv .d p{margin-top:8px;font:400 14px/1.55 Inter,sans-serif;color:var(--mut);}
+  .mock{max-width:940px;margin:52px auto 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 28px 60px -34px rgba(20,20,16,.35);}
+  .mock-bar{display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid var(--line2);background:var(--bg2);}
+  .mock-bar .md{width:11px;height:11px;border-radius:50%;background:var(--line);}
+  .mock-bar .md:nth-child(1){background:#ff5f57;}
+  .mock-bar .md:nth-child(2){background:#febc2e;}
+  .mock-bar .md:nth-child(3){background:#28c840;}
+  .mock-bar .murl{margin-left:14px;font:500 12px Inter,sans-serif;color:var(--mut2);background:var(--card);border:1px solid var(--line2);border-radius:6px;padding:5px 16px;}
+  .mock-body{display:grid;grid-template-columns:1.7fr 1fr;}
+  .mock-main{padding:30px;border-right:1px solid var(--line2);}
+  .mock-h{font:600 19px Inter,sans-serif;letter-spacing:-.02em;}
+  .mock-subt{font:400 13px Inter,sans-serif;color:var(--mut2);margin-top:3px;}
+  .mock-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;}
+  .mock-kpi{border:1px solid var(--line2);border-radius:9px;padding:14px;}
+  .mock-kpi .v{font:600 23px Inter,sans-serif;letter-spacing:-.02em;}
+  .mock-kpi .v .up{font-size:11px;color:var(--accent);margin-left:5px;font-weight:600;}
+  .mock-kpi .l{font:500 10px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--mut2);margin-top:5px;}
+  .mock-chart{margin-top:24px;height:96px;}
+  .mock-chart svg{width:100%;height:100%;display:block;}
+  .mock-chart .area{fill:#1b4be314;opacity:0;transition:opacity .8s ease .5s;}
+  .mock-chart .line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:520;stroke-dashoffset:520;transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1) .25s;}
+  .mock.in .mock-chart .area{opacity:1;}
+  .mock.in .mock-chart .line{stroke-dashoffset:0;}
+  .mock-chat{padding:24px;background:var(--bg2);}
+  .mock-chat .ct{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mut2);margin-bottom:16px;}
+  .mock-msg{font:400 13px/1.45 Inter,sans-serif;padding:11px 14px;border-radius:13px;margin-bottom:8px;max-width:90%;}
+  .mock-msg.them{background:var(--card);border:1px solid var(--line2);border-bottom-left-radius:3px;}
+  .mock-msg.me{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:3px;}
+  .mock-time{font:500 10px Inter,sans-serif;color:var(--mut2);margin:0 0 14px 4px;}
+  @media(max-width:760px){.mock-body{grid-template-columns:1fr;}.mock-main{border-right:none;border-bottom:1px solid var(--line2);padding:24px;}.mock-chat{padding:20px;}}
+
+  /* MOTION — reveal au scroll */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:none;}
+
+  /* DELIVERABLES — carrousel horizontal sur mobile */
+  @media(max-width:760px){
+    .deliv .grid{display:flex;overflow-x:auto;border:none;gap:12px;padding-bottom:6px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);}
+    .deliv .grid::-webkit-scrollbar{display:none;}
+    .deliv .d{flex:0 0 78%;border:1px solid var(--line);border-radius:10px;}
+  }
+
+  /* TEMPLATES — défilement (marquee) */
+  .tpls{margin-top:48px;overflow:hidden;position:relative;}
+  .tpls::before,.tpls::after{content:"";position:absolute;top:0;bottom:0;width:70px;z-index:2;pointer-events:none;}
+  .tpls::before{left:0;background:linear-gradient(90deg,var(--bg),transparent);}
+  .tpls::after{right:0;background:linear-gradient(270deg,var(--bg),transparent);}
+  .tpls-track{display:flex;gap:20px;width:max-content;animation:marq 42s linear infinite;}
+  .tpls:hover .tpls-track{animation-play-state:paused;}
+  @keyframes marq{to{transform:translateX(-50%);}}
+  .tpl{width:306px;flex:none;border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#fff;box-shadow:0 16px 34px -26px rgba(20,20,16,.32);transition:transform .42s cubic-bezier(.2,.7,.2,1),box-shadow .42s;}
+  .tpl:hover{transform:translateY(-9px) scale(1.022);box-shadow:0 38px 66px -28px rgba(20,20,16,.52);}
+  .tpl-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--bg2);}
+  .tpl-bar i{width:8px;height:8px;border-radius:50%;}
+  .tpl-bar i.r{background:#ff5f57;}.tpl-bar i.y{background:#febc2e;}.tpl-bar i.g{background:#28c840;}
+  .tpl-url{margin-left:8px;font:500 9px Inter,sans-serif;color:var(--mut2);background:#fff;border:1px solid var(--line2);border-radius:4px;padding:3px 10px;}
+  .tpl-site{background:#fff;color:#1a1a18;}
+  .ts-head{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid #0000000f;}
+  .ts-logo{font-weight:700;font-size:12px;color:var(--tc);letter-spacing:-.02em;}
+  .ts-logo.serif{font-family:Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:0;}
+  .ts-nav{display:flex;gap:9px;font-size:7.5px;color:#9a9a93;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+  .ts-hero{padding:17px 14px 15px;}
+  .ts-hero.cen{text-align:center;}
+  .ts-ey{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--tc);font-weight:700;}
+  .ts-h{font-size:17px;font-weight:700;letter-spacing:-.025em;line-height:1.08;margin-top:5px;}
+  .ts-h.serif{font-family:Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:-.01em;}
+  .ts-p{font-size:8.5px;color:#86867e;line-height:1.5;margin-top:6px;}
+  .ts-btn{display:inline-block;margin-top:11px;background:var(--tc);color:#fff;font-size:8px;font-weight:700;padding:7px 13px;border-radius:6px;letter-spacing:.02em;}
+  .ts-btn.out{background:transparent;color:var(--tc);border:1px solid var(--tc);}
+  .ts-band{background:var(--tc);padding:16px 14px;}
+  .ts-band .ts-h,.ts-band .ts-ey{color:#fff;}
+  .ts-band .ts-ey{opacity:.8;}
+  .ts-band .ts-btn{background:#fff;color:var(--tc);margin-top:9px;}
+  .ts-grid{display:flex;gap:7px;padding:13px 14px 15px;}
+  .ts-card{flex:1;border:1px solid #00000010;border-radius:6px;overflow:hidden;background:#fff;}
+  .ts-card .im{height:28px;background:var(--tc);opacity:.18;}
+  .ts-card .cap{font-size:7.5px;padding:5px 6px 1px;color:#444;font-weight:600;}
+  .ts-card .pr{font-size:8px;color:var(--tc);font-weight:700;padding:0 6px 6px;}
+  .ts-list{padding:8px 14px 15px;}
+  .ts-li{display:flex;justify-content:space-between;align-items:center;font-size:9px;padding:6px 0;border-top:1px solid #0000000c;color:#5a5a54;}
+  .ts-li:first-child{border-top:none;}
+  .ts-li b{color:var(--tc);font-weight:700;font-size:9px;}
+  .ts-badges{display:flex;gap:6px;padding:12px 14px 15px;}
+  .ts-badge{flex:1;text-align:center;border:1px solid #00000010;border-radius:6px;padding:9px 4px;}
+  .ts-badge .bi{font-size:13px;}
+  .ts-badge .bt{font-size:7px;color:#5a5a54;font-weight:600;margin-top:3px;letter-spacing:.02em;}
+  .ts-imghero{position:relative;height:122px;overflow:hidden;background:var(--tg);}
+  .ts-imghero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .ts-imghero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.66));}
+  .ts-imghero .ov{position:absolute;left:0;right:0;bottom:0;padding:11px 13px;}
+  .ts-imghero .ov .ts-ey{color:rgba(255,255,255,.82);}
+  .ts-imghero .ov .ts-h{color:#fff;font-size:15px;line-height:1.07;margin-top:3px;}
+  .ts-meta{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid #0000000c;}
+  .ts-rate{font-size:8.5px;font-weight:700;color:#26261f;}
+  .ts-rate i{color:#f0a500;font-style:normal;}
+  .ts-rate span{color:#a2a29a;font-weight:500;}
+  .ts-cta2{font-size:8px;font-weight:700;color:#fff;background:var(--tc);padding:6px 12px;border-radius:20px;letter-spacing:.02em;}
+  .ts-cta2.out{background:transparent;color:var(--tc);border:1px solid var(--tc);}
+  /* Templates avancés (multi-sections) */
+  .ts-nav2{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #0000000d;}
+  .ts-nav2 .lk{display:flex;gap:10px;font-size:7.5px;color:#9a9a93;font-weight:600;text-transform:uppercase;letter-spacing:.04em;align-items:center;}
+  .ts-nav2 .lk .nb{background:var(--tc);color:#fff;padding:5px 9px;border-radius:5px;font-size:7px;letter-spacing:.02em;}
+  .ts-hero2{position:relative;height:148px;overflow:hidden;background:var(--tg);}
+  .ts-hero2 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .ts-hero2 .sc{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.74));}
+  .ts-hero2 .ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;}
+  .ts-hero2 .chip{position:absolute;top:11px;right:11px;background:rgba(255,255,255,.94);color:#1a1a18;font-size:7.5px;font-weight:700;padding:4px 9px;border-radius:20px;}
+  .ts-hero2 .chip i{color:#f0a500;font-style:normal;}
+  .ts-hero2 .ey2{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.82);font-weight:700;}
+  .ts-hero2 .h2x{font-size:17px;font-weight:700;color:#fff;line-height:1.06;margin-top:4px;letter-spacing:-.025em;}
+  .ts-hero2 .h2x.serif{font-family:Georgia,'Times New Roman',serif;font-weight:600;}
+  .ts-hero2 .row{display:flex;gap:6px;margin-top:10px;}
+  .ts-hero2 .b1{background:#fff;color:#1a1a18;font-size:7.5px;font-weight:700;padding:6px 11px;border-radius:6px;}
+  .ts-hero2 .b2{background:rgba(255,255,255,.16);color:#fff;font-size:7.5px;font-weight:600;padding:6px 11px;border-radius:6px;border:1px solid rgba(255,255,255,.32);}
+  .ts-stats{display:flex;border-bottom:1px solid #0000000d;}
+  .ts-stats div{flex:1;text-align:center;padding:11px 4px;border-right:1px solid #0000000a;}
+  .ts-stats div:last-child{border-right:none;}
+  .ts-stats .sv{font-size:13px;font-weight:700;color:var(--tc);letter-spacing:-.02em;}
+  .ts-stats .sl{font-size:6.5px;color:#9a9a93;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+  .ts-sec{padding:12px 14px;}
+  .ts-sec .st{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9a9a93;margin-bottom:9px;}
+  .ts-prod{display:flex;gap:7px;}
+  .ts-prod .pc{flex:1;border:1px solid #0000000d;border-radius:7px;overflow:hidden;background:#fff;}
+  .ts-prod .pc .pi{height:36px;background:#ece9e2;position:relative;overflow:hidden;}
+  .ts-prod .pc .pi img{width:100%;height:100%;object-fit:cover;}
+  .ts-prod .pc .pn{font-size:7px;font-weight:600;color:#444;padding:5px 5px 0;}
+  .ts-prod .pc .pp{font-size:7.5px;font-weight:700;color:var(--tc);padding:1px 5px 5px;}
+  .ts-testi{padding:12px 14px;display:flex;gap:9px;align-items:flex-start;border-top:1px solid #0000000a;}
+  .ts-testi img{width:26px;height:26px;border-radius:50%;flex:none;object-fit:cover;background:#ece9e2;}
+  .ts-testi .tq{font-size:8.5px;line-height:1.46;color:#444;font-style:italic;}
+  .ts-testi .tn{font-size:7px;color:#9a9a93;font-weight:600;margin-top:4px;display:block;}
+  .ts-foot{background:var(--tc);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;}
+  .ts-foot .ft{font-size:8.5px;font-weight:700;color:#fff;}
+  .ts-foot .fb{background:#fff;color:var(--tc);font-size:7.5px;font-weight:700;padding:6px 11px;border-radius:20px;}
+
+  /* AVIS */
+  .testi{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .cintro{margin-top:16px;font:400 17px/1.6 Inter,sans-serif;color:var(--mut);max-width:56ch;}
+  .rating{margin-top:24px;display:flex;align-items:center;gap:20px;}
+  .rscore{font:600 58px Inter,sans-serif;letter-spacing:-.045em;line-height:1;}
+  .rscore span{font-size:24px;color:var(--mut2);}
+  .rstars{color:var(--accent);letter-spacing:3px;font-size:18px;}
+  .rstars .hs{position:relative;color:var(--line);}
+  .rstars .hs::before{content:"★";position:absolute;left:0;top:0;width:50%;overflow:hidden;color:var(--accent);}
+  .rcount{margin-top:6px;font:500 13px Inter,sans-serif;color:var(--mut2);}
+  .tscroll{margin-top:44px;display:flex;gap:20px;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;}
+  .tscroll::-webkit-scrollbar{display:none;}
+  .tcard{flex:0 0 360px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 28px;display:flex;flex-direction:column;}
+  .tcard .stars{color:var(--accent);letter-spacing:3px;font-size:14px;}
+  .tcard .stars .half{opacity:.38;}
+  .tcard q{margin-top:14px;font:400 16px/1.62 Inter,sans-serif;color:var(--ink);quotes:"«""»";flex:1;}
+  .tcard .twho{margin-top:24px;display:flex;align-items:center;gap:13px;}
+  .tcard .twho img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:var(--bg2);}
+  .tcard .twho b{display:block;font:600 14.5px Inter,sans-serif;letter-spacing:-.01em;}
+  .tcard .twho span{font:500 12.5px Inter,sans-serif;color:var(--mut2);}
+  .swipe-hint{margin-top:18px;font:600 12px Inter,sans-serif;letter-spacing:.04em;color:var(--mut2);text-align:center;}
+  .swipe-hint::after{content:"";display:inline-block;}
+  .mobonly{display:none;}
+  @media(max-width:760px){.mobonly{display:block;}.tcard{flex:0 0 85%;}.rscore{font-size:46px;}}
+
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important;}.tpls-track{animation:none!important;}.bdot.pulse{animation:none!important;}.mock-chart .line{stroke-dashoffset:0!important;}.mock-chart .area{opacity:1!important;}}
+
+  /* PRESENCE — map monde */
+  .pres{padding:100px 0;border-bottom:1px solid var(--line2);text-align:center;}
+  .pres h2{margin-top:16px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;}
+  .pres .sub{margin-top:18px;font:400 17px/1.6 Inter,sans-serif;color:var(--mut);max-width:46ch;margin-left:auto;margin-right:auto;}
+  .globe{width:100%;max-width:520px;height:520px;margin:44px auto 0;position:relative;}
+  .globe canvas{display:block;}
+  @media(max-width:600px){.globe{height:360px;}}
+  .map{position:relative;max-width:820px;margin:52px auto 0;}
+  .map svg{width:100%;height:auto;display:block;}
+  .map .land{fill:#14141012;stroke:#14141026;stroke-width:1;}
+  .map .grid-l{stroke:#1414100f;stroke-width:1;}
+  .map .pin{fill:var(--accent);}
+  .map .ring{fill:none;stroke:var(--accent);stroke-width:2;transform-origin:center;animation:pulse 2.4s ease-out infinite;}
+  @keyframes pulse{0%{r:6;opacity:.7}100%{r:26;opacity:0}}
+  .map .lbl{font:600 12px Inter,sans-serif;fill:var(--ink);letter-spacing:.12em;text-transform:uppercase;}
+  .map .city{fill:#14141040;}
+  .map .cityl{font:500 10.5px Inter,sans-serif;fill:var(--mut2);letter-spacing:.08em;}
+  .pres .flag{margin-top:36px;display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:100px;padding:10px 20px;font:500 13px Inter,sans-serif;color:var(--ink);}
+  .pres .flag .sd{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+
+  /* ACCORDÉON (Pourquoi · Méthode · FAQ) */
+  .acc{margin-top:48px;border-top:1px solid var(--line);}
+  .acc-item{border-bottom:1px solid var(--line2);}
+  .acc-h{width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:22px;padding:26px 0;text-align:left;}
+  .acc-h .ai{font:600 13px Inter,sans-serif;color:var(--accent);letter-spacing:.08em;min-width:26px;}
+  .acc-h .at{flex:1;font:600 22px Inter,sans-serif;letter-spacing:-.02em;color:var(--ink);transition:color .18s;}
+  .acc-h:hover .at{color:var(--accent);}
+  .acc-h .ax{width:22px;height:22px;position:relative;flex:none;}
+  .acc-h .ax::before,.acc-h .ax::after{content:"";position:absolute;background:var(--accent);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+  .acc-h .ax::before{top:10px;left:3px;width:16px;height:2px;}
+  .acc-h .ax::after{top:3px;left:10px;width:2px;height:16px;}
+  .acc-item.open .ax::after{transform:scaleY(0);}
+  .acc-b{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);}
+  .acc-item.open .acc-b{max-height:260px;}
+  .acc-b p{padding:0 48px 28px 48px;font:400 15.5px/1.7 Inter,sans-serif;color:var(--mut);max-width:74ch;}
+  .faq{padding:104px 0;border-bottom:1px solid var(--line2);}
+  .faq h2{margin-top:18px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;max-width:18ch;}
+  .wgrid{margin-top:52px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .wcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px 30px 32px;overflow:hidden;transition:transform .45s cubic-bezier(.2,.7,.2,1),box-shadow .45s,border-color .45s;}
+  .wcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#6f8bff);transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.4,0,.2,1);}
+  .wcard.on{transform:translateY(-6px);box-shadow:0 28px 52px -34px rgba(27,75,227,.45);border-color:#1b4be355;}
+  .wcard.on::before{transform:scaleX(1);}
+  .wic{width:46px;height:46px;border-radius:13px;background:#1b4be312;color:var(--accent);display:flex;align-items:center;justify-content:center;transition:transform .45s cubic-bezier(.2,.7,.2,1),background .45s,color .45s;}
+  .wcard.on .wic{transform:scale(1.08) rotate(-4deg);background:var(--accent);color:#fff;}
+  .wic svg{width:23px;height:23px;}
+  .wcard .wn{position:absolute;top:26px;right:28px;font:700 30px Inter,sans-serif;color:var(--line);letter-spacing:-.04em;transition:color .45s;}
+  .wcard.on .wn{color:#1b4be326;}
+  .wcard h3{margin-top:20px;font:600 19px Inter,sans-serif;letter-spacing:-.02em;}
+  .wcard p{margin-top:10px;font:400 14.5px/1.62 Inter,sans-serif;color:var(--mut);}
+  .tl{margin-top:48px;max-width:780px;}
+  .tl-item{border-bottom:1px solid var(--line2);}
+  .tl-h{width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:18px;padding:20px 0;text-align:left;}
+  .tl-num{width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif;transition:background .25s,color .25s;}
+  .tl-item.open .tl-num{background:var(--accent);color:#fff;}
+  .tl-t{flex:1;font:600 20px Inter,sans-serif;letter-spacing:-.02em;color:var(--ink);}
+  .tl-x{width:20px;height:20px;flex:none;position:relative;}
+  .tl-x::before,.tl-x::after{content:"";position:absolute;background:var(--accent);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+  .tl-x::before{top:9px;left:2px;width:16px;height:2px;}
+  .tl-x::after{top:2px;left:9px;width:2px;height:16px;}
+  .tl-item.open .tl-x::after{transform:scaleY(0);}
+  .tl-b{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);}
+  .tl-item.open .tl-b{max-height:220px;}
+  .tl-b p{padding:0 0 24px 60px;font:400 15.5px/1.7 Inter,sans-serif;color:var(--mut);max-width:62ch;}
+  @media(max-width:600px){.tl-b p{padding-left:0;}}
+  .case-link{display:inline-flex;align-items:center;gap:7px;margin-top:24px;font:600 13px Inter,sans-serif;color:var(--accent);letter-spacing:.02em;}
+  .cases .c{cursor:pointer;transition:background .18s;}
+  .cases .c:hover{background:#fff;}
+
+  /* BURGER + MENU MOBILE */
+  .burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;background:none;border:none;cursor:pointer;}
+  .burger span{display:block;height:2px;width:22px;margin-left:auto;background:var(--ink);transition:transform .3s,opacity .25s;}
+  .burger[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .burger[aria-expanded="true"] span:nth-child(2){opacity:0;}
+  .burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  .mmenu{position:fixed;top:0;right:0;bottom:0;width:min(80vw,310px);background:var(--bg);border-left:1px solid var(--line);z-index:60;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:80px 32px 40px;transform:translateX(100%);visibility:hidden;transition:transform .4s cubic-bezier(.55,0,.25,1),visibility 0s linear .4s;}
+  .mmenu.open{transform:translateX(0);visibility:visible;transition:transform .4s cubic-bezier(.55,0,.25,1);}
+  .mmenu a{font:600 22px Inter,sans-serif;letter-spacing:-.02em;color:var(--ink);padding:14px 0;border-bottom:1px solid var(--line2);}
+  .mmenu a:active{color:var(--accent);}
+  .mmenu .mm-cta{margin-top:18px;border-bottom:none;background:var(--ink);color:var(--bg);font-size:14px;font-weight:500;letter-spacing:0;padding:16px 20px;border-radius:2px;text-align:center;}
+  .mback{position:fixed;inset:0;background:#14141066;z-index:55;opacity:0;visibility:hidden;transition:opacity .3s;}
+  .mback.open{opacity:1;visibility:visible;}
+
+  .modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s linear .3s;}
+  .modal.open{opacity:1;visibility:visible;transition:opacity .3s;}
+  .modal-bd{position:absolute;inset:0;background:#14141073;}
+  .modal-card{position:relative;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:40px;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+  .modal.open .modal-card{transform:none;}
+  .modal-x{position:absolute;top:18px;right:18px;width:34px;height:34px;border:1px solid var(--line);background:none;border-radius:50%;cursor:pointer;font-size:18px;color:var(--mut);line-height:1;display:flex;align-items:center;justify-content:center;}
+  .modal-x:hover{border-color:var(--accent);color:var(--accent);}
+  .modal-card h3{font:600 28px Inter,sans-serif;letter-spacing:-.025em;margin-bottom:6px;}
+  .modal-card .msub{font:400 14.5px/1.55 Inter,sans-serif;color:var(--mut);margin-bottom:26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font:600 12px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2);margin-bottom:7px;}
+  .field input,.field textarea{width:100%;font:400 15px Inter,sans-serif;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:2px;padding:12px 14px;outline:none;transition:border-color .18s;}
+  .field input:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px #1b4be31f;}
+  .field textarea{resize:vertical;min-height:80px;}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .submit{width:100%;margin-top:8px;background:var(--ink);color:var(--bg);font:500 15px Inter,sans-serif;padding:16px;border:none;border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s;}
+  .submit:hover{background:var(--accent);}
+  .submit:disabled{opacity:.55;cursor:default;}
+  .reassure{margin-top:16px;text-align:center;font:500 12px Inter,sans-serif;color:var(--mut2);}
+  .reassure b{color:var(--accent);}
+  .calalt{margin-top:14px;text-align:center;font:400 13px Inter,sans-serif;color:var(--mut2);}
+  .calalt a{color:var(--accent);font-weight:600;}
+  .msuccess{display:none;text-align:center;padding:20px 0 8px;}
+  .modal-card.done .mform{display:none;}
+  .modal-card.done .msuccess{display:block;}
+  .mcheck{width:56px;height:56px;border-radius:50%;background:#1b4be314;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 22px;}
+  @media (max-width:520px){.modal-card{padding:30px 22px;}.frow{grid-template-columns:1fr;}}
+  #caseBody .ey{margin-bottom:8px;}
+  #caseBody h3{margin-bottom:6px;}
+  #caseBody .cq{font:400 16px/1.5 Inter,sans-serif;color:var(--mut);margin-bottom:24px;}
+  #caseBody .cs{padding:18px 0;border-top:1px solid var(--line2);}
+  #caseBody .cs h4{font:600 13px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+  #caseBody .cs p{font:400 15px/1.65 Inter,sans-serif;color:var(--ink);}
+  #caseBody .ckpis{display:flex;gap:26px;margin-top:24px;border-top:1px solid var(--line);padding-top:22px;}
+  #caseBody .ckpis .kn{font:600 26px Inter,sans-serif;letter-spacing:-.03em;}
+  #caseBody .ckpis .kl{margin-top:4px;font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2);}
+
+  @media (max-width:880px){
+    :root{--pad:24px;}
+    .nav-links{display:none;}
+    .burger{display:flex;}
+    nav .row{height:64px;}
+    .hero{padding:60px 0 56px;}
+    .hero h1{font-size:46px;line-height:1.05;}
+    .hero .sub{font-size:17px;margin-top:24px;}
+    .hero .actions{flex-wrap:wrap;}
+    .hero .meta{flex-direction:column;gap:8px;margin-top:44px;}
+    .nums,.why,.method,.cases,.aud,.deliv,.pres{padding:64px 0;}
+    .nums .grid{grid-template-columns:1fr 1fr;}
+    .why h2,.method h2,.cases h2,.aud h2,.deliv h2,.pres h2{font-size:34px;}
+    .why .cols{grid-template-columns:1fr;gap:44px;}
+    .why .wgrid{grid-template-columns:1fr;gap:12px;}
+    .why .wcard{padding:24px 22px 26px;}
+    .why h2{font-size:29px;}
+    .why .wlead{font-size:15.5px;}
+    .method .steps{grid-template-columns:1fr 1fr;gap:32px 28px;}
+    .cases .grid,.feats{grid-template-columns:1fr;}
+    .deliv .grid{grid-template-columns:1fr 1fr;}
+    .hero .badge{font-size:11px;letter-spacing:.01em;padding:9px 14px;border-radius:12px;line-height:1.45;align-items:flex-start;max-width:100%;}
+    .hero .badge .bdot{margin-top:4px;}
+    .aud .tabs{gap:22px;}
+    .aud .tab{font-size:14px;}
+    .aud .panel.on{grid-template-columns:1fr;gap:26px;}
+    .aud .panel h3{font-size:27px;}
+    .cta-sec{padding:80px 0;}
+    .cta-sec h2{font-size:40px;}
+    footer .top{flex-direction:column;gap:36px;}
+    footer .cols{gap:48px;}
+    footer .base{flex-direction:column;gap:10px;}
+  }
+  @media (max-width:460px){
+    .hero h1{font-size:38px;}
+    .nums .grid{grid-template-columns:1fr;}
+    .method .steps{grid-template-columns:1fr;}
+    .deliv .grid{grid-template-columns:1fr;}
+  }
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "LocalBusiness", "name": "Wyngo", "description": "Cabinet de présence digitale : création de sites web sur-mesure et référencement local pour les professionnels de proximité.", "url": "https://wyngo.fr", "email": "contact@wyngo.fr", "areaServed": "France", "address": {"@type": "PostalAddress", "addressLocality": "Toulouse", "addressCountry": "FR"}, "founder": {"@type": "Person", "name": "Hugo Malet"}, "subjectOf": {"@type": "NewsArticle", "headline": "Découverte — Wyngo, le cabinet qui conçoit votre site chez vous", "url": "https://leradartech.fr/article/wyngo-decouverte-2026/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Qu'est-ce qui est inclus dans le prix ?", "acceptedAnswer": {"@type": "Answer", "text": "L'intégralité du travail : une journée d'immersion, la rédaction de vos textes, la production de vos photos, l'optimisation du référencement local, et la remise du code source — le site vous appartient en entier."}}, {"@type": "Question", "name": "Comment être sûr d'un retour sur investissement ?", "acceptedAnswer": {"@type": "Answer", "text": "Parce qu'on ne construit pas une vitrine mais un outil de conversion : chaque page, chaque image, chaque ligne a un rôle — faire passer un visiteur à l'action. Et on mesure les résultats chaque mois."}}, {"@type": "Question", "name": "Quelles garanties en travaillant avec vous ?", "acceptedAnswer": {"@type": "Answer", "text": "0€ ne vous est demandé avant que vous validiez la première maquette. Vous ne payez que si le travail vous convainc. Le code source vous est remis : vous n'êtes jamais prisonnier."}}, {"@type": "Question", "name": "Combien de temps pour être en ligne ?", "acceptedAnswer": {"@type": "Answer", "text": "Première maquette sous 48h, mise en ligne sous 21 jours. On va vite parce qu'on ne sélectionne que 9 entrepreneurs par trimestre — toute notre attention est sur votre projet."}}]}</script>
+</head>
+<body>
+
+<nav><div class="wrap row">
+  <div class="wmwrap"><span class="wm">Wyngo</span><span class="wm-tag">Cabinet de présence digitale</span></div>
+  <div class="nav-links">
+    <a href="#why">Pourquoi Wyngo</a>
+    <a href="#method">Méthode</a>
+    <a href="#cases">Études de cas</a>
+    <a href="#contact" class="nav-cta">Soumettre une candidature</a>
+  </div>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+</div></nav>
+<div class="mmenu" id="mmenu" aria-hidden="true">
+  <a href="#why" data-mm>Pourquoi Wyngo</a>
+  <a href="#method" data-mm>Méthode</a>
+  <a href="#cases" data-mm>Études de cas</a>
+  <a href="#contact" data-mm class="mm-cta">Soumettre une candidature →</a>
+</div>
+
+<header class="hero"><div class="wrap">
+  <div class="badge"><span class="bdot pulse"></span><b>Cabinet ouvert</b> · nouveaux projets ce trimestre</div>
+  <h1>Votre présence en ligne, traitée comme <span class="mut">un actif.</span></h1>
+  <p class="sub">Wyngo conçoit des sites qui travaillent — trouvés sur Google, pensés pour convertir, suivis chaque mois. Pas une vitrine de plus.</p>
+  <div class="actions">
+    <a href="#contact" class="btn">Soumettre une candidature →</a>
+    <a href="#" class="btn-ghost" data-cal>Réserver un appel</a>
+  </div>
+</div></header>
+
+<section class="sum"><div class="wrap">
+  <div class="ey">En bref</div>
+  <h2>Ce que fait Wyngo, simplement.</h2>
+  <p class="sumlead">On conçoit votre site, on le met en ligne et on le fait vivre — pour qu'il vous trouve des clients, pas qu'il dorme dans un coin d'internet.</p>
+  <div class="sumrow">
+    <div class="sumstep"><span class="ss">01</span><b>On crée votre site</b><span class="sd">Sur-mesure, après une journée d'immersion dans votre métier.</span></div>
+    <div class="sumstep"><span class="ss">02</span><b>On vous rend visible</b><span class="sd">Référencement Google local : vos clients vous trouvent enfin.</span></div>
+    <div class="sumstep"><span class="ss">03</span><b>On vous amène des clients</b><span class="sd">Un site pensé pour convertir, suivi et optimisé chaque mois.</span></div>
+  </div>
+</div></section>
+
+<section class="nums tone"><div class="wrap">
+  <div class="lab">Le cabinet, en chiffres</div>
+  <div class="grid" style="margin-top:28px;">
+    <div class="cell"><div class="n">48<s>h</s></div><div class="d">pour livrer votre première maquette</div></div>
+    <div class="cell"><div class="n">0<s>€</s></div><div class="d">d'acompte avant validation</div></div>
+    <div class="cell"><div class="n">1<s> jour</s></div><div class="d">d'immersion sur place dans votre activité</div></div>
+    <div class="cell"><div class="n">21<s>j</s></div><div class="d">pour mettre votre site en ligne</div></div>
+  </div>
+</div></section>
+
+<section class="aud" id="audience"><div class="wrap">
+  <div class="ey">À qui on s'adresse</div>
+  <h2>Notre travail commence par comprendre le vôtre.</h2>
+  <div class="tabs" data-tabs>
+    <button class="tab on" data-tab="0"><span class="tn">01</span>Artisans &amp; commerçants</button>
+    <button class="tab" data-tab="1"><span class="tn">02</span>Startups &amp; PME</button>
+    <button class="tab" data-tab="2"><span class="tn">03</span>Professions libérales</button>
+    <button class="tab" data-tab="3"><span class="tn">04</span>Autre · sur-mesure</button>
+  </div>
+  <div class="panel on" data-panel="0">
+    <div><div class="pn">Profil 01</div><h3>Artisans &amp; commerçants</h3><p>Votre savoir-faire mérite d'être trouvé sur Google <b>avant vos concurrents locaux</b>. Site vitrine, fiche Google Business optimisée, avis automatisés : on construit votre présence locale, pierre par pierre.</p></div>
+    <div class="chips"><span>Boulanger</span><span>Plombier</span><span>Coiffeur</span><span>Garagiste</span><span>Fleuriste</span><span>Restaurateur</span><span>Menuisier</span><span>Esthéticienne</span></div>
+  </div>
+  <div class="panel" data-panel="1">
+    <div><div class="pn">Profil 02</div><h3>Startups &amp; PME</h3><p>Une présence qui inspire confiance et <b>convertit</b>. Message clair, preuve sociale, parcours pensé pour transformer le visiteur en client — pas juste une jolie page.</p></div>
+    <div class="chips"><span>SaaS B2B</span><span>Marketplace</span><span>App mobile</span><span>Fintech</span><span>Service en ligne</span><span>Agence</span></div>
+  </div>
+  <div class="panel" data-panel="2">
+    <div><div class="pn">Profil 03</div><h3>Professions libérales</h3><p>Votre <b>crédibilité se joue en ligne</b>. Un site sobre et rassurant qui reflète votre expertise dès la première seconde, et capte les demandes qualifiées.</p></div>
+    <div class="chips"><span>Avocat</span><span>Médecin</span><span>Notaire</span><span>Architecte</span><span>Consultant</span><span>Expert-comptable</span><span>Coach</span></div>
+  </div>
+  <div class="panel" data-panel="3">
+    <div><div class="pn">Profil 04</div><h3>Autre · sur-mesure</h3><p>Quel que soit votre univers, on conçoit un site qui ne ressemble qu'à vous. <b>Dites-nous votre métier</b> — on s'occupe du reste.</p></div>
+    <div class="custom">
+      <label for="customJob">Votre métier</label>
+      <div class="crow"><input id="customJob" type="text" placeholder="Ex. caviste, ostéopathe, traiteur…" autocomplete="off"><button id="customGo" type="button" aria-label="Valider">→</button></div>
+      <div class="cdone" id="customDone"></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="why tone" id="why"><div class="wrap">
+  <div class="head">
+    <div class="ey">Pourquoi Wyngo</div>
+    <h2>La plupart des sites sont des brochures.<br>Nous construisons des <span class="hl">machines à clients</span>.</h2>
+    <p class="wlead">Beau ne suffit pas. Un site doit être <b>trouvé</b>, comprendre votre métier, <b>convaincre en 3 secondes</b> — et continuer à performer mois après mois. C'est tout ce qui nous sépare d'une agence classique.</p>
+  </div>
+  <div class="wgrid">
+    <div class="wcard"><span class="wn">01</span><div class="wic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><h3>Trouvé là où vos clients cherchent</h3><p>SEO local et national pensé dès la conception. On vise les requêtes qui convertissent — un site absent de Google reste une vitrine dans une rue déserte.</p></div>
+    <div class="wcard"><span class="wn">02</span><div class="wic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg></div><h3>Une présence qui parle avant vous</h3><p>Hiérarchie claire, message-clé en haut, preuve sociale immédiate. Le visiteur comprend qui vous êtes en 3 secondes — le temps qu'il vous accorde.</p></div>
+    <div class="wcard"><span class="wn">03</span><div class="wic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></div><h3>On vient chez vous, sur le terrain</h3><p>Une journée d'immersion dans votre boutique, votre atelier ou votre cabinet. On conçoit un site qui vous ressemble vraiment — pas un template de plus.</p></div>
+    <div class="wcard"><span class="wn">04</span><div class="wic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></div><h3>On reste, et on fait performer</h3><p>On ne disparaît pas après la livraison. Suivi mensuel, ajustements, mesure des résultats : votre présence est un actif qu'on entretient.</p></div>
+  </div>
+</div></section>
+
+<section class="method" id="method"><div class="wrap">
+  <div class="ey">Notre méthode</div>
+  <h2>Quatre étapes, de la candidature à la mise en ligne.</h2>
+  <div class="tl" data-tl>
+    <div class="tl-item open"><button class="tl-h"><span class="tl-num">01</span><span class="tl-t">Candidature</span><span class="tl-x"></span></button><div class="tl-b"><p>Vous postulez en 2 minutes. On sélectionne 9 entrepreneurs par trimestre — un nombre volontairement restreint pour garantir l'attention que mérite votre projet.</p></div></div>
+    <div class="tl-item"><button class="tl-h"><span class="tl-num">02</span><span class="tl-t">Immersion sur le terrain</span><span class="tl-x"></span></button><div class="tl-b"><p>Une journée sur place, dans votre boutique ou atelier. On observe votre métier, votre clientèle, ce qui vous rend unique — avant d'écrire la moindre ligne.</p></div></div>
+    <div class="tl-item"><button class="tl-h"><span class="tl-num">03</span><span class="tl-t">Conception</span><span class="tl-x"></span></button><div class="tl-b"><p>Première maquette sous 48h. Textes, photos, référencement : on s'occupe de tout. Et 0€ ne vous est demandé avant que vous validiez.</p></div></div>
+    <div class="tl-item"><button class="tl-h"><span class="tl-num">04</span><span class="tl-t">Croissance</span><span class="tl-x"></span></button><div class="tl-b"><p>Mise en ligne sous 21 jours, puis un suivi mensuel pour faire performer le site dans la durée. On reste à vos côtés.</p></div></div>
+  </div>
+</div></section>
+
+<section class="deliv tone" id="deliverables"><div class="wrap">
+  <div class="ey">Après votre commande</div>
+  <h2>Tout ce que vous recevez, dès la livraison.</h2>
+  <p class="lead">Pas un produit en plus — juste ce qu'il faut pour piloter votre site et notre collaboration, dès le premier jour. À commencer par votre espace client.</p>
+  <div class="mock">
+    <div class="mock-bar"><span class="md"></span><span class="md"></span><span class="md"></span><span class="murl">espace.wyngo.fr</span></div>
+    <div class="mock-body">
+      <div class="mock-main">
+        <div class="mock-h">Bonjour, Marie</div>
+        <div class="mock-subt">Voici la performance de votre site cette semaine.</div>
+        <div class="mock-kpis">
+          <div class="mock-kpi"><div class="v">1 248<span class="up">+18%</span></div><div class="l">Visites</div></div>
+          <div class="mock-kpi"><div class="v">37<span class="up">+9</span></div><div class="l">Demandes</div></div>
+          <div class="mock-kpi"><div class="v">#1<span class="up">Local</span></div><div class="l">Position Google</div></div>
+        </div>
+        <div class="mock-chart">
+          <svg viewBox="0 0 320 96" preserveAspectRatio="none" aria-hidden="true">
+            <path class="area" d="M0,78 L40,68 L80,72 L120,52 L160,58 L200,36 L240,44 L280,26 L320,34 L320,96 L0,96 Z"/>
+            <path class="line" d="M0,78 L40,68 L80,72 L120,52 L160,58 L200,36 L240,44 L280,26 L320,34"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mock-chat">
+        <div class="ct">Messagerie · Wyngo</div>
+        <div class="mock-msg them">Bonjour Marie ! La nouvelle page « Spécialités » est en ligne.</div>
+        <div class="mock-time">Wyngo · 09:14</div>
+        <div class="mock-msg me">Super, merci ! On reçoit déjà plus d'appels.</div>
+        <div class="mock-msg them">Parfait. Je vous prépare le récap du mois pour vendredi.</div>
+        <div class="mock-time">Wyngo · 09:21</div>
+      </div>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="d"><div class="di">01</div><h4>Le site, et son code source</h4><p>Livré clé en main. Le site vous appartient en intégralité — code remis à la livraison.</p></div>
+    <div class="d"><div class="di">02</div><h4>Référencement local activé</h4><p>Fiche Google Business optimisée et SEO local pensé dès la conception.</p></div>
+    <div class="d"><div class="di">03</div><h4>Textes &amp; photos inclus</h4><p>Rédaction et production visuelle comprises. Vous n'avez rien à préparer.</p></div>
+    <div class="d"><div class="di">04</div><h4>Espace de suivi</h4><p>Un tableau de bord pour suivre vos statistiques et notre collaboration en temps réel.</p></div>
+    <div class="d"><div class="di">05</div><h4>Suivi mensuel</h4><p>On ne disparaît pas après la livraison. On fait performer le site chaque mois.</p></div>
+    <div class="d"><div class="di">06</div><h4>Un interlocuteur unique</h4><p>Votre contact direct chez Wyngo. Réponse personnelle sous 24h, sans intermédiaire.</p></div>
+  </div>
+</div></section>
+
+<section class="cases" id="cases"><div class="wrap">
+  <div class="ey">Études de cas</div>
+  <h2>Des sites taillés pour chaque métier.</h2>
+  <p class="cintro">Un aperçu de réalisations Wyngo — chaque site conçu sur-mesure pour son activité, de la boulangerie au cabinet d'avocats.</p>
+  <div class="tpls" aria-hidden="true"><div class="tpls-track" id="tplsTrack"></div></div>
+</div></section>
+
+<section class="testi tone" id="avis"><div class="wrap">
+  <div class="ey">Ils en parlent</div>
+  <div class="rating">
+    <div class="rscore">4,5<span>/5</span></div>
+    <div class="rmeta"><div class="rstars">★★★★<span class="hs">★</span></div><div class="rcount">Note moyenne · 40+ entrepreneurs accompagnés</div></div>
+  </div>
+  <div class="tscroll">
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <q>En 3 mois, on est passés d'invisibles à premiers sur « boulangerie Toulouse ». Ce qui m'a marquée : ils sont venus une journée à la boutique avant de commencer. Le site nous ressemble vraiment.</q>
+      <div class="twho"><img src="https://i.pravatar.cc/96?img=47" alt="" loading="lazy"><div><b>Marie L.</b><span>Boulangerie · Toulouse</span></div></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <q>Je ne croyais pas qu'un site changerait quoi que ce soit. Aujourd'hui la moitié de mes nouveaux clients viennent de Google — et je n'ai eu à m'occuper de rien, Wyngo a tout géré.</q>
+      <div class="twho"><img src="https://i.pravatar.cc/96?img=12" alt="" loading="lazy"><div><b>Karim B.</b><span>Plomberie · Lyon</span></div></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <q>Sobre, crédible, à mon image. Les demandes qualifiées ont doublé, et je n'ai jamais eu à relancer pour obtenir une réponse — toujours sous 24h. Un vrai partenaire.</q>
+      <div class="twho"><img src="https://i.pravatar.cc/96?img=32" alt="" loading="lazy"><div><b>Sophie M.</b><span>Cabinet d'avocats · Bordeaux</span></div></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★<span class="half">★</span></div>
+      <q>Le rendu est superbe et surtout ça convertit. Seul bémol : j'aurais aimé démarrer plus tôt. Trois mois après, mon agenda de cours est complet.</q>
+      <div class="twho"><img src="https://i.pravatar.cc/96?img=5" alt="" loading="lazy"><div><b>Inès R.</b><span>Studio de yoga · Nantes</span></div></div>
+    </div>
+    <div class="tcard">
+      <div class="stars">★★★★★</div>
+      <q>Enfin un site qui inspire confiance aux clients avant même qu'ils m'appellent. Le devis se remplit tout seul depuis le site, je gagne un temps fou.</q>
+      <div class="twho"><img src="https://i.pravatar.cc/96?img=68" alt="" loading="lazy"><div><b>Thomas D.</b><span>Garage automobile · Lille</span></div></div>
+    </div>
+  </div>
+  <div class="swipe-hint mobonly">Faites glisser pour lire les avis →</div>
+</div></section>
+
+<style>
+  .press{padding:var(--pad) 0;}
+  .press h2{margin-top:16px;font:600 46px/1.08 Inter,sans-serif;letter-spacing:-.03em;}
+  .press .sub{margin-top:18px;font:400 18px/1.6 Inter,sans-serif;color:var(--mut);max-width:52ch;}
+  .pcard{position:relative;display:flex;gap:30px;align-items:center;max-width:768px;margin:42px auto 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:34px 38px 34px 34px;overflow:hidden;transition:border-color .28s ease,transform .28s ease,box-shadow .28s ease;}
+  .pcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#9a2a2a;}
+  .pcard:hover{border-color:#9a2a2a5c;transform:translateY(-5px);box-shadow:0 26px 54px -30px #14141059;}
+  .plogo{position:relative;width:112px;height:112px;flex:none;display:grid;place-items:center;}
+  .plogo img{width:70px;height:70px;position:relative;z-index:2;filter:drop-shadow(0 1px 0 #fff);}
+  .plogo .ring{position:absolute;left:50%;top:50%;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:1.5px solid #9a2a2a;opacity:0;animation:pradar 3.4s cubic-bezier(.2,.6,.3,1) infinite;}
+  .plogo .ring:nth-child(2){animation-delay:1.13s;}
+  .plogo .ring:nth-child(3){animation-delay:2.26s;}
+  @keyframes pradar{0%{opacity:.5;transform:scale(.42);}70%{opacity:.09;}100%{opacity:0;transform:scale(1.32);}}
+  .pcard:hover .ring{animation-duration:2.3s;}
+  @media(prefers-reduced-motion:reduce){.plogo .ring{animation:none;opacity:.14;}}
+  .pbody{flex:1;min-width:0;}
+  .psrc{display:inline-block;font:600 19px Inter,sans-serif;letter-spacing:-.01em;color:var(--ink);}
+  .psrc b{color:#9a2a2a;font-weight:600;}
+  .ptag{display:block;margin-top:5px;font:600 11px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2);}
+  .ptitle{display:block;margin:14px 0 10px;font:600 23px/1.32 Inter,sans-serif;letter-spacing:-.02em;color:var(--ink);}
+  .pex{display:block;font:400 14.5px/1.62 Inter,sans-serif;color:var(--mut);margin-bottom:20px;}
+  .pcta{display:inline-flex;align-items:center;gap:8px;font:600 14px Inter,sans-serif;color:#9a2a2a;transition:gap .2s ease;}
+  .pcta svg{transition:transform .2s ease;}
+  .pcard:hover .pcta{gap:13px;}
+  @media(max-width:760px){.press{padding:64px 0;}.press h2{font-size:34px;}.pcard{flex-direction:column;text-align:center;gap:20px;padding:32px 24px;}.pcard::before{left:0;right:0;top:0;bottom:auto;width:auto;height:3px;}.pcta{justify-content:center;}}
+</style>
+<section class="press" id="presse"><div class="wrap">
+  <div class="ey">Vu dans la presse</div>
+  <h2>On parle de nous.</h2>
+  <p class="sub">La presse tech s'intéresse à notre façon de travailler — sur le terrain, au plus près de nos clients.</p>
+  <a class="pcard" href="https://leradartech.fr/article/wyngo-decouverte-2026/" target="_blank" rel="noopener">
+    <span class="plogo"><span class="ring"></span><span class="ring"></span><span class="ring"></span><img src="/logo-radar.png" alt="Le Radar Tech" loading="lazy"></span>
+    <span class="pbody">
+      <span class="psrc">Le Radar <b>Tech</b></span>
+      <span class="ptag">Média tech · Découverte</span>
+      <span class="ptitle">« Wyngo, le cabinet qui conçoit votre site chez vous »</span>
+      <span class="pex">Un reportage à contre-courant : des visites clients sur place, un travail sur-mesure parti d'un petit bureau étudiant, et la technologie mise au service du contact humain.</span>
+      <span class="pcta">Lire l'article <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </span>
+  </a>
+</div></section>
+
+<section class="pres tone" id="presence"><div class="wrap">
+  <div class="ey">Notre présence</div>
+  <h2>Basés à Toulouse.</h2>
+  <p class="sub">Un cabinet ancré dans le Sud-Ouest. Nous accompagnons nos clients partout en France — et au-delà.</p>
+  <div class="globe" id="globe"></div>
+  <div class="flag"><span class="sd"></span>Toulouse · Siège</div>
+</div></section>
+
+<section class="faq" id="faq"><div class="wrap">
+  <div class="ey">Les réponses</div>
+  <h2>Les vraies questions que vous vous posez.</h2>
+  <div class="acc" data-acc>
+    <div class="acc-item open"><button class="acc-h"><span class="ai">Prix</span><span class="at">Qu'est-ce qui est inclus dans le prix ?</span><span class="ax"></span></button><div class="acc-b"><p>L'intégralité du travail : une journée d'immersion, la rédaction de vos textes, la production de vos photos, l'optimisation du référencement local, et la remise du code source — le site vous appartient en entier.</p></div></div>
+    <div class="acc-item"><button class="acc-h"><span class="ai">ROI</span><span class="at">Comment être sûr d'un retour sur investissement ?</span><span class="ax"></span></button><div class="acc-b"><p>Parce qu'on ne construit pas une vitrine mais un outil de conversion : chaque page, chaque image, chaque ligne a un rôle — faire passer un visiteur à l'action. Et on mesure les résultats chaque mois.</p></div></div>
+    <div class="acc-item"><button class="acc-h"><span class="ai">Garantie</span><span class="at">Quelles garanties en travaillant avec vous ?</span><span class="ax"></span></button><div class="acc-b"><p>0€ ne vous est demandé avant que vous validiez la première maquette. Vous ne payez que si le travail vous convainc. Le code source vous est remis : vous n'êtes jamais prisonnier.</p></div></div>
+    <div class="acc-item"><button class="acc-h"><span class="ai">Délai</span><span class="at">Combien de temps pour être en ligne ?</span><span class="ax"></span></button><div class="acc-b"><p>Première maquette sous 48h, mise en ligne sous 21 jours. On va vite parce qu'on ne sélectionne que 9 entrepreneurs par trimestre — toute notre attention est sur votre projet.</p></div></div>
+  </div>
+</div></section>
+
+<section class="cta-sec" id="contact"><div class="wrap">
+  <div class="ey">Travaillons ensemble</div>
+  <h2 style="margin-top:18px;">Demain ne se construit pas seul. <span class="mut">Faisons-le ensemble.</span></h2>
+  <div class="actions">
+    <a href="#" class="btn">Soumettre une candidature →</a>
+    <a href="#" class="btn-ghost" data-cal>Réserver un appel</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="top">
+    <div class="bi"><div class="wm">Wyngo</div><p>Votre site web créé, votre référencement géré, vos clients multipliés.</p></div>
+    <div class="cols">
+      <div class="fc"><h5>Le cabinet</h5><a href="#why">Pourquoi Wyngo</a><a href="#method">Méthode</a><a href="#cases">Études de cas</a><a href="#presse">Vu dans la presse</a></div>
+      <div class="fc"><h5>Contact</h5><a href="mailto:contact@wyngo.fr">contact@wyngo.fr</a><a href="#contact">Soumettre une candidature</a></div>
+    </div>
+  </div>
+  <div class="base"><span>© 2026 Wyngo · Toulouse</span><span>Mentions légales · Confidentialité</span></div>
+</div></footer>
+
+<div class="modal" id="cand" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-bd" data-close></div>
+  <div class="modal-card" id="candCard">
+    <button class="modal-x" data-close aria-label="Fermer">×</button>
+    <div class="mform">
+      <h3>Soumettre une candidature</h3>
+      <p class="msub">9 entrepreneurs sélectionnés par trimestre. Parlez-nous de vous — on revient vers vous personnellement sous 24h.</p>
+      <form id="candForm">
+        <div class="frow">
+          <div class="field"><label>Nom complet</label><input name="name" required placeholder="Marie Dupont"></div>
+          <div class="field"><label>Entreprise / activité</label><input name="company" required placeholder="Boulangerie, cabinet…"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Email</label><input type="email" name="email" required placeholder="vous@exemple.fr"></div>
+          <div class="field"><label>Téléphone <span style="text-transform:none;color:var(--mut2)">(optionnel)</span></label><input name="phone" placeholder="06 12 34 56 78"></div>
+        </div>
+        <div class="field"><label>Votre projet en une phrase</label><textarea name="project" required placeholder="Ce que vous voulez accomplir avec votre site."></textarea></div>
+        <button type="submit" class="submit" id="candSubmit">Envoyer ma candidature →</button>
+        <div class="reassure">Réponse sous <b>24h</b> · Sans engagement</div>
+        <div class="calalt">Vous préférez échanger de vive voix ? <a href="#" data-cal>Réserver un appel →</a></div>
+      </form>
+    </div>
+    <div class="msuccess">
+      <div class="mcheck">✓</div>
+      <h3>Candidature reçue.</h3>
+      <p class="msub" style="margin-bottom:0;">Merci. On étudie votre projet et on revient vers vous sous 24h à l'adresse indiquée.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="caseModal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-bd" data-cclose></div>
+  <div class="modal-card" style="max-width:560px;"><button class="modal-x" data-cclose aria-label="Fermer">×</button><div id="caseBody"></div></div>
+</div>
+
+<script>
+(function(){
+  var b=document.getElementById('burger'),m=document.getElementById('mmenu');
+  var bk=document.createElement('div');bk.className='mback';document.body.appendChild(bk);
+  function open(){m.classList.add('open');bk.classList.add('open');b.setAttribute('aria-expanded','true');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+  function close(){m.classList.remove('open');bk.classList.remove('open');b.setAttribute('aria-expanded','false');m.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+  b.addEventListener('click',function(){m.classList.contains('open')?close():open();});
+  bk.addEventListener('click',close);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&m.classList.contains('open'))close();});
+  m.querySelectorAll('[data-mm]').forEach(function(a){a.addEventListener('click',function(){setTimeout(close,80);});});
+
+  var cand=document.getElementById('cand'),card=document.getElementById('candCard'),form=document.getElementById('candForm');
+  function isCandTrigger(el){var a=el.closest('a,button');if(!a)return null;var t=(a.textContent||'').toLowerCase();return /soumettre une candidature/.test(t)?a:null;}
+  function openCand(e){if(e)e.preventDefault();card.classList.remove('done');if(form)form.reset();cand.classList.add('open');cand.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(m.classList.contains('open'))close();}
+  function closeCand(){cand.classList.remove('open');cand.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+  document.addEventListener('click',function(e){var t=isCandTrigger(e.target);if(t){openCand(e);}});
+  cand.querySelectorAll('[data-close]').forEach(function(x){x.addEventListener('click',closeCand);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cand.classList.contains('open'))closeCand();});
+  if(form){form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var btn=document.getElementById('candSubmit');btn.disabled=true;btn.textContent='Envoi…';
+    var data={};new FormData(form).forEach(function(v,k){data[k]=v;});
+    var done=function(){card.classList.add('done');btn.disabled=false;btn.textContent='Envoyer ma candidature →';};
+    var EP="https://mwkkgubvdswmdaiswepl.supabase.co/functions/v1/candidature-send";
+    var KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13a2tndWJ2ZHN3bWRhaXN3ZXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODU1MjksImV4cCI6MjA5NDk2MTUyOX0.voOfEzx1Cy4ERDpH_T1EBmjeCHBqREgOUZFuLp4Or-A";
+    fetch(EP,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify(data)}).then(done).catch(done);
+  });}
+
+  document.querySelectorAll('[data-acc] .acc-h').forEach(function(h){
+    h.addEventListener('click',function(){h.parentElement.classList.toggle('open');});
+  });
+  document.querySelectorAll('[data-tl] .tl-h').forEach(function(h){
+    h.addEventListener('click',function(){h.parentElement.classList.toggle('open');});
+  });
+
+  var wc=document.querySelectorAll('.wgrid .wcard');
+  if(wc.length){
+    var wi=0,wt=null;
+    var setOn=function(n){wc.forEach(function(c,k){c.classList.toggle('on',k===n);});};
+    var startW=function(){wt=setInterval(function(){wi=(wi+1)%wc.length;setOn(wi);},2600);};
+    setOn(0);startW();
+    wc.forEach(function(c,k){
+      c.addEventListener('mouseenter',function(){clearInterval(wt);wi=k;setOn(k);});
+      c.addEventListener('mouseleave',function(){clearInterval(wt);startW();});
+    });
+  }
+
+  var revSel='.hero .badge,.hero h1,.hero .sub,.hero .actions,.nums .cell,.aud h2,.aud .tabs,.wgrid,.tl,.mock,.deliv .d,.tpls,.cases .c,.testi h2,.tcard,.pres h2,.globe,.faq h2,.faq .acc-item,.cta-sec h2';
+  var rev=[].slice.call(document.querySelectorAll(revSel));
+  rev.forEach(function(el){
+    el.classList.add('reveal');
+    var sibs=el.parentElement?[].slice.call(el.parentElement.children).filter(function(c){return c.className===el.className;}):[];
+    var i=sibs.indexOf(el);
+    if(i>0)el.style.transitionDelay=Math.min(i,5)*70+'ms';
+  });
+  if('IntersectionObserver' in window){
+    var rio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');rio.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+    rev.forEach(function(el){rio.observe(el);});
+  } else { rev.forEach(function(el){el.classList.add('in');}); }
+
+  document.querySelectorAll('[data-tabs]').forEach(function(tabs){
+    var root=tabs.parentElement;
+    tabs.querySelectorAll('.tab').forEach(function(t){
+      t.addEventListener('click',function(){
+        var i=t.getAttribute('data-tab');
+        tabs.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x===t);});
+        root.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-panel')===i);});
+      });
+    });
+  });
+
+  var tt=document.getElementById('tplsTrack');
+  if(tt){
+    var bar=function(u){return '<div class="tpl-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span class="tpl-url">'+u+'</span></div>';};
+    var img=function(u){return '<img src="'+u+'?auto=format&fit=crop&w=480&h=260&q=70" onerror="this.remove()" alt="" loading="lazy">';};
+    var th=function(u){return '<img src="'+u+'?auto=format&fit=crop&w=140&h=90&q=60" onerror="this.remove()" alt="">';};
+    var av=function(n){return '<img src="https://i.pravatar.cc/60?img='+n+'" alt="">';};
+    var TPLS=[
+      '<div class="tpl" style="--tc:#B0431A;--tg:linear-gradient(135deg,#C2632E,#7E340F)">'+bar('le-fournil.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo serif">Le Fournil</span><span class="lk"><span>Carte</span><span>Maison</span><span class="nb">Commander</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1549931319-a545dcf3bc73')+'<div class="sc"></div><span class="chip"><i>★</i> 4,9</span><div class="ov"><div class="ey2">Boulangerie artisanale · Toulouse</div><div class="h2x serif">Le bon pain, comme avant.</div><div class="row"><span class="b1">Voir la carte</span><span class="b2">Nous trouver</span></div></div></div><div class="ts-stats"><div><div class="sv">1947</div><div class="sl">Maison fondée</div></div><div><div class="sv">240+</div><div class="sl">Avis 5★</div></div><div><div class="sv">7h–20h</div><div class="sl">Ouvert</div></div></div><div class="ts-sec"><div class="st">Nos pains</div><div class="ts-prod"><div class="pc"><div class="pi">'+th('https://images.unsplash.com/photo-1509440159596-0249088772ff')+'</div><div class="pn">Tradition</div><div class="pp">1,30 €</div></div><div class="pc"><div class="pi">'+th('https://images.unsplash.com/photo-1598373182133-52452f7691ef')+'</div><div class="pn">Complet</div><div class="pp">2,80 €</div></div><div class="pc"><div class="pi">'+th('https://images.unsplash.com/photo-1555507036-ab1f4038808a')+'</div><div class="pn">Croissant</div><div class="pp">1,20 €</div></div></div></div><div class="ts-foot"><span class="ft">Commande en ligne</span><span class="fb">Commander</span></div></div></div>',
+      '<div class="tpl" style="--tc:#6D3A8C;--tg:linear-gradient(135deg,#8B4BA8,#54276F)">'+bar('salon-elise.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo">Élise</span><span class="lk"><span>Prestations</span><span>Équipe</span><span class="nb">RDV</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1560066984-138dadb4c035')+'<div class="sc"></div><span class="chip"><i>★</i> 4,8</span><div class="ov"><div class="ey2">Coiffure & beauté · Paris 11ᵉ</div><div class="h2x">Votre style, sublimé.</div><div class="row"><span class="b1">Prendre RDV</span><span class="b2">Tarifs</span></div></div></div><div class="ts-sec"><div class="st">Prestations</div><div class="ts-list"><div class="ts-li">Coupe & brushing <b>35 €</b></div><div class="ts-li">Couleur <b>dès 60 €</b></div><div class="ts-li">Balayage <b>90 €</b></div></div></div><div class="ts-testi">'+av(45)+'<div><span class="tq">« Le meilleur salon du quartier, toujours à l\'écoute. »</span><span class="tn">Camille R. · cliente fidèle</span></div></div><div class="ts-foot"><span class="ft">Réservez en 30 secondes</span><span class="fb">Prendre RDV</span></div></div></div>',
+      '<div class="tpl" style="--tc:#0E7C86;--tg:linear-gradient(135deg,#159AA6,#0A5860)">'+bar('aquapro.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo">AquaPro</span><span class="lk"><span>Services</span><span class="nb">06 12 34 56 78</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1585704032915-c3400ca199e7')+'<div class="sc"></div><span class="chip">⏱ &lt; 1h</span><div class="ov"><div class="ey2">Plombier chauffagiste · Lyon</div><div class="h2x">Dépannage 24h/24, 7j/7.</div><div class="row"><span class="b1">Devis gratuit</span><span class="b2">Appeler</span></div></div></div><div class="ts-stats"><div><div class="sv">24/7</div><div class="sl">Disponible</div></div><div><div class="sv">0€</div><div class="sl">Devis</div></div><div><div class="sv">10 ans</div><div class="sl">Garantie</div></div></div><div class="ts-sec"><div class="st">Interventions</div><div class="ts-list"><div class="ts-li">Fuite d\'eau <b>Urgence</b></div><div class="ts-li">Chauffe-eau <b>Pose & SAV</b></div><div class="ts-li">Débouchage <b>Caméra</b></div></div></div><div class="ts-foot"><span class="ft">Une urgence ? On arrive.</span><span class="fb">Appeler</span></div></div></div>',
+      '<div class="tpl" style="--tc:#1F3A5F;--tg:linear-gradient(135deg,#33567E,#15243A)">'+bar('moreau-avocats.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo serif">Moreau &amp; Associés</span><span class="lk"><span>Expertise</span><span class="nb">Contact</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1521737711867-e3b97375f902')+'<div class="sc"></div><span class="chip"><i>★</i> 5,0</span><div class="ov"><div class="ey2">Avocats · Droit des affaires</div><div class="h2x serif">La rigueur, au service de vos intérêts.</div><div class="row"><span class="b1">Consultation</span><span class="b2">Le cabinet</span></div></div></div><div class="ts-stats"><div><div class="sv">25 ans</div><div class="sl">D\'expérience</div></div><div><div class="sv">800+</div><div class="sl">Dossiers</div></div><div><div class="sv">Paris</div><div class="sl">Barreau</div></div></div><div class="ts-sec"><div class="st">Domaines</div><div class="ts-list"><div class="ts-li">Droit des sociétés <b>→</b></div><div class="ts-li">Contentieux commercial <b>→</b></div><div class="ts-li">Fusions-acquisitions <b>→</b></div></div></div><div class="ts-foot"><span class="ft">Premier échange offert</span><span class="fb">Nous écrire</span></div></div></div>',
+      '<div class="tpl" style="--tc:#16a34a;--tg:linear-gradient(135deg,#1FB866,#0E7A42)">'+bar('studio-zen.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo">Studio Zen</span><span class="lk"><span>Cours</span><span>Tarifs</span><span class="nb">Essai</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1506126613408-eca07ce68773')+'<div class="sc"></div><span class="chip"><i>★</i> 4,9</span><div class="ov"><div class="ey2">Yoga & méditation · Nantes</div><div class="h2x">Respirez. Recentrez-vous.</div><div class="row"><span class="b1">1ᵉʳ cours offert</span><span class="b2">Planning</span></div></div></div><div class="ts-sec"><div class="st">Cette semaine</div><div class="ts-list"><div class="ts-li">Lun · Hatha yoga <b>18h</b></div><div class="ts-li">Mer · Vinyasa flow <b>12h</b></div><div class="ts-li">Sam · Méditation <b>10h</b></div></div></div><div class="ts-testi">'+av(31)+'<div><span class="tq">« J\'ai trouvé mon équilibre ici. Une ambiance unique. »</span><span class="tn">Léa M. · adhérente</span></div></div><div class="ts-foot"><span class="ft">Carte 10 cours · 120 €</span><span class="fb">Réserver</span></div></div></div>',
+      '<div class="tpl" style="--tc:#E2632A;--tg:linear-gradient(135deg,#F0763A,#BE4314)">'+bar('garage-leon.fr')+'<div class="tpl-site"><div class="ts-nav2"><span class="ts-logo">Garage Léon</span><span class="lk"><span>Services</span><span>Avis</span><span class="nb">RDV</span></span></div><div class="ts-hero2">'+img('https://images.unsplash.com/photo-1487754180451-c456f719a1fc')+'<div class="sc"></div><span class="chip"><i>★</i> 4,7</span><div class="ov"><div class="ey2">Mécanique toutes marques · Lille</div><div class="h2x">Votre voiture, entre de bonnes mains.</div><div class="row"><span class="b1">Réserver</span><span class="b2">Devis</span></div></div></div><div class="ts-stats"><div><div class="sv">15 ans</div><div class="sl">D\'expérience</div></div><div><div class="sv">5000+</div><div class="sl">Révisions</div></div><div><div class="sv">Agréé</div><div class="sl">Assurances</div></div></div><div class="ts-sec"><div class="st">Prestations</div><div class="ts-list"><div class="ts-li">Vidange <b>dès 49 €</b></div><div class="ts-li">Pneus montés <b>dès 80 €</b></div><div class="ts-li">Révision complète <b>129 €</b></div></div></div><div class="ts-foot"><span class="ft">Diagnostic offert</span><span class="fb">Réserver</span></div></div></div>'
+    ];
+    var h='';for(var k=0;k<2;k++){TPLS.forEach(function(t){h+=t;});}
+    tt.innerHTML=h;
+  }
+
+  var cj=document.getElementById('customJob'),cg=document.getElementById('customGo'),cd=document.getElementById('customDone');
+  function saveJob(){var v=(cj.value||'').trim();if(!v)return;try{localStorage.setItem('wyngo-metier',v);}catch(e){}cd.textContent='Parfait — on conçoit du sur-mesure pour : '+v+'.';cj.value='';cj.setAttribute('placeholder',v);}
+  if(cg){cg.addEventListener('click',saveJob);cj.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveJob();}});}
+
+  var CASES={
+    dulac:{tag:'Artisan · Boulangerie',name:'Maison Dulac',q:'Du bouche-à-oreille au n°1 local.',
+      cs:[['Le point de départ','Une boulangerie réputée dans son quartier, mais invisible en ligne : aucun site, une fiche Google quasi vide, presque pas d\'avis. Les nouveaux habitants ne la trouvaient tout simplement pas.'],
+          ['Ce qu\'on a construit','Un site vitrine sur-mesure, une fiche Google Business optimisée, la collecte d\'avis automatisée, et un référencement local taillé pour « boulangerie + quartier ».'],
+          ['Le résultat','Première position locale en 4 mois, un trafic multiplié par 18, et en moyenne +312 nouveaux clients par mois sur le premier semestre.']],
+      k:[['×18','Trafic'],['#1','Google local'],['+312','Clients/mois']]},
+    nexora:{tag:'Startup · SaaS B2B',name:'Nexora Tech',q:'D\'un template à un site qui convertit.',
+      cs:[['Le point de départ','Un produit solide derrière un site générique acheté sur un template. Beaucoup de visiteurs venus des ads, mais très peu de demandes de démo.'],
+          ['Ce qu\'on a construit','Refonte complète orientée conversion : message clair, preuve sociale, parcours de démo simplifié, pages d\'atterrissage dédiées aux campagnes.'],
+          ['Le résultat','+210% de conversions, un ROAS publicitaire multiplié par 4,2 et un coût d\'acquisition réduit de 32%.']],
+      k:[['+210%','Conversions'],['×4,2','ROAS ads'],['−32%','CPA']]},
+    moreau:{tag:'Profession libérale',name:'Cabinet Moreau',q:'La crédibilité se joue en ligne.',
+      cs:[['Le point de départ','Un cabinet reconnu, mais une présence en ligne qui ne reflétait ni son sérieux ni son expertise. Peu de prises de contact qualifiées.'],
+          ['Ce qu\'on a construit','Un site sobre et rassurant, une ligne éditoriale d\'autorité, et un référencement sur les requêtes à forte intention de ses spécialités.'],
+          ['Le résultat','+38 demandes qualifiées par mois, un Top 3 sur ses mots-clés stratégiques, et un chiffre d\'affaires annuel multiplié par 2,3.']],
+      k:[['+38','Leads/mois'],['Top 3','Mots-clés'],['×2,3','CA annuel']]}
+  };
+  var cm=document.getElementById('caseModal'),cb=document.getElementById('caseBody');
+  function openCase(id){
+    var c=CASES[id]; if(!c)return;
+    var html='<div class="ey">'+c.tag+'</div><h3>'+c.name+'</h3><p class="cq">'+c.q+'</p>';
+    c.cs.forEach(function(s){html+='<div class="cs"><h4>'+s[0]+'</h4><p>'+s[1]+'</p></div>';});
+    html+='<div class="ckpis">';c.k.forEach(function(k){html+='<div><div class="kn">'+k[0]+'</div><div class="kl">'+k[1]+'</div></div>';});html+='</div>';
+    cb.innerHTML=html; cm.classList.add('open'); cm.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+  }
+  function closeCase(){cm.classList.remove('open');cm.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+  document.querySelectorAll('.cases .c[data-case]').forEach(function(card){
+    card.addEventListener('click',function(){openCase(card.getAttribute('data-case'));});
+  });
+  cm.querySelectorAll('[data-cclose]').forEach(function(x){x.addEventListener('click',closeCase);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cm.classList.contains('open'))closeCase();});
+
+  /* ── Planificateur de rendez-vous natif Wyngo (aucun Calendly) ──
+     Calendrier + créneaux 30 min (Lun→Sam, 9h–18h, heure de Paris),
+     branché à la fonction Supabase publique book-slot → Google Agenda. */
+  var SB_URL='https://mwkkgubvdswmdaiswepl.supabase.co';
+  var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13a2tndWJ2ZHN3bWRhaXN3ZXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODU1MjksImV4cCI6MjA5NDk2MTUyOX0.voOfEzx1Cy4ERDpH_T1EBmjeCHBqREgOUZFuLp4Or-A';
+  var FN=SB_URL+'/functions/v1/book-slot';
+  var MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var wyOv=null,vY,vM,selDay=null,selISO=null,taken={},busy=false;
+
+  function api(payload){
+    return fetch(FN,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify(payload)}).then(function(r){return r.json();});
+  }
+  function parisOffset(y,mo,d){ // minutes UTC→Paris pour cette date (gère l'heure d'été)
+    try{
+      var p=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Paris',timeZoneName:'shortOffset'}).formatToParts(new Date(Date.UTC(y,mo,d,12,0,0)));
+      var tz=(p.filter(function(x){return x.type==='timeZoneName';})[0]||{}).value||'GMT+1';
+      var m=/GMT([+-]?\d{1,2})(?::?(\d{2}))?/.exec(tz);
+      if(m){var h=parseInt(m[1],10);var mi=m[2]?parseInt(m[2],10):0;return h*60+(h<0?-mi:mi);}
+    }catch(e){}
+    return 60;
+  }
+  function slotISO(y,mo,d,h,mi){return new Date(Date.UTC(y,mo,d,h,mi,0)-parisOffset(y,mo,d)*60000).toISOString();}
+
+  function wyStyle(){
+    if(document.getElementById('wy-sched-style'))return;
+    var st=document.createElement('style');st.id='wy-sched-style';
+    st.textContent='.wy-cal-ov{position:fixed;inset:0;z-index:99999;display:none;background:#FBF9F2}'
+    +'.wy-cal-ov.open{display:block}'
+    +'.wy-cal-modal{width:100%;height:100%;background:#FBF9F2;overflow:hidden;display:flex;flex-direction:column;font-family:Inter,-apple-system,sans-serif;color:#141410;animation:wyCalIn .32s cubic-bezier(.2,.8,.2,1)}'
+    +'@keyframes wyCalIn{from{opacity:0}to{opacity:1}}'
+    +'.wy-cal-head{position:relative;background:linear-gradient(120deg,#1B4BE3,#0C2A80);color:#F7F4EC;padding:26px 32px 30px}'
+    +'.wy-cal-headin{max-width:1040px;margin:0 auto;position:relative}'
+    +'.wy-cal-brand{display:flex;align-items:center;gap:13px}'
+    +'.wy-cal-logo{width:44px;height:44px;border-radius:11px;background:#141410;display:flex;align-items:center;justify-content:center;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:24px;color:#F1EDE0;position:relative;flex:none}'
+    +'.wy-cal-logo::after{content:"";position:absolute;bottom:9px;left:11px;right:11px;height:2px;background:#3E6BFF;border-radius:2px}'
+    +'.wy-cal-name{font-family:Inter,sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.05}'
+    +'.wy-cal-tag{font-size:12px;font-weight:500;opacity:.8;margin-top:2px;letter-spacing:.01em}'
+    +'.wy-cal-title{font-family:Inter,sans-serif;margin:20px 0 0;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.1}'
+    +'.wy-cal-sub{font-size:14.5px;font-weight:400;opacity:.9;margin-top:8px;max-width:56ch;line-height:1.5}'
+    +'.wy-cal-x{position:absolute;top:0;right:0;width:38px;height:38px;border:none;border-radius:11px;background:rgba(255,255,255,.16);color:#F7F4EC;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}'
+    +'.wy-cal-x:hover{background:rgba(255,255,255,.32)}'
+    +'.wy-cal-body{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;padding:34px 24px}'
+    +'.wy-cal-inner{width:100%;max-width:1040px;display:grid;grid-template-columns:1.12fr 1fr;gap:36px;align-items:start}'
+    +'.wy-cal-cal{padding:0 34px 0 0;border-right:1px solid rgba(20,20,16,.1)}'
+    +'.wy-mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}'
+    +'.wy-mnav b{font-size:16px;font-weight:600;color:#141410;text-transform:capitalize;letter-spacing:-.01em}'
+    +'.wy-mbtn{width:34px;height:34px;border:1px solid rgba(20,20,16,.14);background:transparent;border-radius:10px;cursor:pointer;font-size:16px;color:#141410;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .12s}'
+    +'.wy-mbtn:disabled{opacity:.3;cursor:default}'
+    +'.wy-mbtn:not(:disabled):hover{background:#F0EAD9}'
+    +'.wy-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px}'
+    +'.wy-dow span{text-align:center;font-size:10.5px;font-weight:600;color:rgba(20,20,16,.4);text-transform:uppercase;letter-spacing:.06em}'
+    +'.wy-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}'
+    +'.wy-day{aspect-ratio:1;border:none;background:transparent;border-radius:11px;cursor:pointer;font-size:14px;color:#141410;font-weight:500;position:relative;transition:background .12s}'
+    +'.wy-day.mut{color:rgba(20,20,16,.2)}'
+    +'.wy-day:disabled{color:rgba(20,20,16,.18);cursor:default}'
+    +'.wy-day:not(:disabled):hover{background:#EDE7D6}'
+    +'.wy-day.today:not(.sel){box-shadow:inset 0 0 0 1.5px #1B4BE3;color:#1B4BE3;font-weight:600}'
+    +'.wy-day.sel{background:#1B4BE3;color:#fff;font-weight:600}'
+    +'.wy-tz{margin-top:20px;font-size:11.5px;color:rgba(20,20,16,.48);letter-spacing:.01em}'
+    +'.wy-side{display:flex;flex-direction:column;min-height:340px}'
+    +'.wy-side-h{font-size:15px;font-weight:600;color:#141410;margin-bottom:14px;letter-spacing:-.01em}'
+    +'.wy-side-hint{color:rgba(20,20,16,.5);font-size:14px;margin:auto 0;text-align:center;line-height:1.55}'
+    +'.wy-slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;overflow:auto;align-content:start}'
+    +'.wy-slot{padding:12px 8px;border:1px solid rgba(27,75,227,.3);background:#fff;color:#1B4BE3;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;transition:.12s;font-family:inherit}'
+    +'.wy-slot:hover{background:#1B4BE3;color:#fff;border-color:#1B4BE3}'
+    +'.wy-slot:disabled{border-color:rgba(20,20,16,.1);color:rgba(20,20,16,.26);background:#F3F0E7;cursor:default;text-decoration:line-through}'
+    +'.wy-back{background:none;border:none;color:#1B4BE3;font-size:13.5px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;display:inline-flex;align-items:center;gap:5px;font-family:inherit}'
+    +'.wy-recap{background:#F0EAD9;border-radius:13px;padding:14px 16px;font-size:14px;color:#141410;margin-bottom:18px;line-height:1.5}'
+    +'.wy-recap b{text-transform:capitalize;font-weight:600}'
+    +'.wy-field{margin-bottom:12px}'
+    +'.wy-field label{display:block;font-size:12px;font-weight:600;color:rgba(20,20,16,.65);margin-bottom:5px;letter-spacing:.01em}'
+    +'.wy-field input,.wy-field textarea{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid rgba(20,20,16,.16);border-radius:11px;font-size:14.5px;font-family:inherit;background:#fff;color:#141410}'
+    +'.wy-field input::placeholder,.wy-field textarea::placeholder{color:rgba(20,20,16,.35)}'
+    +'.wy-field input:focus,.wy-field textarea:focus{outline:none;border-color:#1B4BE3;box-shadow:0 0 0 3px rgba(27,75,227,.13)}'
+    +'.wy-book{margin-top:8px;width:100%;padding:14px;border:none;border-radius:12px;background:#1B4BE3;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.01em;transition:background .15s}'
+    +'.wy-book:disabled{opacity:.6;cursor:default}'
+    +'.wy-book:not(:disabled):hover{background:#153bbf}'
+    +'.wy-err{color:#B0431A;font-size:13px;margin-top:10px;min-height:1px}'
+    +'.wy-done{margin:auto 0;text-align:center;padding:10px}'
+    +'.wy-done .ic{width:60px;height:60px;border-radius:50%;background:#1B4BE3;color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}'
+    +'.wy-done h4{font-family:Inter,sans-serif;font-size:23px;font-weight:600;color:#141410;margin:0 0 10px;letter-spacing:-.02em}'
+    +'.wy-done p{font-size:14.5px;color:rgba(20,20,16,.68);line-height:1.55;margin:0}'
+    +'@media(max-width:820px){.wy-cal-inner{grid-template-columns:1fr;gap:26px}.wy-cal-cal{padding:0 0 26px;border-right:none;border-bottom:1px solid rgba(20,20,16,.1)}.wy-side{min-height:0}.wy-cal-title{font-size:25px}.wy-cal-head{padding:20px 20px 24px}.wy-cal-body{padding:24px 18px}}';
+    document.head.appendChild(st);
+  }
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  function renderCal(){
+    var g=document.getElementById('wy-grid');if(!g)return;
+    document.getElementById('wy-mlabel').textContent=MONTHS[vM]+' '+vY;
+    var now=new Date(),t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    document.querySelector('[data-mprev]').disabled=(vY<now.getFullYear()||(vY===now.getFullYear()&&vM<=now.getMonth()));
+    var first=new Date(vY,vM,1),startIdx=(first.getDay()+6)%7,html='';
+    for(var i=0;i<42;i++){
+      var dt=new Date(vY,vM,1-startIdx+i),inM=dt.getMonth()===vM,dow=dt.getDay();
+      var dis=!inM||dow===0||dt<t0;
+      var cls='wy-day'+(inM?'':' mut')+(dt.getTime()===t0.getTime()?' today':'')+(selDay&&dt.getTime()===selDay.getTime()?' sel':'');
+      html+='<button class="'+cls+'"'+(dis?' disabled':'')+' data-day="'+dt.getFullYear()+'-'+dt.getMonth()+'-'+dt.getDate()+'">'+dt.getDate()+'</button>';
+    }
+    g.innerHTML=html;
+  }
+
+  function renderSlots(){
+    var s=document.getElementById('wy-side');if(!s)return;
+    if(!selDay){s.innerHTML='<div class="wy-side-hint">← Choisissez une date<br>pour voir les créneaux disponibles.</div>';return;}
+    var y=selDay.getFullYear(),mo=selDay.getMonth(),d=selDay.getDate(),nowMs=Date.now(),html='';
+    for(var h=9;h<18;h++){for(var mi=0;mi<60;mi+=30){
+      var iso=slotISO(y,mo,d,h,mi),ms=new Date(iso).getTime();
+      var dis=ms<nowMs+60000||taken[ms];
+      var lbl=(h<10?'0'+h:h)+':'+(mi<10?'0'+mi:mi);
+      html+='<button class="wy-slot"'+(dis?' disabled':'')+' data-slot="'+iso+'">'+lbl+'</button>';
+    }}
+    var dlabel=selDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    s.innerHTML='<div class="wy-side-h" style="text-transform:capitalize">'+esc(dlabel)+'</div><div class="wy-slots">'+html+'</div>';
+  }
+
+  function renderForm(){
+    var s=document.getElementById('wy-side');if(!s)return;
+    var dlabel=new Date(selISO).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    var tlabel=new Date(selISO).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Paris'});
+    s.innerHTML='<button class="wy-back" type="button" data-back>‹ Changer de créneau</button>'
+      +'<div class="wy-recap">📅 <b>'+esc(dlabel)+'</b> à <b>'+esc(tlabel)+'</b> · 30 min · visio ou téléphone</div>'
+      +'<div class="wy-field"><label>Nom et prénom *</label><input id="wy-f-name" type="text" autocomplete="name" placeholder="Marie Dupont"></div>'
+      +'<div class="wy-field"><label>Email *</label><input id="wy-f-email" type="email" autocomplete="email" placeholder="marie@exemple.fr"></div>'
+      +'<div class="wy-field"><label>Téléphone</label><input id="wy-f-phone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78"></div>'
+      +'<div class="wy-field"><label>Votre activité / message (facultatif)</label><textarea id="wy-f-notes" rows="2" placeholder="Boulangerie à Toulouse, je n\'ai pas encore de site…"></textarea></div>'
+      +'<button class="wy-book" type="button" data-book>Confirmer le rendez-vous</button>'
+      +'<div class="wy-err" id="wy-err"></div>';
+  }
+
+  function renderDone(){
+    var s=document.getElementById('wy-side');if(!s)return;
+    var dlabel=new Date(selISO).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    var tlabel=new Date(selISO).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Paris'});
+    s.innerHTML='<div class="wy-done"><div class="ic">✓</div><h4>C\'est réservé !</h4><p>Rendez-vous le <b style="text-transform:capitalize">'+esc(dlabel)+'</b> à <b>'+esc(tlabel)+'</b>.<br>Vous recevez la confirmation et l\'invitation par email. À très vite !</p></div>';
+  }
+
+  function loadTaken(){
+    var from=vY+'-'+String(vM+1).padStart(2,'0')+'-01';
+    var last=new Date(vY,vM+1,0).getDate();
+    var to=vY+'-'+String(vM+1).padStart(2,'0')+'-'+String(last).padStart(2,'0');
+    api({action:'slots',from:from,to:to}).then(function(r){
+      taken={};(r&&r.taken||[]).forEach(function(iso){taken[new Date(iso).getTime()]=1;});
+      renderSlots();
+    }).catch(function(){});
+  }
+
+  function wyBuild(){
+    wyStyle();
+    wyOv=document.createElement('div');wyOv.className='wy-cal-ov';
+    wyOv.innerHTML='<div class="wy-cal-modal" role="dialog" aria-modal="true" aria-label="Réserver un appel Wyngo">'
+      +'<div class="wy-cal-head"><div class="wy-cal-headin">'
+        +'<button class="wy-cal-x" type="button" aria-label="Fermer">&#10005;</button>'
+        +'<div class="wy-cal-brand"><div class="wy-cal-logo">W</div><div><div class="wy-cal-name">Wyngo</div><div class="wy-cal-tag">Cabinet de présence digitale</div></div></div>'
+        +'<div class="wy-cal-title">Réservons votre appel découverte</div>'
+        +'<div class="wy-cal-sub">30 minutes, sans engagement — on fait le point sur votre présence en ligne.</div>'
+      +'</div></div>'
+      +'<div class="wy-cal-body"><div class="wy-cal-inner">'
+        +'<div class="wy-cal-cal"><div class="wy-mnav"><button class="wy-mbtn" type="button" data-mprev>&#8249;</button><b id="wy-mlabel"></b><button class="wy-mbtn" type="button" data-mnext>&#8250;</button></div>'
+          +'<div class="wy-dow"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>'
+          +'<div class="wy-grid" id="wy-grid"></div><div class="wy-tz">Horaires affichés : heure de Paris (Europe/Paris)</div></div>'
+        +'<div class="wy-side" id="wy-side"></div>'
+      +'</div></div>'
+    +'</div>';
+    document.body.appendChild(wyOv);
+    wyOv.addEventListener('click',function(e){
+      if(e.target===wyOv){wyClose();return;}
+      var el=e.target.closest('button');if(!el)return;
+      if(el.classList.contains('wy-cal-x')){wyClose();return;}
+      if(el.hasAttribute('data-mprev')){var m=vM-1;vM=m<0?11:m;if(m<0)vY--;selDay=null;renderCal();renderSlots();loadTaken();return;}
+      if(el.hasAttribute('data-mnext')){var n=vM+1;vM=n>11?0:n;if(n>11)vY++;selDay=null;renderCal();renderSlots();loadTaken();return;}
+      if(el.hasAttribute('data-day')){var p=el.getAttribute('data-day').split('-');selDay=new Date(+p[0],+p[1],+p[2]);selISO=null;renderCal();renderSlots();return;}
+      if(el.hasAttribute('data-slot')){selISO=el.getAttribute('data-slot');renderForm();return;}
+      if(el.hasAttribute('data-back')){selISO=null;renderSlots();return;}
+      if(el.hasAttribute('data-book')){submit(el);return;}
+    });
+  }
+
+  function submit(btn){
+    if(busy)return;
+    var name=(document.getElementById('wy-f-name')||{}).value||'';
+    var email=(document.getElementById('wy-f-email')||{}).value||'';
+    var phone=(document.getElementById('wy-f-phone')||{}).value||'';
+    var notes=(document.getElementById('wy-f-notes')||{}).value||'';
+    var err=document.getElementById('wy-err');err.textContent='';
+    if(name.trim().length<2){err.textContent='Merci d\'indiquer votre nom.';return;}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())){err.textContent='Merci d\'indiquer un email valide.';return;}
+    busy=true;btn.disabled=true;btn.textContent='Réservation…';
+    api({action:'book',name:name.trim(),email:email.trim(),phone:phone.trim(),notes:notes.trim(),start_iso:selISO}).then(function(r){
+      busy=false;
+      if(r&&r.ok){taken[new Date(selISO).getTime()]=1;renderDone();return;}
+      btn.disabled=false;btn.textContent='Confirmer le rendez-vous';
+      err.textContent=(r&&r.message)||'La réservation a échoué. Réessayez.';
+    }).catch(function(){busy=false;btn.disabled=false;btn.textContent='Confirmer le rendez-vous';err.textContent='Connexion impossible. Réessayez.';});
+  }
+
+  function wyClose(){if(wyOv)wyOv.classList.remove('open');document.documentElement.style.overflow='';}
+  function openCal(e){
+    if(e)e.preventDefault();
+    if(!wyOv)wyBuild();
+    var now=new Date();vY=now.getFullYear();vM=now.getMonth();selDay=null;selISO=null;busy=false;
+    wyOv.classList.add('open');document.documentElement.style.overflow='hidden';
+    renderCal();renderSlots();loadTaken();
+  }
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&wyOv&&wyOv.classList.contains('open'))wyClose();});
+  document.addEventListener('click',function(e){var t=e.target.closest('[data-cal]');if(t){openCal(e);}});
+})();
+</script>
+
+<script>
+(function(){
+  var el=document.getElementById('globe');
+  if(!el)return;
+  function load(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  async function init(){
+    try{
+      await load('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+      await load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js');
+      await load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js');
+      var W=function(){return el.clientWidth;},H=function(){return el.clientHeight;};
+      var scene=new THREE.Scene();
+      var camera=new THREE.PerspectiveCamera(38,W()/H(),0.1,100);
+      camera.position.set(0,0.3,3.4);
+      var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+      renderer.setSize(W(),H());renderer.setPixelRatio(Math.min(devicePixelRatio,2));el.appendChild(renderer.domElement);
+      var lr=new THREE.CSS2DRenderer();lr.setSize(W(),H());lr.domElement.style.position='absolute';lr.domElement.style.top='0';lr.domElement.style.pointerEvents='none';el.appendChild(lr.domElement);
+      var ctr=new THREE.OrbitControls(camera,renderer.domElement);ctr.enableDamping=true;ctr.dampingFactor=.08;ctr.rotateSpeed=.5;ctr.enablePan=false;ctr.enableZoom=false;ctr.autoRotate=false;
+      scene.add(new THREE.AmbientLight(0x445577,1.1));
+      var sun=new THREE.DirectionalLight(0xfff0d8,1.25);sun.position.set(5,2,5);scene.add(sun);
+      var fill=new THREE.DirectionalLight(0x6688bb,.5);fill.position.set(-3,-1,-3);scene.add(fill);
+      var grp=new THREE.Group();scene.add(grp);
+      var tex=new THREE.TextureLoader();
+      var earth=new THREE.Mesh(new THREE.SphereGeometry(1,96,96),new THREE.MeshPhongMaterial({
+        map:tex.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'),
+        specularMap:tex.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg'),
+        specular:new THREE.Color('grey'),shininess:9,
+        normalMap:tex.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg'),
+        normalScale:new THREE.Vector2(.7,.7)}));
+      grp.add(earth);
+      var clouds=new THREE.Mesh(new THREE.SphereGeometry(1.008,96,96),new THREE.MeshPhongMaterial({map:tex.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png'),transparent:true,opacity:.38,depthWrite:false}));
+      grp.add(clouds);
+      var atmo=new THREE.Mesh(new THREE.SphereGeometry(1.03,48,48),new THREE.MeshBasicMaterial({color:0x1B4BE3,transparent:true,opacity:.06,side:THREE.BackSide}));
+      grp.add(atmo);
+      function v3(lat,lon,r){r=r||1.005;var phi=(90-lat)*Math.PI/180,th=lon*Math.PI/180;return new THREE.Vector3(r*Math.sin(phi)*Math.cos(th),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(th));}
+      var sp=v3(43.6,1.44,1.002);
+      var dot=new THREE.Mesh(new THREE.SphereGeometry(.018,14,14),new THREE.MeshBasicMaterial({color:0x1B4BE3}));dot.position.copy(sp);grp.add(dot);
+      var pillar=new THREE.Line(new THREE.BufferGeometry().setFromPoints([sp,v3(43.6,1.44,1.13)]),new THREE.LineBasicMaterial({color:0x1B4BE3,transparent:true,opacity:.7}));grp.add(pillar);
+      var div=document.createElement('div');div.textContent='TOULOUSE';div.style.cssText='font:600 10px Inter,sans-serif;letter-spacing:.22em;color:#1B4BE3;transform:translateY(-16px);text-shadow:0 1px 4px rgba(255,255,255,.9);';
+      var lbl=new THREE.CSS2DObject(div);lbl.position.copy(v3(43.6,1.44,1.14));grp.add(lbl);
+      var dir=v3(43.6,1.44,1).normalize();camera.position.copy(dir.multiplyScalar(3.4));camera.lookAt(0,0,0);ctr.target.set(0,0,0);ctr.update();
+      var cn=new THREE.Vector3();
+      (function anim(){clouds.rotation.y+=.0004;ctr.update();cn.copy(camera.position).normalize();div.style.opacity=sp.clone().normalize().dot(cn)>0.05?'1':'0';renderer.render(scene,camera);lr.render(scene,camera);requestAnimationFrame(anim);})();
+      addEventListener('resize',function(){camera.aspect=W()/H();camera.updateProjectionMatrix();renderer.setSize(W(),H());lr.setSize(W(),H());});
+    }catch(e){el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#14141066;font:500 12px Inter,sans-serif;letter-spacing:.2em;">🌍 TOULOUSE · FRANCE</div>';}
+  }
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){io.disconnect();init();}});},{rootMargin:'200px'});
+  io.observe(el);
+})();
+</script>
+</body>
+</html>

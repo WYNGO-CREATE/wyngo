@@ -144,6 +144,27 @@ const SERVICE_EMOJIS: Record<Sector, string[]> = {
   service: ["✨", "⚡", "🎯"],
 };
 
+// Icônes en trait (style éditorial) pour les cartes "spécialités" en escalier
+const STEP_ICONS: string[] = [
+  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 4 7.5L3 21Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>`,
+  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 5 5.6.7-4 3.8 1 5.5-5-2.8-5 2.8 1-5.5-4-3.8 5.6-.7Z"/></svg>`,
+];
+
+// Nettoie le nom d'auteur d'avis : Google renvoie parfois des noms
+// anonymisés/cassés ("V6hhheLNñPatricia té"). On ne garde que des noms
+// plausibles, sinon on retombe sur "Client".
+function cleanAuthorName(raw: string): string {
+  const n = (raw || "").trim().replace(/\s+/g, " ");
+  if (!n) return "Client";
+  if (/\d/.test(n)) return "Client";                       // chiffres = anonymisé/cassé
+  if (n.length < 2 || n.length > 24) return "Client";
+  if (n.split(" ").length > 3) return "Client";            // pas un nom (trop de mots)
+  if (!/^[\p{L}][\p{L}\s.''’\-]+$/u.test(n)) return "Client"; // lettres + . ' - uniquement
+  if (/^a google user$/i.test(n)) return "Client";
+  return n;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // GOOGLE PLACES — récupération des photos HD, reviews, horaires
 // ════════════════════════════════════════════════════════════════════
@@ -185,11 +206,18 @@ async function fetchPlacesData(company: string, location: string | null): Promis
         `https://places.googleapis.com/v1/${p.name}/media?maxHeightPx=1600&maxWidthPx=2400&key=${apiKey}`
       );
     }
-    const reviews = (place.reviews || []).slice(0, 3).map((r: any) => ({
-      author: r.authorAttribution?.displayName || "Client",
-      rating: r.rating || 5,
-      text: r.text?.text || "",
-    }));
+    // On ne garde QUE des avis dignes d'être affichés sur le site :
+    //  • note ≥ 4 (positifs)
+    //  • un vrai texte complet (≥ 25 caractères, pas juste « » vide)
+    // Sinon on n'affiche aucun avis (le template a un fallback propre).
+    const reviews = (place.reviews || [])
+      .map((r: any) => ({
+        author: cleanAuthorName(r.authorAttribution?.displayName || ""),
+        rating: r.rating || 5,
+        text: (r.text?.text || r.originalText?.text || "").trim(),
+      }))
+      .filter((r: { rating: number; text: string }) => r.rating >= 4 && r.text.length >= 25)
+      .slice(0, 3);
     return {
       photos,
       reviews,
@@ -203,6 +231,60 @@ async function fetchPlacesData(company: string, location: string | null): Promis
     console.error("Places fetch failed:", e);
     return { photos: [], reviews: [] };
   }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MARQUE — logo + couleur réels du prospect (depuis son site existant)
+// Problème résolu : l'aperçu "fait template". Là, c'est SON identité.
+// ════════════════════════════════════════════════════════════════════
+async function fetchBrand(website?: string | null): Promise<{ logoUrl: string | null; brandColor: string | null }> {
+  if (!website) return { logoUrl: null, brandColor: null };
+  let url = website.trim();
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  let domain = "";
+  try { domain = new URL(url).hostname; } catch { return { logoUrl: null, brandColor: null }; }
+
+  let logoUrl: string | null = null;
+  let brandColor: string | null = null;
+  try {
+    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (compatible; WyngoBot/1.0)" }, signal: AbortSignal.timeout(6000) });
+    if (res.ok) {
+      const html = await res.text();
+      const base = new URL(url);
+      const abs = (href: string) => { try { return new URL(href, base).href; } catch { return null; } };
+
+      // Couleur de marque : <meta name="theme-color">
+      const tc = html.match(/<meta[^>]+name=["']theme-color["'][^>]+content=["']([^"']+)["']/i)
+              || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']theme-color["']/i);
+      if (tc && /^#?[0-9a-fA-F]{3,8}$/.test(tc[1].trim())) {
+        brandColor = tc[1].trim().startsWith("#") ? tc[1].trim() : "#" + tc[1].trim();
+      }
+
+      // Logo : on privilégie un vrai logo, puis apple-touch-icon, puis icon
+      const logoImg = html.match(/<img[^>]+(?:src|data-src)=["']([^"']+)["'][^>]*(?:class|alt|id)=["'][^"']*logo[^"']*["']/i)
+                   || html.match(/<img[^>]+(?:class|alt|id)=["'][^"']*logo[^"']*["'][^>]*(?:src|data-src)=["']([^"']+)["']/i);
+      const appleTouch = html.match(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i)
+                      || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["'][^"']*apple-touch-icon[^"']*["']/i);
+      const iconLink = html.match(/<link[^>]+rel=["'](?:shortcut )?icon["'][^>]+href=["']([^"']+)["']/i)
+                    || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut )?icon["']/i);
+      const cand = logoImg?.[1] || appleTouch?.[1] || iconLink?.[1];
+      if (cand && !/\.svg(\?|$)/i.test(cand)) logoUrl = abs(cand); // évite SVG cross-origin parfois cassés
+    }
+  } catch { /* on retombe sur le favicon */ }
+
+  // Filet : service de favicon Google (toujours disponible)
+  if (!logoUrl && domain) logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  return { logoUrl, brandColor };
+}
+
+// La couleur de marque ne sert d'accent que si elle reste lisible (pas trop claire)
+function isUsableAccent(hex: string): boolean {
+  const m = hex.replace("#", "");
+  const h = m.length === 3 ? m.split("").map((c) => c + c).join("") : m.slice(0, 6);
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some(Number.isNaN)) return false;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum < 0.72;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -542,10 +624,14 @@ type BuildInput = {
   preview_id: string;
   supabase_url: string;
   app_url: string;
+  logo_url?: string | null;
+  brand_color?: string | null;
 };
 
 function buildHtml(input: BuildInput): string {
   const theme = SECTOR_THEME[input.sector];
+  // Accent = couleur réelle de la marque si elle est lisible, sinon thème secteur
+  const accent = (input.brand_color && isUsableAccent(input.brand_color)) ? input.brand_color : theme.accent;
   // Fallback photos par secteur (Unsplash haute qualité, libre d'usage)
   const SECTOR_FALLBACK_PHOTOS: Record<Sector, string[]> = {
     boulangerie: [
@@ -584,15 +670,23 @@ function buildHtml(input: BuildInput): string {
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1600&q=85",
     ],
     service: [
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=2400&q=85",
-      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1600&q=85",
-      "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&q=85",
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1600&q=85",
-      "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?w=1600&q=85",
+      // Sobres, épurés, professionnels — bureaux/architecture neutres, jamais de visages aléatoires
+      "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=2400&q=85",
+      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=85",
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=85",
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&q=85",
+      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1600&q=85",
     ],
   };
-  // Si Google Places n'a rien fourni → utilise les photos de secours du secteur
-  const effectivePhotos = input.photos.length > 0 ? input.photos : SECTOR_FALLBACK_PHOTOS[input.sector];
+
+  // PHOTOS PROFESSIONNELLES GARANTIES :
+  // Les photos Google Places des métiers de "service" (avocat, conseil, expert…)
+  // sont souvent des selfies / clichés clients sans rapport → on les ignore et on
+  // utilise des fonds sobres et professionnels par métier. Les secteurs visuels
+  // (boulangerie, restaurant, coiffure, commerce, artisan) gardent leurs vraies photos.
+  const trustsPlacesPhotos = input.sector !== "service";
+  const realPhotos = trustsPlacesPhotos ? input.photos : [];
+  const effectivePhotos = realPhotos.length > 0 ? realPhotos : SECTOR_FALLBACK_PHOTOS[input.sector];
   const heroPhoto = effectivePhotos[0];
   const galleryPhotos = effectivePhotos.slice(1);
   const company = escapeHtml(input.company);
@@ -673,11 +767,12 @@ function buildHtml(input: BuildInput): string {
   <style>
     :root {
       --c-primary: ${theme.primary};
-      --c-accent: ${theme.accent};
+      --c-accent: ${accent};
       --c-bg: ${theme.bg};
       --c-surface: ${theme.surface};
       --display-font: '${displayFamily}', Georgia, serif;
       --body-font: '${bodyFamily}', system-ui, -apple-system, sans-serif;
+      --mono-font: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
     }
     * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -729,10 +824,57 @@ function buildHtml(input: BuildInput): string {
       line-height: 1.55; font-weight: 300;
     }
     .eyebrow {
-      font-size: 0.75rem; font-weight: 600;
-      letter-spacing: 0.18em; text-transform: uppercase;
+      font-family: var(--mono-font);
+      font-size: 0.72rem; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase;
       color: var(--c-accent);
+      display: inline-flex; align-items: center; gap: 10px;
     }
+    .eyebrow::before {
+      content: ""; width: 26px; height: 1px;
+      background: var(--c-accent); display: inline-block; flex: none;
+    }
+    /* ─ Boîte à outils éditoriale (style Swiss / wyngo.fr) ─ */
+    .texture-dots {
+      background-image: radial-gradient(circle, color-mix(in srgb, var(--c-primary) 9%, transparent) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    .icon-tile {
+      width: 52px; height: 52px; border-radius: 15px;
+      background: var(--c-primary); color: var(--c-surface);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--c-primary) 70%, transparent);
+      flex: none;
+    }
+    .step-card {
+      position: relative; background: var(--c-surface);
+      border: 1px solid color-mix(in srgb, var(--c-primary) 9%, transparent);
+      border-radius: 18px; padding: 22px;
+      display: flex; gap: 18px; align-items: flex-start;
+      transition: all 0.45s cubic-bezier(.22,.61,.36,1);
+    }
+    .step-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c-accent) 45%, transparent); box-shadow: 0 22px 44px -20px rgba(0,0,0,0.22); }
+    .step-ico {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: var(--c-bg); border: 1px solid color-mix(in srgb, var(--c-primary) 8%, transparent);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--c-primary); flex: none;
+      transition: all 0.45s cubic-bezier(.22,.61,.36,1);
+    }
+    .step-card:hover .step-ico { background: var(--c-primary); color: var(--c-surface); transform: scale(1.08); }
+    .num-tag { font-family: var(--mono-font); font-size: 0.62rem; color: color-mix(in srgb, var(--c-primary) 45%, transparent); }
+    .draw-line { position: absolute; left: 34px; top: 16px; bottom: 24px; width: 1px; background: linear-gradient(to bottom, var(--c-accent), color-mix(in srgb, var(--c-primary) 12%, transparent), transparent); }
+    .pill-live {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 9px 18px; background: var(--c-surface);
+      border: 1px solid color-mix(in srgb, var(--c-primary) 12%, transparent);
+      border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    }
+    .pill-dot { position: relative; width: 8px; height: 8px; flex: none; }
+    .pill-dot::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--c-accent); opacity: 0.5; animation: pulsering 1.8s ease-out infinite; }
+    .pill-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--c-accent); }
+    @keyframes pulsering { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.6); opacity: 0; } }
+    .grad-ink { background: linear-gradient(90deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 45%, var(--c-bg))); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .container-w { max-width: 1280px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
     @media (min-width: 768px) { .container-w { padding-left: 48px; padding-right: 48px; } }
 
@@ -757,6 +899,11 @@ function buildHtml(input: BuildInput): string {
       border: 1px solid rgba(255,255,255,0.25);
       color: white; font-size: 0.75rem; font-weight: 500;
     }
+    .logo-chip {
+      background: #fff; border-radius: 12px; padding: 6px 12px; height: 46px;
+      display: flex; align-items: center; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    }
+    .logo-chip img { height: 34px; width: auto; max-width: 140px; object-fit: contain; display: block; }
     .pulse-dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: ${isOpenToday ? "#22c55e" : "#ef4444"};
@@ -888,6 +1035,7 @@ function buildHtml(input: BuildInput): string {
         <span class="pulse-dot"></span>
         <span>${escapeHtml(isOpenToday ? `Ouvert · ${todayHours}` : `Fermé aujourd'hui`)}</span>
       </div>
+      ${input.logo_url ? `<div class="logo-chip"><img src="${input.logo_url}" alt="${company}" onerror="this.parentNode.remove()"></div>` : ""}
     </div>
 
     <div class="relative z-10 container-w pb-12 md:pb-20 text-white">
@@ -973,22 +1121,35 @@ function buildHtml(input: BuildInput): string {
     </div>
   </section>
 
-  <!-- SERVICES -->
-  <section class="section bg-surface">
-    <div class="container-w">
-      <div class="text-center mb-12 md:mb-16">
-        <div class="reveal mb-3"><span class="eyebrow">Nos spécialités</span></div>
-        <h2 class="reveal reveal-d1 h-section ink mx-auto max-w-3xl">Le savoir-faire au cœur du métier</h2>
-        <div class="rule"></div>
-      </div>
-      <div class="grid md:grid-cols-3 gap-5 md:gap-7">
-        ${input.copy.services.map((s, i) => `
-        <div class="reveal reveal-d${(i % 3) + 1} service-card">
-          <div class="service-icon">${sectorEmojis[i] || theme.emoji}</div>
-          <h3 class="h-card ink mb-3">${escapeHtml(s.title)}</h3>
-          <p class="ink" style="opacity:0.7; line-height:1.55;">${escapeHtml(s.description)}</p>
+  <!-- SERVICES — escalier éditorial -->
+  <section class="section bg-surface relative overflow-hidden">
+    <div class="texture-dots absolute inset-0 opacity-40 pointer-events-none" style="mask-image:linear-gradient(to right, white, transparent 75%); -webkit-mask-image:linear-gradient(to right, white, transparent 75%);"></div>
+    <div class="container-w relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div class="reveal max-w-xl">
+          <div class="mb-6"><span class="eyebrow">01 — Nos spécialités</span></div>
+          <div class="icon-tile mb-7">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7Z"/><path d="m4 7 8 5 8-5"/><path d="M12 12v10"/></svg>
+          </div>
+          <h2 class="h-section grad-ink mb-6">Le savoir-faire<br>au cœur du métier.</h2>
+          <p class="lead ink mb-8" style="opacity:0.8;">${escapeHtml(input.copy.signature_phrase || input.copy.hero_tagline)}</p>
+          <div class="pill-live"><span class="pill-dot"></span><span class="ink">Un travail sur-mesure, près de chez vous.</span></div>
         </div>
-        `).join("")}
+
+        <div class="relative reveal reveal-d1">
+          <div class="draw-line hidden md:block"></div>
+          <div class="flex flex-col gap-5 relative z-10">
+            ${input.copy.services.map((s, i) => `
+            <div class="step-card ${i === 1 ? "md:ml-10" : i === 2 ? "md:ml-20" : ""}">
+              <div class="step-ico">${STEP_ICONS[i % STEP_ICONS.length]}</div>
+              <div>
+                <h3 class="font-semibold tracking-tight ink mb-1.5" style="font-size:0.95rem;">${escapeHtml(s.title)} <span class="num-tag">[0${i + 1}]</span></h3>
+                <p style="font-size:0.82rem; line-height:1.5; color:color-mix(in srgb, var(--c-primary) 60%, transparent);">${escapeHtml(s.description)}</p>
+              </div>
+            </div>
+            `).join("")}
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1205,6 +1366,9 @@ serve(async (req) => {
     // 1. Google Places (photos + reviews + horaires)
     const places = await fetchPlacesData(company, prospect.location);
 
+    // 1b. Marque réelle (logo + couleur) depuis le site existant du prospect
+    const brand = await fetchBrand(prospect.website);
+
     const reviewsExcerpt = places.reviews
       .slice(0, 5)
       .map((r) => `- (${r.rating}★ par ${r.author}) "${r.text.slice(0, 400)}"`)
@@ -1308,6 +1472,8 @@ serve(async (req) => {
       preview_id: previewId,
       supabase_url: supabaseUrl,
       app_url: appUrl,
+      logo_url: brand.logoUrl,
+      brand_color: brand.brandColor,
     });
 
     // 5. Upload sur Storage (Blob → content-type correct)

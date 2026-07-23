@@ -8,7 +8,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
-import { buildRawMultipartEmail } from "../_shared/email-html.ts";
+import { buildRawMultipartEmail, transactionalEmail } from "../_shared/email-html.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -98,46 +98,34 @@ Deno.serve(async (req) => {
     const ctaLabel = isFacture ? "Payer en ligne" : "Voir et signer le devis";
     const docWord = isFacture ? "facture" : "devis";
 
-    // ── Corps HTML (email-safe, inline styles, bouton en table) ──
+    // ── Corps HTML (gabarit premium partagé) ──
     const lines = Array.isArray(doc.lines) ? doc.lines as { description: string; quantity: number; unit_price_ht: number }[] : [];
     const lineRows = lines.map((l) => `<tr>
-      <td style="padding:6px 0;border-bottom:1px solid #eee;font-size:13px;">${esc(l.description) || "—"}</td>
-      <td style="padding:6px 0;border-bottom:1px solid #eee;font-size:13px;text-align:right;white-space:nowrap;">${eur((Number(l.quantity)||0)*(Number(l.unit_price_ht)||0))}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f1f2f4;font-size:13.5px;color:#374151;">${esc(l.description) || "—"}</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f1f2f4;font-size:13.5px;color:#374151;text-align:right;white-space:nowrap;">${eur((Number(l.quantity)||0)*(Number(l.unit_price_ht)||0))}</td>
     </tr>`).join("");
+    const contentHtml = lineRows
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 2px;">${lineRows}
+          <tr><td style="padding:12px 0 0;font-size:14.5px;font-weight:700;color:#0f172a;">Total</td>
+              <td style="padding:12px 0 0;font-size:14.5px;font-weight:700;color:#0f172a;text-align:right;">${eur(total)}</td></tr></table>`
+      : "";
 
     const intro = isFacture
       ? `Voici votre facture <b>${esc(doc.number || "")}</b> d'un montant de <b>${eur(total)}</b>${doc.due_date ? `, à régler avant le <b>${dateFr(doc.due_date)}</b>` : ""}.`
       : `Voici votre devis <b>${esc(doc.number || "")}</b> d'un montant de <b>${eur(total)}</b>. Vous pouvez le consulter et le valider en ligne en un clic.`;
 
-    const htmlBody = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;"><tr><td align="center" style="padding:24px 12px;">
-  <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #eceef1;">
-    <tr><td style="padding:22px 28px;border-bottom:1px solid #f0f1f3;">
-      <div style="font-size:18px;font-weight:800;">${esc(sellerName)}</div>
-    </td></tr>
-    <tr><td style="padding:24px 28px;">
-      <p style="margin:0 0 14px;font-size:15px;">Bonjour ${esc(doc.client_name) || ""},</p>
-      <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">${intro}</p>
-      ${lineRows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 6px;">
-        ${lineRows}
-        <tr><td style="padding:10px 0 0;font-size:14px;font-weight:800;">Total ${isFacture ? "" : ""}</td>
-            <td style="padding:10px 0 0;font-size:14px;font-weight:800;text-align:right;">${eur(total)}</td></tr>
-      </table>` : ""}
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0;"><tr>
-        <td style="border-radius:10px;background:#4f46e5;">
-          <a href="${esc(ctaUrl)}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;border-radius:10px;">${ctaLabel} →</a>
-        </td>
-      </tr></table>
-      <p style="margin:0;font-size:12px;color:#8a8a8a;">Ou copiez ce lien : ${esc(ctaUrl)}</p>
-    </td></tr>
-    <tr><td style="padding:16px 28px;border-top:1px solid #f0f1f3;font-size:12px;color:#8a8a8a;">
-      ${esc(sellerName)}${s?.email ? ` · ${esc(s.email)}` : ""}${s?.phone ? ` · ${esc(s.phone)}` : ""}
-      ${s?.vat_regime !== "normal" ? `<br>TVA non applicable, art. 293 B du CGI.` : ""}
-    </td></tr>
-  </table>
-  <div style="font-size:11px;color:#b0b4ba;margin-top:14px;">Émis avec Wyngo</div>
-</td></tr></table></body></html>`;
+    const htmlBody = transactionalEmail({
+      brand: sellerName,
+      greetingName: doc.client_name,
+      intro,
+      contentHtml,
+      ctaUrl,
+      ctaLabel,
+      footerLines: [
+        `${esc(sellerName)}${s?.email ? ` · ${esc(s.email)}` : ""}${s?.phone ? ` · ${esc(s.phone)}` : ""}`,
+        s?.vat_regime !== "normal" ? "TVA non applicable, art. 293 B du CGI." : "",
+      ],
+    });
 
     const textBody = `Bonjour ${doc.client_name || ""},\n\n${isFacture ? `Voici votre facture ${doc.number || ""} d'un montant de ${eur(total)}.` : `Voici votre devis ${doc.number || ""} d'un montant de ${eur(total)}.`}\n\n${ctaLabel} : ${ctaUrl}\n\n${sellerName}`;
 

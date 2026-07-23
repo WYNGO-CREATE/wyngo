@@ -1,0 +1,1 @@
+insert into public.prospects (id, owner_id, first_name, last_name, company, location, status, source) values ('33333333-3333-3333-3333-333333333333',(select id from auth.users order by created_at limit 1),'Test','DA','Maison Landemaine','Paris','nouveau','demo') on conflict (id) do nothing;
