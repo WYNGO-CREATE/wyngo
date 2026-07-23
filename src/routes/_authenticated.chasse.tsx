@@ -143,6 +143,8 @@ function ChassePage() {
   const [codeNaf, setCodeNaf] = useState("70.22Z");
   const [ville, setVille] = useState("");
   const [codePostal, setCodePostal] = useState("");
+  // Rayon de chasse : 0 = ville stricte, >0 = ville + communes/villages alentour.
+  const [rayon, setRayon] = useState(30);
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
   const [effectif, setEffectif] = useState("01");
@@ -219,6 +221,7 @@ function ChassePage() {
             code_postal: codePostal || undefined,
             tranche_effectif: effectif || undefined,
             max_results: targetCount,
+            rayon_km: rayon || undefined,
           },
         },
       });
@@ -635,6 +638,29 @@ function ChassePage() {
                 value={codePostal}
                 onChange={(e) => setCodePostal(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Rayon autour de la ville</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {[0, 10, 20, 30, 45].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRayon(r)}
+                    className={cn(
+                      "text-xs rounded-full border px-3 py-1 transition",
+                      rayon === r
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                    )}
+                  >
+                    {r === 0 ? "Ville seule" : `${r} km`}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Inclut les communes et villages alentour. La ville de chaque prospect reste affichée.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="count">Nombre de prospects</Label>

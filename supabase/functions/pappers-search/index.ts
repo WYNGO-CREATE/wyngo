@@ -106,6 +106,75 @@ type PappersEntreprise = {
   domaine_email?: string;
 };
 
+// ─── Zone de chasse : ville + rayon (communes réelles autour) ───
+// Utilise geo.api.gouv.fr (API officielle, gratuite, sans clé) pour obtenir la
+// liste EXACTE des communes/villages dans le rayon demandé. On garde le nom de
+// chaque commune : le commercial doit toujours voir où se trouve le prospect.
+const GEO = "https://geo.api.gouv.fr";
+
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const normCity = (s: string | null | undefined) =>
+  (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+
+async function geoJson(path: string): Promise<any> {
+  try {
+    const r = await fetch(`${GEO}${path}`);
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
+async function resolveZone(ville: string | undefined, cp: string | undefined, rayonKm: number) {
+  // 1. Commune centrale
+  let c: any = null;
+  if (cp && /^\d{5}$/.test(cp.trim())) {
+    const l = await geoJson(`/communes?codePostal=${cp.trim()}&fields=nom,centre,codeDepartement,codesPostaux`);
+    c = l?.[0] || null;
+  }
+  if (!c && ville) {
+    const l = await geoJson(`/communes?nom=${encodeURIComponent(ville)}&fields=nom,centre,codeDepartement,codesPostaux&boost=population&limit=1`);
+    c = l?.[0] || null;
+  }
+  if (!c?.centre?.coordinates) return null;
+  const center = { lat: c.centre.coordinates[1], lng: c.centre.coordinates[0] };
+
+  // 2. Départements touchés par le rayon (échantillonnage sur 8 directions)
+  const depts = new Set<string>([c.codeDepartement]);
+  const probes = await Promise.all(
+    Array.from({ length: 8 }, (_, i) => {
+      const brg = (i * 45 * Math.PI) / 180;
+      const lat = center.lat + (rayonKm / 111.32) * Math.cos(brg);
+      const lng = center.lng + (rayonKm / (111.32 * Math.cos((center.lat * Math.PI) / 180))) * Math.sin(brg);
+      return geoJson(`/communes?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&fields=codeDepartement`);
+    }),
+  );
+  for (const p of probes) if (p?.[0]?.codeDepartement) depts.add(p[0].codeDepartement);
+
+  // 3. Toutes les communes de ces départements, filtrées par distance réelle
+  const lists = await Promise.all(
+    [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,centre,codesPostaux`)),
+  );
+  const communes: Array<{ nom: string; cps: string[] }> = [];
+  const names = new Set<string>();
+  const cps = new Set<string>();
+  for (const list of lists) {
+    for (const com of list || []) {
+      const co = com?.centre?.coordinates;
+      if (!co) continue;
+      if (haversineKm(center, { lat: co[1], lng: co[0] }) > rayonKm) continue;
+      communes.push({ nom: com.nom, cps: com.codesPostaux || [] });
+      names.add(normCity(com.nom));
+      for (const p of com.codesPostaux || []) cps.add(p);
+    }
+  }
+  if (names.size === 0) return null;
+  return { center, centerName: c.nom, depts: [...depts], names, cps, communes };
+}
+
 async function actionSearch(params: {
   code_naf?: string;
   ville?: string;
@@ -115,6 +184,7 @@ async function actionSearch(params: {
   page?: number;
   par_page?: number;
   max_results?: number; // objectif de résultats utiles (après filtrage géo) — pagination auto
+  rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
   with_site_web?: boolean | null; // true = uniquement avec site, false = uniquement sans, null/undef = tous
 }) {
   // Objectif : nombre de prospects UTILES voulus (après rejet hors-zone).
@@ -127,8 +197,11 @@ async function actionSearch(params: {
     if (!s) return "";
     return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
   }
-  const requestedVille = normalizeCity(params.ville);
-  const requestedCp = (params.code_postal || "").trim();
+  // Zone de chasse : soit la ville stricte (rayon 0), soit ville + périphérie.
+  const rayon = Math.min(Math.max(Number(params.rayon_km) || 0, 0), 60);
+  const zone = rayon > 0 ? await resolveZone(params.ville, params.code_postal, rayon) : null;
+  const requestedVille = zone ? "" : normalizeCity(params.ville);
+  const requestedCp = zone ? "" : (params.code_postal || "").trim();
 
   function mapResultats(resultats: PappersEntreprise[]) {
     return resultats.map((r) => {
@@ -158,6 +231,13 @@ async function actionSearch(params: {
   // (le commercial doit pouvoir cibler une zone de façon 100% fiable).
   function geoFilter(list: ReturnType<typeof mapResultats>) {
     return list.filter((e) => {
+      // Rayon : on accepte toute commune réellement située dans la zone.
+      if (zone) {
+        const cp = (e.code_postal || "").trim();
+        if (cp && zone.cps.has(cp)) return true;
+        const n = normCity(e.ville);
+        return !!n && zone.names.has(n);
+      }
       if (requestedVille) {
         const eVille = normalizeCity(e.ville);
         if (!eVille || !eVille.includes(requestedVille)) return false;
@@ -175,35 +255,44 @@ async function actionSearch(params: {
   let totalApi = 0;
   let rejected = 0;
   let scannedPages = 0;
-  let page = params.page ?? 1;
 
-  for (let i = 0; i < MAX_PAGES && collected.length < target; i++, page++) {
-    const apiParams: Record<string, string | number | undefined> = {
-      code_naf: params.code_naf,
-      code_postal: params.code_postal,
-      q: params.q,
-      page,
-      par_page: PER_PAGE,
-      precision: "exacte",
-      bases: "entreprises",
-    };
-    if (params.ville) apiParams["ville"] = params.ville;
-    if (params.tranche_effectif) apiParams["tranche_effectif"] = params.tranche_effectif;
+  // En mode rayon on interroge Pappers département par département (la zone peut
+  // déborder sur un département voisin), puis on ne garde que les communes
+  // réellement situées dans le rayon.
+  const queryScopes: Array<Record<string, string | undefined>> = zone
+    ? zone.depts.map((d) => ({ departement: d }))
+    : [{ code_postal: params.code_postal, ville: params.ville }];
 
-    const data = await callPappers("/recherche", apiParams);
-    const resultats = (data?.resultats as PappersEntreprise[]) || [];
-    scannedPages++;
-    if (i === 0) totalApi = (data?.total as number) || 0;
+  for (const scope of queryScopes) {
+    let page = params.page ?? 1;
+    for (let i = 0; i < MAX_PAGES && collected.length < target; i++, page++) {
+      const apiParams: Record<string, string | number | undefined> = {
+        code_naf: params.code_naf,
+        q: params.q,
+        page,
+        par_page: PER_PAGE,
+        precision: "exacte",
+        bases: "entreprises",
+        ...scope,
+      };
+      if (params.tranche_effectif) apiParams["tranche_effectif"] = params.tranche_effectif;
 
-    const mapped = mapResultats(resultats);
-    const kept = geoFilter(mapped);
-    rejected += mapped.length - kept.length;
-    for (const e of kept) {
-      if (e.siren && seen.has(e.siren)) continue; // dédup inter-pages
-      if (e.siren) seen.add(e.siren);
-      collected.push(e);
+      const data = await callPappers("/recherche", apiParams);
+      const resultats = (data?.resultats as PappersEntreprise[]) || [];
+      scannedPages++;
+      if (totalApi === 0) totalApi = (data?.total as number) || 0;
+
+      const mapped = mapResultats(resultats);
+      const kept = geoFilter(mapped);
+      rejected += mapped.length - kept.length;
+      for (const e of kept) {
+        if (e.siren && seen.has(e.siren)) continue; // dédup inter-pages
+        if (e.siren) seen.add(e.siren);
+        collected.push(e);
+      }
+      if (resultats.length < PER_PAGE) break; // plus de pages disponibles
     }
-    if (resultats.length < PER_PAGE) break; // plus de pages disponibles
+    if (collected.length >= target) break;
   }
 
   const entreprises = collected.slice(0, target);
@@ -218,6 +307,9 @@ async function actionSearch(params: {
     },
     rejected_out_of_zone: rejected,
     scanned_pages: scannedPages,
+    zone: zone
+      ? { centre: zone.centerName, rayon_km: rayon, communes: zone.communes.length, departements: zone.depts }
+      : null,
   };
 }
 
