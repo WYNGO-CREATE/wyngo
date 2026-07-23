@@ -29,6 +29,19 @@ type Competitor = { name: string; website: string; rating: number | null; review
 const strip = (s: string) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
+// Extrait la VILLE d'un champ « location » qui peut être une adresse complète
+// (ex : "5 Pl. du Président Thomas Wilson, 31000 Toulouse" → "Toulouse").
+function cleanCity(loc: string): string {
+  const s = (loc || "").trim();
+  // Cas courant : "... 31000 Toulouse" → on capture ce qui suit le code postal.
+  const m = s.match(/\b\d{4,5}\s+([a-zA-Zà-ÿ'’ .-]+?)(?:,|$)/);
+  if (m && m[1].trim().length > 1) return m[1].trim();
+  // Sinon : dernier segment après virgule, code postal retiré.
+  const parts = s.split(",").map((x) => x.trim()).filter(Boolean);
+  const last = parts.length ? parts[parts.length - 1] : s;
+  return last.replace(/\b\d{4,5}\b/g, "").trim() || s;
+}
+
 function host(url: string | null | undefined): string | null {
   if (!url) return null;
   try { return new URL(url).hostname.replace(/^www\./, "").toLowerCase(); } catch { return null; }
@@ -156,13 +169,14 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: cors });
     }
 
-    // Métier propre pour la recherche Google (gère les fiches enrichies en longue description).
+    // Métier + ville propres pour la recherche Google (gère les fiches enrichies : longue description + adresse complète).
     const metier = await cleanTrade(rawMetier);
+    const city = cleanCity(ville);
 
     const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
     if (!placesKey) return new Response(JSON.stringify({ error: "GOOGLE_PLACES_API_KEY non configurée" }), { status: 500, headers: cors });
 
-    const query = `${metier} ${ville}`;
+    const query = `${metier} ${city}`;
     const pr = await fetch(`${PLACES_BASE}/places:searchText`, {
       method: "POST",
       headers: {
@@ -176,7 +190,7 @@ Deno.serve(async (req) => {
     const places = (await pr.json()).places || [];
 
     // Mots significatifs de la ville (gère « 31000 Toulouse », « Toulouse, Occitanie », villes en 2 mots…)
-    const villeWords = strip(ville).replace(/[^a-zà-ÿ\s]/gi, " ").split(/\s+/).filter((w) => w.length > 2);
+    const villeWords = strip(city).replace(/[^a-zà-ÿ\s]/gi, " ").split(/\s+/).filter((w) => w.length > 2);
     const prospectHost = host(prospect.website);
     const prospectName = strip(prospect.company || "");
 
