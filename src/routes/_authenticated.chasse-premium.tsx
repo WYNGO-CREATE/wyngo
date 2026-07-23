@@ -16,6 +16,7 @@ import { Crown, Loader2, Search, Plus, ExternalLink, Check, X, Star } from "luci
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TRADES } from "@/lib/trades-catalog";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/chasse-premium")({
   component: ChassePremium,
@@ -34,6 +35,7 @@ type Candidate = {
 const cleanQuery = (label: string) => label.split(/[-–/]/)[0].trim();
 
 function ChassePremium() {
+  const { user } = useAuth();
   const [sectorInput, setSectorInput] = useState("");
   const [sectors, setSectors] = useState<string[]>([]);
   const [location, setLocation] = useState("");
@@ -70,16 +72,21 @@ function ChassePremium() {
   };
 
   const addProspect = async (c: Candidate) => {
+    if (!user?.id) { toast.error("Session expirée — reconnecte-toi."); return; }
     const payload = {
+      owner_id: user.id,                        // OBLIGATOIRE (RLS multi-utilisateur) — sinon l'insert est rejeté silencieusement
       company: c.nom,
       first_name: c.dirigeant?.prenom || "Contact",
       last_name: c.dirigeant?.nom || c.nom.slice(0, 60),
+      title: c.dirigeant?.qualite || null,
       location: c.adresse || res?.city || location,
       brief_activity: c.secteur,
       industry: c.secteur,
       phone: c.telephone || null,
       website: c.website || null,
+      source: "chasse_premium",
       custom_status: "premium",
+      tags: ["chasse_premium", c.b2b ? "b2b" : "b2c"],
     };
     const { error } = await supabase.from("prospects").insert(payload as never);
     if (error) { toast.error("Ajout impossible", { description: error.message }); return; }
