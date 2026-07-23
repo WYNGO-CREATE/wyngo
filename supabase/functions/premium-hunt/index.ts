@@ -141,6 +141,8 @@ Deno.serve(async (req) => {
       for (const p of places) {
         const nom = p.displayName?.text || "";
         const website = p.websiteUri || null;
+        // Chasse Premium = uniquement les entreprises qui ONT déjà un site (les sans-site = chasse classique).
+        if (!website) continue;
         const key = host(website) || strip(nom);
         if (!nom || seen.has(key)) continue;
         seen.add(key);
