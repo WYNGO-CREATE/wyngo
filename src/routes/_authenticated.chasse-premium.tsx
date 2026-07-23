@@ -34,6 +34,9 @@ type Candidate = {
   site_score: number; load_ms: number | null; etablissement: number; faiblesse: number; opportunite: number; b2b: boolean;
   raisons: string[]; problemes: Probleme[];
   nb_critiques: number; nb_majeurs: number; verdict: string; priorite: string;
+  ca: number | null; ca_label: string | null; resultat: number | null; annee_finances: string | null;
+  effectif_label: string | null; raison_sociale: string | null;
+  confiance_legale: "exact" | "probable" | null;
 };
 
 const GRAVITE_STYLE: Record<Gravite, { dot: string; label: string; chip: string }> = {
@@ -125,7 +128,7 @@ function ChassePremium() {
           <Crown className="h-6 w-6 text-amber-500" /> Chasse Premium
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Trouve les entreprises qui <strong>tournent déjà</strong> (donc ont du budget) mais dont le <strong>site web sous-performe</strong> — le meilleur profil pour une refonte. Analyse réelle : Google + audit du site + Pappers.
+          Trouve les entreprises qui <strong>tournent déjà</strong> (donc ont du budget) mais dont le <strong>site web sous-performe</strong> — le meilleur profil pour une refonte. Analyse réelle : Google Places + audit technique du site + données légales officielles (Sirene/INPI).
         </p>
       </div>
 
@@ -188,7 +191,7 @@ function ChassePremium() {
           </div>
           <Button onClick={run} disabled={loading} className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {loading ? "Analyse du marché en cours… (~20 s)" : "Lancer la chasse premium"}
+            {loading ? "Balayage + audit technique en cours… (~40 s)" : "Lancer la chasse premium"}
           </Button>
         </CardContent>
       </Card>
@@ -247,6 +250,27 @@ function ChassePremium() {
                         <span key={i} className="text-[11px] rounded bg-muted px-1.5 py-0.5">{r}</span>
                       ))}
                     </div>
+
+                    {/* Fiche légale officielle (données publiques Sirene/INPI) */}
+                    {(c.dirigeant?.nom || c.raison_sociale || c.ca_label) && (
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        {c.dirigeant?.nom && (
+                          <span className="text-foreground font-medium">
+                            {[c.dirigeant.prenom, c.dirigeant.nom].filter(Boolean).join(" ")}
+                            {c.dirigeant.qualite ? ` · ${c.dirigeant.qualite}` : ""}
+                          </span>
+                        )}
+                        {c.raison_sociale && c.raison_sociale.toLowerCase() !== c.nom.toLowerCase() && (
+                          <span> · {c.raison_sociale}</span>
+                        )}
+                        {c.ca_label && <span> · CA {c.ca_label}{c.annee_finances ? ` (${c.annee_finances})` : ""}</span>}
+                        {c.confiance_legale === "probable" && (
+                          <span className="ml-1 rounded bg-amber-100 text-amber-700 px-1 py-px text-[9px] font-semibold">
+                            rattachement à vérifier
+                          </span>
+                        )}
+                      </p>
+                    )}
 
                     {/* Barre visuelle : établi vs faiblesse du site */}
                     <div className="grid grid-cols-2 gap-3 mt-3">

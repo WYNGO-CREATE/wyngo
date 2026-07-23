@@ -20,6 +20,8 @@
 //   4. Classement par Opportunité. Bons sites déjà au top = gardés, derniers.
 // ─────────────────────────────────────────────────────────────────────────
 
+import { lookupEntreprise, type EntrepriseInfo } from "../_shared/entreprises.ts";
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -202,7 +204,24 @@ async function placesSearch(
   } catch { return { places: [], next: null }; }
 }
 
-// Enrichissement Pappers (best-effort) : effectif + ancienneté + dirigeant + siren.
+// Enrichissement légal : API officielle de l'État (gratuite, illimitée) en
+// source principale ; Pappers seulement en repli s'il lui reste des crédits.
+async function enrich(nom: string, cp: string | null, secteur: string | null, ville: string | null, pappersKey: string | undefined): Promise<EntrepriseInfo | null> {
+  const officiel = await lookupEntreprise(nom, cp, secteur, ville);
+  if (officiel) return officiel;
+  if (!pappersKey) return null;
+  const p = await pappersLookup(pappersKey, nom, cp);
+  if (!p) return null;
+  return {
+    siren: p.siren, siret: null, nom, naf: null, ville: null, code_postal: cp,
+    adresse: null, lat: null, lng: null,
+    effectif: p.eff, effectif_label: p.eff ? `${p.eff} salariés` : "effectif non renseigné",
+    anciennete: p.age, date_creation: null, dirigeant: p.dirigeant,
+    ca: null, resultat: null, annee_finances: null,
+  };
+}
+
+// Enrichissement Pappers (repli) : effectif + ancienneté + dirigeant + siren.
 async function pappersLookup(key: string, name: string, cp: string | null): Promise<{ eff: number; age: number | null; siren: string | null; dirigeant: any } | null> {
   try {
     const url = new URL(`${PAPPERS_BASE}/recherche`);
@@ -227,14 +246,27 @@ async function pappersLookup(key: string, name: string, cp: string | null): Prom
 }
 
 // Établissement 0-100 : à quel point l'entreprise "tourne" et a du budget.
-function establishmentScore(reviews: number | null, rating: number | null, eff: number): number {
+// Le chiffre d'affaires (source officielle) est le signal de budget le plus fiable.
+function establishmentScore(reviews: number | null, rating: number | null, eff: number, ca: number | null): number {
   let s = 0;
   const r = reviews ?? 0;
-  if (r >= 500) s += 82; else if (r >= 150) s += 72; else if (r >= 50) s += 60;
-  else if (r >= 10) s += 46; else if (r >= 1) s += 30; else s += 14;
-  if (rating != null) { if (rating >= 4.5) s += 8; else if (rating >= 4.0) s += 4; }
-  if (eff >= 10) s += 12; else if (eff >= 5) s += 8; else if (eff >= 1) s += 4;
+  if (r >= 500) s += 74; else if (r >= 150) s += 64; else if (r >= 50) s += 54;
+  else if (r >= 10) s += 42; else if (r >= 1) s += 28; else s += 12;
+  if (rating != null) { if (rating >= 4.5) s += 7; else if (rating >= 4.0) s += 4; }
+  if (eff >= 20) s += 11; else if (eff >= 10) s += 9; else if (eff >= 6) s += 7; else if (eff >= 3) s += 5; else if (eff >= 1) s += 3;
+  if (ca != null) {
+    if (ca >= 5_000_000) s += 16; else if (ca >= 1_000_000) s += 13;
+    else if (ca >= 500_000) s += 9; else if (ca >= 200_000) s += 6; else if (ca > 0) s += 3;
+  }
   return Math.min(100, s);
+}
+
+// Montant lisible : 3 143 971 € → "3,1 M€"
+function euros(n: number | null): string | null {
+  if (n == null) return null;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".", ",")} M€`;
+  if (n >= 1_000) return `${Math.round(n / 1000)} k€`;
+  return `${n} €`;
 }
 
 Deno.serve(async (req) => {
@@ -321,18 +353,20 @@ Deno.serve(async (req) => {
       const reasons: string[] = [];
       const cpCand = extractCP(c.adresse || "") || cpHint;
 
-      const [audit, pap] = await Promise.all([
+      const [audit, info] = await Promise.all([
         auditSite(c.website),
-        pappersKey ? pappersLookup(pappersKey, c.nom, cpCand) : Promise.resolve(null),
+        enrich(c.nom, cpCand, c.secteur, c.ville, pappersKey),
       ]);
 
-      const eff = pap?.eff ?? 0;
-      const age = pap?.age ?? null;
-      const establishment = establishmentScore(c.avis, c.note, eff);
+      const eff = info?.effectif ?? 0;
+      const age = info?.anciennete ?? null;
+      const ca = info?.ca ?? null;
+      const establishment = establishmentScore(c.avis, c.note, eff, ca);
 
       // Preuves que l'entreprise tourne (= a du budget)
       if (c.avis != null) reasons.push(`${c.avis} avis Google${c.note ? ` (${c.note}/5)` : ""}`);
-      if (eff >= 1) reasons.push(`${eff} salarié${eff > 1 ? "s" : ""}`);
+      if (ca != null) reasons.push(`CA ${euros(ca)}${info?.annee_finances ? ` (${info.annee_finances})` : ""}`);
+      if (eff >= 1 && info?.effectif_label) reasons.push(info.effectif_label);
       if (age != null) reasons.push(`établie depuis ${age} ans`);
       if (c.ville) reasons.push(c.distance_km != null && c.distance_km >= 1 ? `${c.ville} · à ${c.distance_km} km` : c.ville);
 
@@ -350,7 +384,8 @@ Deno.serve(async (req) => {
       if (problems.length === 0) {
         verdict = "Site techniquement propre : peu de leviers, à contacter en dernier.";
       } else if (critiques >= 2 && establishment >= 60) {
-        verdict = `Pépite : l'entreprise tourne clairement (${c.avis ?? 0} avis) mais son site cumule ${critiques} défauts critiques. Refonte à fort impact.`;
+        const preuve = ca != null ? `${euros(ca)} de CA` : `${c.avis ?? 0} avis`;
+        verdict = `Pépite : l'entreprise tourne clairement (${preuve}) mais son site cumule ${critiques} défauts critiques. Refonte à fort impact.`;
       } else if (critiques >= 1) {
         verdict = `${critiques} défaut${critiques > 1 ? "s" : ""} critique${critiques > 1 ? "s" : ""} bloque${critiques > 1 ? "nt" : ""} sa visibilité — angle d'entrée direct.`;
       } else {
@@ -361,8 +396,10 @@ Deno.serve(async (req) => {
         nom: c.nom, secteur: c.secteur, adresse: c.adresse,
         ville: c.ville, distance_km: c.distance_km,
         telephone: c.telephone, website: c.website,
-        avis: c.avis, note: c.note, effectif: eff, anciennete: age,
-        siren: pap?.siren ?? null, dirigeant: pap?.dirigeant ?? null,
+        avis: c.avis, note: c.note, effectif: eff, effectif_label: info?.effectif_label ?? null, anciennete: age,
+        ca, ca_label: euros(ca), resultat: info?.resultat ?? null, annee_finances: info?.annee_finances ?? null,
+        siren: info?.siren ?? null, dirigeant: info?.dirigeant ?? null,
+        raison_sociale: info?.nom ?? null, confiance_legale: info?.confiance ?? null,
         site_score: audit.score,
         load_ms: audit.loadMs ?? null,
         problemes: problems.slice(0, 10),

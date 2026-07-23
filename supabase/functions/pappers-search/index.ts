@@ -21,6 +21,8 @@
  * Doc API : https://www.pappers.fr/api/documentation
  */
 
+import { searchEntreprises } from "../_shared/entreprises.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -74,10 +76,9 @@ async function callPappers(path: string, params: Record<string, string | number 
 // ─── Actions ───
 
 async function actionTest() {
-  // L'endpoint "recherche" avec un paramètre minimal sert de health-check
-  const data = await callPappers("/recherche", { q: "test", par_page: 1 });
-  const total = (data as { total?: number })?.total;
-  return { ok: true, pappers_total_sample: total };
+  // Health-check de la source principale : l'API officielle de l'État.
+  const { total } = await searchEntreprises({ q: "boulangerie", codePostal: "31000", perPage: 1 });
+  return { ok: true, source: "api-recherche-entreprises-etat", echantillon: total };
 }
 
 type PappersEntreprise = {
@@ -156,9 +157,9 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
 
   // 3. Toutes les communes de ces départements, filtrées par distance réelle
   const lists = await Promise.all(
-    [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,centre,codesPostaux`)),
+    [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,centre,codesPostaux,population`)),
   );
-  const communes: Array<{ nom: string; cps: string[] }> = [];
+  const communes: Array<{ nom: string; cps: string[]; pop: number }> = [];
   const names = new Set<string>();
   const cps = new Set<string>();
   for (const list of lists) {
@@ -166,11 +167,13 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
       const co = com?.centre?.coordinates;
       if (!co) continue;
       if (haversineKm(center, { lat: co[1], lng: co[0] }) > rayonKm) continue;
-      communes.push({ nom: com.nom, cps: com.codesPostaux || [] });
+      communes.push({ nom: com.nom, cps: com.codesPostaux || [], pop: com.population || 0 });
       names.add(normCity(com.nom));
       for (const p of com.codesPostaux || []) cps.add(p);
     }
   }
+  // Les grandes communes d'abord : c'est là que se trouvent les entreprises.
+  communes.sort((a, b) => b.pop - a.pop);
   if (names.size === 0) return null;
   return { center, centerName: c.nom, depts: [...depts], names, cps, communes };
 }
@@ -179,137 +182,99 @@ async function actionSearch(params: {
   code_naf?: string;
   ville?: string;
   code_postal?: string;
-  tranche_effectif?: string; // "0", "1", "2", "3" (codes Pappers)
+  tranche_effectif?: string; // code INSEE ("01", "02", "03", "11"…)
   q?: string;
   page?: number;
   par_page?: number;
-  max_results?: number; // objectif de résultats utiles (après filtrage géo) — pagination auto
+  max_results?: number;  // objectif de prospects utiles
   rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
-  with_site_web?: boolean | null; // true = uniquement avec site, false = uniquement sans, null/undef = tous
+  with_site_web?: boolean | null;
 }) {
-  // Objectif : nombre de prospects UTILES voulus (après rejet hors-zone).
-  // On pagine l'API Pappers (100/page) jusqu'à l'atteindre, avec garde-fou.
   const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 300);
-  const PER_PAGE = 100;
-  const MAX_PAGES = 8; // 8 × 100 = 800 entreprises scannées max par chasse
-
-  function normalizeCity(s: string | null | undefined): string {
-    if (!s) return "";
-    return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
-  }
-  // Zone de chasse : soit la ville stricte (rayon 0), soit ville + périphérie.
   const rayon = Math.min(Math.max(Number(params.rayon_km) || 0, 0), 60);
   const zone = rayon > 0 ? await resolveZone(params.ville, params.code_postal, rayon) : null;
-  const requestedVille = zone ? "" : normalizeCity(params.ville);
-  const requestedCp = zone ? "" : (params.code_postal || "").trim();
 
-  function mapResultats(resultats: PappersEntreprise[]) {
-    return resultats.map((r) => {
-      const principal = r.dirigeants?.[0];
-      return {
-        siren: r.siren,
-        siret: r.siege?.siret || null,
-        nom: r.nom_entreprise || r.denomination || "Sans nom",
-        code_naf: r.code_naf || null,
-        libelle_naf: r.libelle_code_naf || null,
-        ville: r.siege?.ville || null,
-        code_postal: r.siege?.code_postal || null,
-        adresse: r.siege?.adresse_ligne_1 || null,
-        tranche_effectif: r.tranche_effectif || r.effectif || null,
-        site_web: r.site_web || null,
-        email: r.email || null,
-        telephone: r.telephone || null,
-        date_creation: r.date_creation_formate || null,
-        dirigeant_principal: principal
-          ? { prenom: principal.prenom || "", nom: principal.nom || "", qualite: principal.qualite || "" }
-          : null,
-      };
-    });
-  }
+  // L'API officielle n'applique ses filtres géographiques QUE si elle reçoit
+  // aussi un mot-clé. On interroge donc commune par commune (les plus peuplées
+  // d'abord, c'est là que sont les entreprises), jusqu'à atteindre l'objectif.
+  const cibles: Array<{ q: string; cp?: string }> = zone
+    ? zone.communes.map((c) => ({ q: c.nom, cp: c.cps[0] }))
+    : [{
+        q: (params.ville || params.code_postal || "").trim(),
+        cp: (params.code_postal || "").trim() || undefined,
+      }];
 
-  // Filtrage défensif : on REJETTE les sieges hors de la ville/CP demandés
-  // (le commercial doit pouvoir cibler une zone de façon 100% fiable).
-  function geoFilter(list: ReturnType<typeof mapResultats>) {
-    return list.filter((e) => {
-      // Rayon : on accepte toute commune réellement située dans la zone.
-      if (zone) {
-        const cp = (e.code_postal || "").trim();
-        if (cp && zone.cps.has(cp)) return true;
-        const n = normCity(e.ville);
-        return !!n && zone.names.has(n);
-      }
-      if (requestedVille) {
-        const eVille = normalizeCity(e.ville);
-        if (!eVille || !eVille.includes(requestedVille)) return false;
-      }
-      if (requestedCp) {
-        const eCp = (e.code_postal || "").trim();
-        if (!eCp || !eCp.startsWith(requestedCp)) return false;
-      }
-      return true;
-    });
-  }
-
-  const collected: ReturnType<typeof mapResultats> = [];
+  const collected: any[] = [];
   const seen = new Set<string>();
-  let totalApi = 0;
   let rejected = 0;
-  let scannedPages = 0;
+  let scanned = 0;
+  const communesTouchees = new Set<string>();
+  const villeDemandee = normCity(params.ville);
 
-  // En mode rayon on interroge Pappers département par département (la zone peut
-  // déborder sur un département voisin), puis on ne garde que les communes
-  // réellement situées dans le rayon.
-  const queryScopes: Array<Record<string, string | undefined>> = zone
-    ? zone.depts.map((d) => ({ departement: d }))
-    : [{ code_postal: params.code_postal, ville: params.ville }];
-
-  for (const scope of queryScopes) {
-    let page = params.page ?? 1;
-    for (let i = 0; i < MAX_PAGES && collected.length < target; i++, page++) {
-      const apiParams: Record<string, string | number | undefined> = {
-        code_naf: params.code_naf,
-        q: params.q,
-        page,
-        par_page: PER_PAGE,
-        precision: "exacte",
-        bases: "entreprises",
-        ...scope,
-      };
-      if (params.tranche_effectif) apiParams["tranche_effectif"] = params.tranche_effectif;
-
-      const data = await callPappers("/recherche", apiParams);
-      const resultats = (data?.resultats as PappersEntreprise[]) || [];
-      scannedPages++;
-      if (totalApi === 0) totalApi = (data?.total as number) || 0;
-
-      const mapped = mapResultats(resultats);
-      const kept = geoFilter(mapped);
-      rejected += mapped.length - kept.length;
-      for (const e of kept) {
-        if (e.siren && seen.has(e.siren)) continue; // dédup inter-pages
-        if (e.siren) seen.add(e.siren);
-        collected.push(e);
-      }
-      if (resultats.length < PER_PAGE) break; // plus de pages disponibles
-    }
+  for (const cible of cibles) {
     if (collected.length >= target) break;
-  }
+    if (!cible.q) continue;
 
-  const entreprises = collected.slice(0, target);
+    for (let page = 1; page <= 3 && collected.length < target; page++) {
+      const { results } = await searchEntreprises({
+        q: cible.q,
+        naf: params.code_naf,
+        codePostal: cible.cp,
+        trancheEffectif: params.tranche_effectif,
+        page,
+        perPage: 25,
+      });
+      scanned += results.length;
+      if (results.length === 0) break;
+
+      for (const e of results) {
+        // Vérification géographique sur le résultat lui-même : les filtres de
+        // l'API ne sont pas fiables à 100 %, on ne livre pas un prospect hors zone.
+        const nv = normCity(e.ville);
+        const dansZone = zone
+          ? zone.names.has(nv)
+          : (!villeDemandee || nv.includes(villeDemandee));
+        if (!dansZone) { rejected++; continue; }
+        if (e.siren && seen.has(e.siren)) continue;
+        if (e.siren) seen.add(e.siren);
+        if (e.ville) communesTouchees.add(e.ville);
+
+        collected.push({
+          siren: e.siren,
+          siret: e.siret,
+          nom: e.nom,
+          code_naf: e.naf,
+          libelle_naf: null,          // non fourni par l'API : le front retombe sur le métier choisi
+          ville: e.ville,
+          code_postal: e.code_postal,
+          adresse: e.adresse,
+          tranche_effectif: e.effectif_label,
+          site_web: null,             // récupéré ensuite via places-enrich
+          email: null,                // récupéré ensuite via email-finder / scraper
+          telephone: null,
+          date_creation: e.date_creation,
+          chiffre_affaires: e.ca,
+          resultat_net: e.resultat,
+          annee_finances: e.annee_finances,
+          dirigeant_principal: e.dirigeant,
+        });
+        if (collected.length >= target) break;
+      }
+      if (results.length < 25) break;
+    }
+  }
 
   return {
     ok: true,
-    entreprises,
-    pagination: {
-      page: params.page || 1,
-      par_page: PER_PAGE,
-      total: totalApi || entreprises.length,
-    },
+    entreprises: collected.slice(0, target),
+    pagination: { page: 1, par_page: 25, total: collected.length },
     rejected_out_of_zone: rejected,
-    scanned_pages: scannedPages,
+    scanned_pages: scanned,
+    source: "api-recherche-entreprises-etat",
     zone: zone
       ? { centre: zone.centerName, rayon_km: rayon, communes: zone.communes.length, departements: zone.depts }
       : null,
+    communes_touchees: [...communesTouchees].slice(0, 60),
   };
 }
 

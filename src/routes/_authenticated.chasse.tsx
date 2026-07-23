@@ -145,6 +145,9 @@ function ChassePage() {
   const [codePostal, setCodePostal] = useState("");
   // Rayon de chasse : 0 = ville stricte, >0 = ville + communes/villages alentour.
   const [rayon, setRayon] = useState(30);
+  // L'API officielle ne renvoie pas le libellé du code NAF : on retombe sur le
+  // métier sélectionné dans la liste, qui dit exactement la même chose.
+  const nafLabel = TRADES.find((t) => t.naf === codeNaf)?.label ?? codeNaf;
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
   const [effectif, setEffectif] = useState("01");
@@ -429,7 +432,7 @@ function ChassePage() {
           website: r.website_url || null,
           location: loc,
           siret: r.siret,
-          industry: r.libelle_naf,
+          industry: r.libelle_naf || nafLabel,
           source: "pappers",
           website_status: r.website_status,
           website_score: r.website_score,
@@ -859,9 +862,9 @@ function ChassePage() {
                           )}
                         </div>
                         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                          {r.libelle_naf && (
+                          {(r.libelle_naf || nafLabel) && (
                             <span className="inline-flex items-center gap-1">
-                              <Building2 className="h-3 w-3" /> {r.libelle_naf}
+                              <Building2 className="h-3 w-3" /> {r.libelle_naf || nafLabel}
                             </span>
                           )}
                           {r.ville && (
