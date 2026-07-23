@@ -187,21 +187,33 @@ function ChassePremium() {
                       {c.telephone && <span>{c.telephone}</span>}
                     </div>
 
-                    {/* Audit critique du site — le vrai retour actionnable */}
+                    {/* Audit critique du site — le vrai retour actionnable, ton adapté au score (honnête) */}
                     {c.problemes.length > 0 ? (
-                      <div className="mt-3 rounded-md border border-rose-200 bg-rose-50/60 p-2.5">
-                        <p className="text-[11px] font-semibold text-rose-700 mb-1.5">
-                          {c.problemes.length} point{c.problemes.length > 1 ? "s" : ""} faible{c.problemes.length > 1 ? "s" : ""} du site — angle d'attaque
-                        </p>
-                        <ul className="space-y-1">
-                          {c.problemes.map((p, i) => (
-                            <li key={i} className="flex gap-1.5 text-[11px] text-rose-900/90 leading-snug">
-                              <span className="mt-[3px] h-1 w-1 shrink-0 rounded-full bg-rose-500" />
-                              <span>{p}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      (() => {
+                        const strong = c.site_score < 60;   // vrai levier de refonte
+                        const box = strong ? "border-rose-200 bg-rose-50/60" : "border-amber-200 bg-amber-50/60";
+                        const head = strong ? "text-rose-700" : "text-amber-700";
+                        const dot = strong ? "bg-rose-500" : "bg-amber-500";
+                        const txt = strong ? "text-rose-900/90" : "text-amber-900/90";
+                        const n = c.problemes.length;
+                        return (
+                          <div className={cn("mt-3 rounded-md border p-2.5", box)}>
+                            <p className={cn("text-[11px] font-semibold mb-1.5", head)}>
+                              {strong
+                                ? `${n} point${n > 1 ? "s" : ""} faible${n > 1 ? "s" : ""} du site — angle d'attaque`
+                                : `Site déjà correct · ${n} détail${n > 1 ? "s" : ""} à peaufiner`}
+                            </p>
+                            <ul className="space-y-1">
+                              {c.problemes.map((p, i) => (
+                                <li key={i} className={cn("flex gap-1.5 text-[11px] leading-snug", txt)}>
+                                  <span className={cn("mt-[3px] h-1 w-1 shrink-0 rounded-full", dot)} />
+                                  <span>{p}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })()
                     ) : (
                       <p className="mt-3 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2.5 py-1.5">
                         Site déjà solide — peu de leviers techniques. Classé en bas volontairement.
