@@ -239,7 +239,11 @@ async function actionSearch(params: {
         if (e.siren) seen.add(e.siren);
         if (e.ville) communesTouchees.add(e.ville);
 
+        const dist = zone && e.lat != null && e.lng != null
+          ? Math.round(haversineKm(zone.center, { lat: e.lat, lng: e.lng }) * 10) / 10
+          : null;
         collected.push({
+          distance_km: dist,
           siren: e.siren,
           siret: e.siret,
           nom: e.nom,

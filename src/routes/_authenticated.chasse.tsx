@@ -62,6 +62,7 @@ type PappersResult = {
   code_postal: string | null;
   adresse: string | null;
   tranche_effectif: string | null;
+  distance_km: number | null;
   site_web: string | null;
   email: string | null;
   telephone: string | null;
@@ -105,30 +106,34 @@ const EFFECTIF_PRESETS: Array<{ label: string; code: string }> = [
 
 const STATUS_META: Record<
   WebsiteStatus,
-  { label: string; emoji: string; cls: string; priority: number }
+  { label: string; emoji: string; cls: string; badge: string; priority: number }
 > = {
   no_website: {
     label: "Pas de site",
     emoji: "🔥",
     cls: "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900",
+    badge: "bg-sky-600 text-white",
     priority: 0,
   },
   outdated: {
     label: "Site obsolète",
     emoji: "🟡",
     cls: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
+    badge: "bg-sky-400 text-white",
     priority: 1,
   },
   has_website: {
     label: "Site OK",
     emoji: "✅",
     cls: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
+    badge: "bg-muted text-muted-foreground",
     priority: 3,
   },
   unknown: {
     label: "Vérif en cours",
     emoji: "⏳",
     cls: "bg-muted text-muted-foreground border-border",
+    badge: "bg-muted text-muted-foreground",
     priority: 2,
   },
 };
@@ -515,11 +520,11 @@ function ChassePage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <Target className="h-6 w-6 text-primary" />
+            <Target className="h-6 w-6 text-sky-600" />
             Chasse aux prospects
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Trouve des TPE françaises et détecte automatiquement celles sans site web.
+            Trouve les entreprises <strong>sans site web</strong> (ou au site dépassé) autour de toi — données officielles Sirene/INPI, vérification du site en direct. La commune et la distance sont affichées pour chaque prospect.
           </p>
         </div>
         {connectionTest.isPending ? (
@@ -653,8 +658,8 @@ function ChassePage() {
                     className={cn(
                       "text-xs rounded-full border px-3 py-1 transition",
                       rayon === r
-                        ? "border-primary bg-primary/10 text-primary font-semibold"
-                        : "text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                        ? "border-sky-500 bg-sky-50 text-sky-700 font-semibold"
+                        : "text-muted-foreground hover:border-sky-400 hover:text-foreground",
                     )}
                   >
                     {r === 0 ? "Ville seule" : `${r} km`}
@@ -685,7 +690,7 @@ function ChassePage() {
             <Button
               onClick={() => search.mutate()}
               disabled={!isConnected || search.isPending || checking}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white"
             >
               {search.isPending || checking ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -797,33 +802,35 @@ function ChassePage() {
           </div>
 
           {/* Liste */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="space-y-2">
+          <div className="space-y-3">
                 {sortedResults.map((r) => {
                   const meta = STATUS_META[r.website_status];
                   const isImported = r.siret ? importedSirets.data?.has(r.siret) : false;
                   const isSelected = selectedSirens.has(r.siren);
                   return (
-                    <div
+                    <Card
                       key={r.siren}
-                      className={`flex items-start gap-3 p-3 rounded-lg border bg-card transition ${
-                        isSelected ? "ring-2 ring-primary" : "hover:bg-accent/30"
-                      } ${isImported ? "opacity-60" : ""}`}
+                      className={cn(
+                        "transition",
+                        isSelected && "ring-2 ring-sky-500 border-sky-400",
+                        !isSelected && r.website_status === "no_website" && "border-sky-300",
+                        isImported && "opacity-60",
+                      )}
                     >
+                     <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         disabled={isImported || r.website_status === "has_website"}
                         onChange={() => toggleSelect(r.siren)}
-                        className="mt-1.5 flex-shrink-0"
+                        className="mt-1 flex-shrink-0 accent-sky-600"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="font-medium truncate">{r.nom}</span>
-                          <Badge variant="outline" className={meta.cls}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn("text-xs font-bold px-2 py-0.5 rounded", meta.badge)}>
                             {meta.emoji} {meta.label}
-                          </Badge>
+                          </span>
                           {/* Badges contact : vert si trouvé, rouge si manquant */}
                           {!r.enriching && (
                             <>
@@ -861,19 +868,22 @@ function ChassePage() {
                             </Badge>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                          {(r.libelle_naf || nafLabel) && (
-                            <span className="inline-flex items-center gap-1">
-                              <Building2 className="h-3 w-3" /> {r.libelle_naf || nafLabel}
-                            </span>
-                          )}
-                          {r.ville && (
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3 w-3" /> {r.ville} {r.code_postal}
-                            </span>
-                          )}
-                          {r.tranche_effectif && <span>{r.tranche_effectif}</span>}
-                        </div>
+                        <h3 className="font-semibold mt-1.5 leading-tight">{r.nom}</h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap mt-0.5">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <strong className="text-foreground font-medium">{r.ville || "—"}</strong>
+                          {r.code_postal && <span>{r.code_postal}</span>}
+                          {r.distance_km != null && r.distance_km >= 1 && <span>· à {r.distance_km} km</span>}
+                          <span>· {r.libelle_naf || nafLabel}</span>
+                        </p>
+                        {r.tranche_effectif && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <span className="text-[11px] rounded bg-muted px-1.5 py-0.5">{r.tranche_effectif}</span>
+                            {r.date_creation && (
+                              <span className="text-[11px] rounded bg-muted px-1.5 py-0.5">créée en {String(r.date_creation).slice(0, 4)}</span>
+                            )}
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs">
                           {r.dirigeant_principal && (
                             <span className="font-medium text-foreground">
@@ -936,12 +946,12 @@ function ChassePage() {
                           )}
                         </div>
                       </div>
-                    </div>
+                      </div>
+                     </CardContent>
+                    </Card>
                   );
                 })}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </>
       )}
     </div>
