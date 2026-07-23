@@ -136,6 +136,34 @@ async function geocode(key: string, city: string, cp: string | null): Promise<{ 
   } catch { return null; }
 }
 
+// Lit au plus `max` octets du corps de la réponse puis coupe la connexion.
+// Indispensable : l'audit n'a besoin que du début du HTML, et certains sites
+// pèsent plusieurs mégaoctets.
+async function lireDebut(r: Response, max: number): Promise<string> {
+  if (!r.body) return "";
+  const reader = r.body.getReader();
+  const morceaux: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (total < max) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) { morceaux.push(value); total += value.length; }
+    }
+  } catch { /* flux interrompu : on audite ce qu'on a */ }
+  finally { try { await reader.cancel(); } catch { /* déjà fermé */ } }
+
+  const buf = new Uint8Array(Math.min(total, max));
+  let pos = 0;
+  for (const m of morceaux) {
+    if (pos >= buf.length) break;
+    const n = Math.min(m.length, buf.length - pos);
+    buf.set(m.subarray(0, n), pos);
+    pos += n;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(buf);
+}
+
 type Problem = { titre: string; impact: string; gravite: "critique" | "majeur" | "mineur" };
 
 // Audit technique approfondi (15+ contrôles + temps de chargement). Sort une note
@@ -154,7 +182,11 @@ async function auditSite(url: string): Promise<{ score: number; problems: Proble
     }
     const finalUrl = r.url || url;
     const enc = (r.headers.get("content-encoding") || "").toLowerCase();
-    const html = (await r.text()).slice(0, 400000);
+    // ⚠️ Ne JAMAIS faire r.text() ici : certains sites pèsent plusieurs Mo et
+    // on les téléchargeait en entier avant d'en garder 400 Ko → la fonction
+    // dépassait sa limite de ressources et tombait en erreur 546.
+    // On lit le flux et on coupe dès qu'on a de quoi auditer.
+    const html = await lireDebut(r, 400_000);
     let score = 0; const P: Problem[] = [];
     const add = (pts: number, ok: boolean, titre: string, impact: string, gravite: Problem["gravite"]) => {
       if (ok) score += pts; else P.push({ titre, impact, gravite });
