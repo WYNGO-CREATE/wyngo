@@ -73,7 +73,6 @@ function ChassePremium() {
       industry: c.secteur,
       phone: c.telephone || null,
       website: c.website || null,
-      siren: c.siren || null,
       custom_status: "premium",
     };
     const { error } = await supabase.from("prospects").insert(payload as never);
