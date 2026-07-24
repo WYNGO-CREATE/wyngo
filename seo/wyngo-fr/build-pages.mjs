@@ -416,7 +416,7 @@ function render(p, autres) {
         inLanguage: "fr-FR", datePublished: MAJ, dateModified: MAJ,
         isPartOf: { "@type": "WebSite", "@id": `${SITE}/#website`, url: SITE, name: "Wyngo" },
         about: { "@id": `${SITE}/#organization` },
-        primaryImageOfPage: { "@type": "ImageObject", url: `${SITE}/favicon.png` },
+        primaryImageOfPage: { "@type": "ImageObject", url: `${SITE}/og.png`, width: 1200, height: 630 },
         speakable: { "@type": "SpeakableSpecification", cssSelector: [".lede", "h1"] },
       },
       {
