@@ -40,6 +40,7 @@ export function startGoogleOAuth() {
     scope: GOOGLE_SCOPES,
     access_type: "offline",
     prompt: "select_account consent",
+    login_hint: "contact@wyngo.fr",
     state: "gmail_oauth",
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

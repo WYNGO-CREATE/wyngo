@@ -109,6 +109,17 @@ Deno.serve(async (req) => {
     const userInfo = await userInfoRes.json();
     const gmailEmail = userInfo.email as string;
 
+    // ─── VERROU : un SEUL compte autorisé, contact@wyngo.fr ───
+    // Le cabinet envoie exclusivement depuis cette adresse. Toute autre boîte
+    // connectée par erreur est refusée AVANT enregistrement (garde-fou serveur,
+    // indépendant de ce que l'utilisateur choisit dans l'écran Google).
+    const ALLOWED_GMAIL = "contact@wyngo.fr";
+    if ((gmailEmail || "").trim().toLowerCase() !== ALLOWED_GMAIL) {
+      return json({
+        error: `Seul le compte ${ALLOWED_GMAIL} peut être connecté. Tu as choisi « ${gmailEmail} » — reconnecte-toi en sélectionnant ${ALLOWED_GMAIL}.`,
+      }, 403);
+    }
+
     // ─── Upsert dans gmail_accounts ───
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000)).toISOString();
