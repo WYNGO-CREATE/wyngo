@@ -202,103 +202,103 @@ const PAGES = [
   },
   {
     slug: "site-ou-page-facebook",
-    title: "Site internet ou page Facebook : que choisir ? — Wyngo",
-    h1: "Un site internet, ou juste une page Facebook ?",
-    desc: "Ce que Facebook fait pour votre entreprise, ce qu'il ne fait pas, et pourquoi les deux ne jouent pas le même rôle. Explications simples, sans jargon.",
+    title: "Site internet ou page Facebook : que choisir — Wyngo",
+    h1: "Site internet ou page Facebook : lequel pour votre entreprise ?",
+    desc: "Ce qu'apporte une page Facebook, ce qu'apporte un site internet, et pourquoi les deux remplissent des rôles distincts. Comparatif pour les professionnels.",
     reponse:
-      "Une page Facebook et un site internet ne remplissent pas le même rôle. Facebook vous fait exister auprès des gens qui vous suivent déjà ; un site vous fait trouver par ceux qui vous cherchent sans vous connaître. Sur Facebook, vous êtes locataire d'un espace que vous ne contrôlez pas ; un site vous appartient. Les deux sont utiles, mais l'un ne remplace pas l'autre.",
+      "Une page Facebook et un site internet répondent à deux besoins distincts. Le réseau social entretient le lien avec une audience qui vous connaît déjà ; le site vous rend visible auprès des personnes qui recherchent votre activité sans vous connaître. Sur Facebook, vous dépendez d'une plateforme et de ses règles ; un site demeure votre propriété. Les deux sont complémentaires et ne se substituent pas l'un à l'autre.",
     sections: [
-      { h: "Facebook vous parle à ceux qui vous suivent déjà", p: [
-        "Une page Facebook, c'est excellent pour entretenir le lien avec vos clients actuels : montrer votre travail du jour, annoncer une nouveauté, répondre à un message. Mais elle touche surtout des gens qui vous connaissent déjà. Quelqu'un qui cherche « plombier près de chez moi » ne tombe pas sur votre page Facebook.",
+      { h: "Le réseau social fidélise une audience acquise", p: [
+        "Une page Facebook est précieuse pour entretenir la relation avec votre clientèle existante : présenter une réalisation, annoncer une actualité, répondre à un message. Mais elle s'adresse avant tout à des personnes qui vous connaissent déjà. Un prospect qui recherche « plombier à proximité » n'atteint pas votre page Facebook.",
       ]},
-      { h: "Un site vous fait trouver par des inconnus", p: [
-        "C'est la différence qui change tout. Un site bien construit apparaît quand une personne qui ne vous connaît pas cherche ce que vous faites. C'est là que naissent les nouveaux clients — pas parmi ceux qui vous suivent déjà, mais parmi ceux qui ne savent pas encore que vous existez.",
+      { h: "Le site capte une demande nouvelle", p: [
+        "C'est la distinction déterminante. Un site correctement référencé apparaît lorsqu'une personne recherche votre activité sans connaître votre nom. C'est là que se génèrent les nouveaux contacts : non parmi ceux qui vous suivent déjà, mais parmi ceux qui ignorent encore votre existence.",
       ]},
-      { h: "Sur Facebook, vous êtes chez quelqu'un d'autre", p: [
-        "Votre page Facebook ne vous appartient pas. Les règles changent, la portée de vos publications baisse, un compte peut être bloqué du jour au lendemain. Un site est à vous : personne ne peut vous en priver, et son adresse reste la vôtre pour toujours.",
+      { h: "Sur une plateforme, vous êtes hébergé, non propriétaire", p: [
+        "Votre page Facebook ne vous appartient pas. Les règles évoluent, la portée de vos publications décline, un compte peut être restreint sans préavis. Un site est votre propriété : nul ne peut vous en priver, et son adresse reste la vôtre durablement.",
       ]},
     ],
     faq: [
-      { q: "Puis-je me contenter d'une page Facebook pour mon entreprise ?", a: "C'est possible au début, mais vous restez invisible pour tous ceux qui vous cherchent sur Google sans connaître votre nom. Un site capte cette demande que Facebook ne voit pas." },
-      { q: "Faut-il supprimer sa page Facebook si on a un site ?", a: "Non, au contraire : les deux se complètent. Facebook entretient le lien, le site attire les nouveaux clients. L'idéal est que les deux pointent l'un vers l'autre." },
-      { q: "Un site est-il plus compliqué à gérer qu'une page Facebook ?", a: "Pas avec Wyngo : le site est conçu, rédigé et mis en ligne pour vous. Vous n'avez rien à gérer techniquement — c'est le principe même de la prestation." },
+      { q: "Une page Facebook suffit-elle pour une entreprise ?", a: "Elle peut convenir au démarrage, mais vous restez invisible pour toutes les personnes qui recherchent votre activité sur Google sans connaître votre nom. Un site capte cette demande que le réseau social ne voit pas." },
+      { q: "Faut-il fermer sa page Facebook si l'on possède un site ?", a: "Non : les deux se complètent. Le réseau social entretient la relation, le site attire les nouveaux clients. L'idéal est qu'ils se renvoient mutuellement." },
+      { q: "Un site est-il plus contraignant à gérer qu'une page Facebook ?", a: "Pas avec Wyngo : le site est conçu, rédigé et mis en ligne pour vous. Vous n'avez aucune gestion technique à assurer — c'est le principe même de la prestation." },
     ],
   },
   {
     slug: "creer-site-sans-rien-connaitre-informatique",
-    title: "Créer un site sans rien connaître en informatique — Wyngo",
-    h1: "Créer un site quand on n'y connaît rien en informatique",
-    desc: "Pas le temps ni l'envie d'apprendre la technique ? Wyngo conçoit tout à votre place : textes, photos, mise en ligne. Vous validez, c'est tout.",
+    title: "Créer un site internet sans compétences techniques — Wyngo",
+    h1: "Créer un site internet sans compétences techniques",
+    desc: "Ni le temps, ni l'envie de vous former aux outils ? Wyngo conçoit l'intégralité du site : textes, photos, mise en ligne. Vous validez le résultat.",
     reponse:
-      "On peut avoir un site internet professionnel sans rien connaître à l'informatique : il suffit de confier la totalité du travail à quelqu'un qui le fait pour vous. Chez Wyngo, vous ne touchez à aucun outil technique. Le cabinet vient chez vous une journée, rédige vos textes, produit vos photos, et met le site en ligne. Vous validez le résultat, vous ne le construisez pas.",
+      "Disposer d'un site internet professionnel ne requiert aucune compétence technique dès lors que la réalisation est entièrement déléguée. Chez Wyngo, vous n'intervenez sur aucun outil : le cabinet se déplace une journée dans votre entreprise, rédige vos textes, réalise vos photographies et met le site en ligne. Votre rôle se limite à valider le résultat.",
     sections: [
-      { h: "Le problème n'est pas vous, c'est la méthode habituelle", p: [
-        "La plupart des solutions vous demandent de tout faire vous-même : choisir un modèle, écrire vos textes, trouver des photos, comprendre des réglages. Pour quelqu'un qui a un métier à exercer, c'est un deuxième travail à temps plein. Rien d'étonnant à ce que tant de sites restent inachevés.",
+      { h: "Le frein n'est pas vous, c'est la méthode courante", p: [
+        "La plupart des solutions reposent sur votre autonomie : choisir un modèle, rédiger vos textes, trouver des visuels, maîtriser des réglages. Pour un professionnel déjà accaparé par son métier, cela représente une seconde activité à temps plein. Rien d'étonnant à ce que tant de sites restent inachevés.",
       ]},
       { h: "Vous validez, vous ne produisez pas", p: [
-        "La méthode de Wyngo renverse ça. On vient chez vous une journée. On regarde comment vous travaillez, on écoute comment vous parlez de votre métier, et c'est <strong>nous</strong> qui écrivons les textes et prenons les photos. Vous n'avez ni formulaire à remplir, ni contenu à fournir.",
+        "La méthode de Wyngo inverse cette logique. Le cabinet se déplace une journée dans votre entreprise, observe votre manière de travailler et recueille votre discours. C'est <strong>lui</strong> qui rédige les textes et réalise les photographies. Aucun formulaire à compléter, aucun contenu à fournir.",
       ]},
-      { h: "Et le site reste le vôtre", p: [
-        "À la fin, le code source vous est remis : le site vous appartient entièrement. Vous n'êtes prisonnier d'aucun prestataire. Et si quelque chose doit changer, vous avez un interlocuteur unique qui vous répond — pas un centre d'assistance anonyme.",
+      { h: "Le site demeure votre propriété", p: [
+        "À la livraison, le code source vous est remis : le site vous appartient intégralement. Vous ne dépendez d'aucun prestataire. Et pour toute évolution, vous disposez d'un interlocuteur unique qui vous répond personnellement — non d'un service d'assistance anonyme.",
       ]},
     ],
     faq: [
-      { q: "Je suis nul en informatique, est-ce vraiment possible ?", a: "Oui, c'est même le public visé. Vous n'ouvrez aucun logiciel, ne réglez rien vous-même. Le cabinet prend tout en charge et vous présente un résultat à valider." },
-      { q: "Qu'est-ce que je dois préparer avant ?", a: "Rien. Les textes et les photos sont produits sur place, lors de la journée d'immersion. Il suffit d'être disponible pour parler de votre métier." },
-      { q: "Et si je veux modifier quelque chose plus tard ?", a: "Vous avez un interlocuteur unique chez Wyngo qui vous répond personnellement. Et comme le code source vous appartient, vous n'êtes jamais bloqué." },
+      { q: "Je ne maîtrise pas l'informatique, est-ce un obstacle ?", a: "Non, c'est précisément le public visé. Vous n'ouvrez aucun logiciel et ne paramétrez rien. Le cabinet prend l'ensemble en charge et vous soumet un résultat à valider." },
+      { q: "Que dois-je préparer en amont ?", a: "Rien. Les textes et les photographies sont produits sur place, lors de la journée d'immersion. Il suffit d'être disponible pour évoquer votre métier." },
+      { q: "Et pour une modification ultérieure ?", a: "Vous disposez d'un interlocuteur unique chez Wyngo, qui vous répond personnellement. Le code source vous appartenant, vous n'êtes jamais bloqué." },
     ],
   },
   {
     slug: "site-internet-qui-rapporte-des-clients",
-    title: "Pourquoi mon site ne me rapporte aucun client — Wyngo",
-    h1: "Pourquoi mon site ne m'apporte aucun client ?",
-    desc: "Avoir un site ne suffit pas : il faut être trouvé et donner envie d'appeler. Les trois raisons d'un site qui ne rapporte aucun client.",
+    title: "Pourquoi un site ne génère aucun client — Wyngo",
+    h1: "Pourquoi un site internet ne génère-t-il aucun client ?",
+    desc: "Disposer d'un site ne suffit pas : encore faut-il qu'il soit trouvé et qu'il incite au contact. Les trois causes les plus fréquentes d'un site improductif.",
     reponse:
-      "Un site qui n'apporte aucun client échoue presque toujours pour l'une de trois raisons : personne ne le trouve parce qu'il n'est pas référencé, il ne donne pas confiance parce qu'il ressemble à tous les autres, ou il ne dit pas clairement quoi faire ensuite. Un site n'est pas une vitrine que l'on pose et que l'on oublie : c'est un outil qui doit amener un inconnu jusqu'au téléphone.",
+      "Un site qui ne génère aucun client échoue presque toujours pour l'une de ces trois raisons : il n'est pas référencé et demeure introuvable, il n'inspire pas confiance faute de se distinguer, ou il n'oriente pas le visiteur vers une action précise. Un site n'est pas une vitrine que l'on installe puis délaisse : c'est un dispositif qui doit conduire un prospect jusqu'à la prise de contact.",
     sections: [
-      { h: "Raison 1 : personne ne le trouve", p: [
-        "Un beau site que Google n'affiche jamais ne sert à rien. Si votre site n'apparaît pas quand on cherche votre métier dans votre secteur, aucun visiteur n'arrive — et un site sans visiteurs ne peut apporter aucun client. Le référencement n'est pas une option, c'est la condition d'entrée.",
+      { h: "Première cause : il n'est pas trouvé", p: [
+        "Un site soigné que Google n'affiche jamais ne produit rien. S'il n'apparaît pas lorsqu'un prospect recherche votre activité dans votre secteur, aucun visiteur n'y accède — et un site sans visiteurs ne peut générer aucun contact. Le référencement n'est pas une option, c'est la condition d'accès.",
       ]},
-      { h: "Raison 2 : il ne donne pas confiance", p: [
-        "Un visiteur décide en quelques secondes s'il vous fait confiance. Des photos de banque d'images que vos concurrents utilisent aussi, des textes creux qui pourraient parler de n'importe qui : tout cela dit « prestataire interchangeable ». Ce qui rassure, c'est le vrai — votre visage, votre travail, vos mots.",
+      { h: "Deuxième cause : il n'inspire pas confiance", p: [
+        "Un visiteur se forge un jugement en quelques secondes. Des visuels de banque d'images que vos concurrents emploient également, des textes convenus qui pourraient décrire n'importe quelle entreprise : tout cela renvoie l'image d'un prestataire interchangeable. Ce qui rassure, c'est l'authentique — votre visage, vos réalisations, vos mots.",
       ]},
-      { h: "Raison 3 : il ne dit pas quoi faire", p: [
-        "Beaucoup de sites oublient l'essentiel : dire au visiteur ce qu'on attend de lui. Appeler ? Demander un devis ? Où, comment ? Un site qui convertit guide le visiteur vers une action claire, à chaque page. Sans ça, même un visiteur convaincu repart sans laisser de trace.",
+      { h: "Troisième cause : il n'indique pas la marche à suivre", p: [
+        "Beaucoup de sites négligent l'essentiel : préciser au visiteur ce que l'on attend de lui. Appeler ? Demander un devis ? Par quel moyen ? Un site performant guide le visiteur vers une action claire, à chaque page. À défaut, même un visiteur convaincu repart sans laisser de trace.",
       ]},
     ],
     faq: [
-      { q: "Comment savoir pourquoi mon site ne marche pas ?", a: "En vérifiant trois choses : s'il apparaît sur Google pour votre activité, s'il inspire confiance dès les premières secondes, et s'il indique clairement comment vous contacter. Un défaut sur l'un des trois suffit à tout bloquer." },
-      { q: "Un site qui ne rapporte rien peut-il être sauvé ?", a: "Souvent oui. Beaucoup de sites ont une bonne base mais un problème précis — invisible sur Google, ou sans appel à l'action. Reprendre ce point suffit parfois à débloquer les contacts." },
-      { q: "En combien de temps un bon site rapporte-t-il des clients ?", a: "Cela dépend de votre marché, mais un site bien référencé et clair commence à générer des contacts à mesure qu'il gagne en visibilité, sur quelques semaines à quelques mois." },
+      { q: "Comment identifier pourquoi un site ne fonctionne pas ?", a: "En vérifiant trois points : sa présence sur Google pour votre activité, la confiance qu'il inspire dès les premières secondes, et la clarté du moyen de vous contacter. Une défaillance sur l'un des trois suffit à tout bloquer." },
+      { q: "Un site improductif peut-il être redressé ?", a: "Souvent, oui. Nombre de sites disposent d'une base saine mais présentent un défaut précis — invisibilité sur Google, ou absence d'appel à l'action. Corriger ce point suffit parfois à débloquer les contacts." },
+      { q: "En combien de temps un site génère-t-il des clients ?", a: "Cela dépend de votre marché, mais un site bien référencé et clair commence à produire des contacts à mesure qu'il gagne en visibilité, sur quelques semaines à quelques mois." },
     ],
   },
   {
     slug: "presence-en-ligne-petite-entreprise",
-    title: "Présence en ligne d'une petite entreprise — Wyngo",
-    h1: "C'est quoi, une bonne présence en ligne quand on est une petite entreprise ?",
-    desc: "Pas besoin d'être partout. Une bonne présence en ligne tient en trois piliers : être trouvé, inspirer confiance, être facile à contacter.",
+    title: "Présence en ligne d'une TPE : l'essentiel — Wyngo",
+    h1: "Qu'est-ce qu'une présence en ligne efficace pour une TPE ?",
+    desc: "Inutile d'être partout. Une présence en ligne efficace repose sur trois piliers : être trouvé, inspirer confiance, faciliter le contact.",
     reponse:
-      "Pour une petite entreprise, une bonne présence en ligne ne veut pas dire être partout à la fois. Elle tient en trois choses simples : être trouvé quand quelqu'un cherche ce que vous faites, inspirer confiance en quelques secondes, et être facile à contacter. Un site clair et une fiche Google à jour suffisent à couvrir ces trois besoins, bien mieux qu'une présence dispersée sur dix réseaux.",
+      "Pour une petite entreprise, une présence en ligne efficace ne consiste pas à occuper toutes les plateformes. Elle repose sur trois fondamentaux : être trouvé lorsqu'un prospect recherche votre activité, inspirer confiance en quelques secondes, et faciliter la prise de contact. Un site clair associé à une fiche Google à jour couvre ces trois besoins bien mieux qu'une présence dispersée sur de multiples réseaux.",
     sections: [
       { h: "Être trouvé", p: [
-        "Le point de départ : quand un client potentiel cherche votre métier près de chez lui, vous devez apparaître. Cela passe par une fiche Google à jour et un site que le moteur comprend et positionne. Sans cette visibilité, tout le reste est invisible.",
+        "Le point de départ : lorsqu'un client potentiel recherche votre activité à proximité, vous devez apparaître. Cela suppose une fiche Google à jour et un site que le moteur comprend et positionne. Sans cette visibilité, tout le reste demeure invisible.",
       ]},
       { h: "Inspirer confiance", p: [
-        "Une fois trouvé, il faut convaincre. Des vraies photos, des mots qui sonnent juste, quelques avis de clients satisfaits : c'est ce qui transforme un visiteur méfiant en client qui décroche son téléphone. La confiance ne se décrète pas, elle se montre.",
+        "Une fois trouvé, il faut convaincre. Des photographies authentiques, un discours juste, quelques avis de clients satisfaits : voilà ce qui transforme un visiteur circonspect en client qui vous contacte. La confiance ne se décrète pas, elle se démontre.",
       ]},
-      { h: "Être facile à contacter", p: [
-        "Le dernier pilier est le plus négligé. Un numéro visible, un formulaire simple, une adresse claire : le visiteur convaincu doit pouvoir vous joindre sans effort. Chaque obstacle entre son envie et son geste est un client perdu.",
+      { h: "Faciliter le contact", p: [
+        "Le dernier pilier est le plus négligé. Un numéro apparent, un formulaire simple, une adresse claire : le visiteur convaincu doit pouvoir vous joindre sans effort. Chaque obstacle entre son intention et son geste représente un client perdu.",
       ]},
       { h: "Le reste est secondaire", p: [
-        "Vous n'avez pas besoin d'être sur tous les réseaux, de publier tous les jours, de suivre chaque tendance. Une petite entreprise gagne à faire peu de choses, mais bien : une présence solide sur ces trois piliers vaut mieux que dix profils à moitié remplis.",
+        "Il n'est pas nécessaire d'être présent sur tous les réseaux, de publier quotidiennement ou de suivre chaque tendance. Une petite entreprise gagne à accomplir peu de choses, mais bien : une présence solide sur ces trois piliers vaut mieux que dix profils partiellement renseignés.",
       ]},
     ],
     faq: [
-      { q: "Faut-il être présent sur tous les réseaux sociaux ?", a: "Non. Mieux vaut une présence soignée là où vos clients vous cherchent qu'une dispersion sur dix plateformes que vous n'avez pas le temps d'alimenter. La qualité prime sur le nombre." },
-      { q: "Un site suffit-il, ou faut-il aussi une fiche Google ?", a: "Les deux se complètent : la fiche Google vous fait apparaître sur la carte et dans les recherches locales, le site convainc et donne tous les détails. L'idéal est d'avoir les deux, cohérents entre eux." },
-      { q: "Par où commencer quand on part de zéro ?", a: "Par les fondations : une fiche Google complète et un site clair, cohérents l'un avec l'autre. C'est la base sur laquelle tout le reste s'appuie ensuite." },
+      { q: "Faut-il être présent sur tous les réseaux sociaux ?", a: "Non. Mieux vaut une présence soignée là où vos clients vous recherchent qu'une dispersion sur de multiples plateformes que vous n'avez pas le temps d'alimenter. La qualité prime sur le nombre." },
+      { q: "Un site suffit-il, ou faut-il aussi une fiche Google ?", a: "Les deux se complètent : la fiche Google assure votre présence sur la carte et dans les recherches locales, le site convainc et détaille votre offre. L'idéal est de disposer des deux, cohérents entre eux." },
+      { q: "Par où commencer lorsqu'on part de zéro ?", a: "Par les fondations : une fiche Google complète et un site clair, cohérents l'un avec l'autre. C'est le socle sur lequel tout le reste s'appuie ensuite." },
     ],
-  },
+  }
 ];
 
 const esc = (s) => String(s).replace(/&(?!\w+;)/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
