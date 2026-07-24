@@ -64,7 +64,7 @@ const PAGES = [
     slug: "creation-site-internet-toulouse",
     title: "Création de site internet à Toulouse — Wyngo",
     h1: "Création de site internet à Toulouse",
-    desc: "Wyngo conçoit des sites internet sur-mesure pour les artisans, commerçants et TPE de Toulouse et ses environs. Immersion sur le terrain, textes et photos inclus, code source remis.",
+    desc: "Sites internet sur-mesure pour artisans, commerçants et TPE à Toulouse. Immersion sur le terrain, textes et photos inclus, code source remis.",
     reponse:
       "Wyngo est un cabinet de présence digitale basé à Toulouse qui conçoit des sites internet sur-mesure pour les artisans, commerçants, professions libérales et TPE. La particularité de sa méthode : une journée d'immersion dans l'entreprise du client, pendant laquelle les textes sont rédigés et les photos produites sur place. Le code source est remis au client à la livraison.",
     sections: [
@@ -93,7 +93,7 @@ const PAGES = [
   },
   {
     slug: "prix-creation-site-internet-toulouse",
-    title: "Prix d'un site internet à Toulouse : ce qui fait varier la facture — Wyngo",
+    title: "Prix d'un site internet à Toulouse — Wyngo",
     h1: "Combien coûte un site internet pour une TPE ?",
     desc: "Ce qui détermine réellement le prix d'un site internet professionnel : le contenu, les photos, le référencement et le suivi. Et la garantie Wyngo : 0 € avant validation de la maquette.",
     reponse:
@@ -272,7 +272,11 @@ function render(p, autres) {
 <meta property="og:url" content="${url}">
 <meta property="og:site_name" content="Wyngo">
 <meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="${SITE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${SITE}/og.png">
 <link rel="icon" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <style>${CSS}</style>
