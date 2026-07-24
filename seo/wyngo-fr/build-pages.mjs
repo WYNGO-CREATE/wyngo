@@ -420,8 +420,9 @@ function render(p, autres) {
         speakable: { "@type": "SpeakableSpecification", cssSelector: [".lede", "h1"] },
       },
       {
-        "@type": "Organization", "@id": `${SITE}/#organization`,
+        "@type": ["Organization", "ProfessionalService"], "@id": `${SITE}/#organization`,
         name: "Wyngo", alternateName: "Cabinet Wyngo", url: SITE,
+        disambiguatingDescription: "Wyngo est un cabinet français de création de sites internet et de référencement local, basé à Toulouse. Entreprise de services aux professionnels, à ne pas confondre avec les applications mobiles homonymes.",
         legalName: "Hugo Malet", foundingDate: "2026-05-14",
         telephone: TEL, email: "contact@wyngo.fr",
         identifier: [{ "@type": "PropertyValue", propertyID: "SIREN", value: "105481386" }],
