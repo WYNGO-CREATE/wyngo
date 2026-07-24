@@ -295,6 +295,7 @@ function ChassePage() {
           const checkRes = await withTimeout(supabase.functions.invoke("website-checker", {
             body: {
               company_name: item.nom,
+              city: item.ville || undefined,
               trusted_url: place?.website || undefined,
               hint_url: item.site_web || undefined,
             },
@@ -471,10 +472,13 @@ function ChassePage() {
 
   // ─── Résultats triés (cibles prime d'abord) + filtre "avec contact" ────
   const sortedResults = useMemo(() => {
-    const sorted = [...results].sort(
-      (a, b) =>
-        STATUS_META[a.website_status].priority - STATUS_META[b.website_status].priority,
-    );
+    const sorted = [...results]
+      // On ne garde QUE les cibles : pas de site 🔥 ou site obsolète 🟡.
+      // Les sites déjà bons ("has_website") sont écartés — ce ne sont pas des
+      // prospects pour Wyngo. En cours d'analyse ("unknown"/enriching) : gardés
+      // tant que le verdict n'est pas tombé.
+      .filter((r) => r.enriching || r.website_status === "no_website" || r.website_status === "outdated" || r.website_status === "unknown")
+      .sort((a, b) => STATUS_META[a.website_status].priority - STATUS_META[b.website_status].priority);
     if (onlyWithContact) {
       return sorted.filter((r) => r.enriching || hasContact(r));
     }

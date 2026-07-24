@@ -51,25 +51,91 @@ type Status = "has_website" | "outdated" | "no_website" | "unknown";
 const FETCH_TIMEOUT_MS = 6000;
 const USER_AGENT = "WyngoBot/1.0 (+https://wyngo.fr)";
 
-/** Génère 5 patterns de domaine probables à partir du nom de l'entreprise. */
-function generateDomainCandidates(companyName: string): string[] {
-  const lower = companyName
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/&/g, " et ")
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!lower) return [];
+// ── Mots qui NE sont PAS distinctifs d'une entreprise ──────────────────────
+// Génériques (métier, structure juridique) : présents sur des milliers de sites.
+const GENERIC_WORDS = new Set([
+  "sarl", "sas", "sasu", "eurl", "sa", "snc", "scop", "sci", "ei", "eirl", "gie",
+  "ets", "etablissement", "etablissements", "entreprise", "societe", "ste", "groupe",
+  "cabinet", "agence", "atelier", "boutique", "maison", "centre", "espace", "studio",
+  "france", "service", "services", "conseil", "conseils", "compagnie", "co",
+  // Métiers (le nom du métier ne prouve pas que le site est le bon)
+  "avocat", "avocats", "maitre", "notaire", "notaires", "huissier", "docteur", "dr",
+  "medecin", "dentiste", "kine", "kinesitherapeute", "osteopathe", "opticien",
+  "pharmacie", "pharmacien", "garage", "garages", "restaurant", "brasserie", "pizzeria",
+  "boulangerie", "patisserie", "boucherie", "traiteur", "coiffure", "coiffeur", "salon",
+  "esthetique", "institut", "plombier", "electricien", "menuisier", "menuiserie",
+  "macon", "maconnerie", "peintre", "peinture", "carreleur", "couvreur", "charpente",
+  "immobilier", "immobiliere", "assurance", "assurances", "comptable", "expertise",
+  "architecte", "architectes", "auto", "automobile", "automobiles", "carrosserie",
+  "hotel", "camping", "fleuriste", "bijouterie", "optique", "clinique", "veterinaire",
+  "the", "les", "des", "aux", "and", "et", "de", "du", "la", "le", "un", "une",
+]);
 
-  const collapsed = lower.replace(/\s/g, "");
-  const hyphenated = lower.replace(/\s/g, "-");
-  const words = lower.split(" ").filter((w) => w.length > 3);
-  const dominantWord = words.sort((a, b) => b.length - a.length)[0];
+// Grandes villes / régions FR : un nom de lieu n'identifie pas l'entreprise
+// (c'est précisément le piège « Toulouse » → toulouse.fr, le site de la ville).
+const PLACES = new Set([
+  "paris", "marseille", "lyon", "toulouse", "nice", "nantes", "montpellier",
+  "strasbourg", "bordeaux", "lille", "rennes", "reims", "toulon", "grenoble",
+  "dijon", "angers", "nimes", "villeurbanne", "clermont", "ferrand", "aix",
+  "brest", "tours", "amiens", "limoges", "annecy", "perpignan", "metz", "besancon",
+  "orleans", "rouen", "mulhouse", "caen", "nancy", "avignon", "poitiers", "dunkerque",
+  "versailles", "creteil", "pau", "bayonne", "cannes", "antibes", "colmar", "biarritz",
+  "occitanie", "bretagne", "normandie", "provence", "aquitaine", "alsace", "auvergne",
+  "bourgogne", "corse", "gascogne", "savoie", "vendee", "gironde", "herault",
+  "france", "francais", "francaise", "sur", "sous", "les", "saint", "sainte", "st",
+]);
+
+// Prénoms très courants : un prénom seul ne suffit pas à deviner un domaine
+// (melodie.fr, julie.fr… appartiennent probablement à quelqu'un d'autre).
+const COMMON_FIRST_NAMES = new Set([
+  "melodie", "julie", "marie", "sophie", "julien", "nicolas", "thomas", "pierre",
+  "jean", "michel", "philippe", "alain", "patrick", "david", "sebastien", "stephane",
+  "laurent", "pascal", "eric", "christophe", "frederic", "olivier", "vincent",
+  "sandrine", "nathalie", "isabelle", "sylvie", "catherine", "christine", "valerie",
+  "celine", "aurelie", "emilie", "camille", "manon", "lea", "chloe", "sarah", "laura",
+  "antoine", "maxime", "alexandre", "guillaume", "romain", "florian", "kevin", "hugo",
+]);
+
+const normTok = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+
+/**
+ * Extrait les mots RÉELLEMENT distinctifs d'un nom d'entreprise : on retire les
+ * mots génériques (métier, structure) et les noms de lieux (dont la ville du
+ * prospect). Ce sont ces mots — et EUX SEULS — qui prouvent qu'un site est bien
+ * celui de l'entreprise.
+ */
+function distinctiveTokens(companyName: string, city?: string): string[] {
+  const banned = new Set([...GENERIC_WORDS, ...PLACES]);
+  for (const w of String(city || "").split(/[\s'-]+/)) {
+    const t = normTok(w);
+    if (t.length > 1) banned.add(t);
+  }
+  return companyName
+    .split(/[\s'’,.\-–/()]+/)
+    .map(normTok)
+    .filter((t) => t.length >= 4 && !banned.has(t) && !/^\d+$/.test(t));
+}
+
+/**
+ * Génère des domaines à deviner — UNIQUEMENT à partir des mots distinctifs.
+ * Si le nom ne contient aucun mot distinctif (ex. « Mélodie Toulouse » = prénom
+ * + ville), on ne devine RIEN : on préfère conclure « pas de site » plutôt que
+ * d'attribuer par erreur le site d'un tiers.
+ */
+function generateDomainCandidates(companyName: string, city?: string): string[] {
+  const toks = distinctiveTokens(companyName, city);
+  if (toks.length === 0) return [];
+
+  // Un seul mot distinctif ET c'est un prénom courant → trop risqué, on ne devine pas.
+  if (toks.length === 1 && COMMON_FIRST_NAMES.has(toks[0]) && toks[0].length < 7) return [];
+
+  const collapsed = toks.join("");
+  const hyphenated = toks.join("-");
+  const dominant = [...toks].sort((a, b) => b.length - a.length)[0];
 
   const candidates: string[] = [];
-  for (const root of [collapsed, hyphenated, dominantWord].filter(Boolean)) {
+  for (const root of [...new Set([collapsed, hyphenated, dominant])].filter((r) => r.length >= 4)) {
     candidates.push(`https://www.${root}.fr`);
     candidates.push(`https://${root}.fr`);
     candidates.push(`https://www.${root}.com`);
@@ -293,12 +359,42 @@ function evaluateSite(
     signals.push("rich_content");
   }
 
+  // ─── Signaux d'obsolescence « discrète » (site qui a l'air bien mais daté) ──
+  // Flash / vieux plugins embarqués = techno morte depuis ~2020.
+  if (/\.swf\b|<embed[^>]+type=["']application\/x-shockwave|classid=["']clsid:/i.test(html)) {
+    score -= 25;
+    signals.push("flash_or_legacy_plugin");
+  }
+  // Aucune donnée structurée (JSON-LD) : les sites modernes en ont (SEO / IA).
+  if (!/application\/ld\+json/i.test(html)) {
+    score -= 4;
+    signals.push("no_structured_data");
+  }
+  // Pas de meta description : SEO négligé, souvent signe d'un site laissé à l'abandon.
+  if (!/<meta[^>]+name=["']description["'][^>]*content=["'][^"']{15,}/i.test(html)) {
+    score -= 5;
+    signals.push("no_meta_description");
+  }
+  // jQuery présent sans framework moderne = stack ancienne (même récent en apparence).
+  if (/jquery/i.test(lower) && !/react|next\.js|nuxt|vue|svelte|astro|gatsby|remix/i.test(lower)) {
+    score -= 4;
+    signals.push("jquery_stack");
+  }
+  // Vieux compteurs / analytics obsolètes.
+  if (/urchin\.js|google-analytics\.com\/ga\.js|piwik\.js/i.test(lower)) {
+    score -= 6;
+    signals.push("legacy_analytics");
+  }
+
   return { score: Math.max(0, Math.min(100, score)), signals };
 }
 
+// Seuils resserrés pour faire remonter davantage de sites « datés » comme
+// OPPORTUNITÉS (outdated) plutôt que de les classer OK. Un site vraiment bon
+// dépasse largement 62 ; un site « correct mais vieillissant » tombe en outdated.
 function scoreToStatus(score: number): Status {
-  if (score >= 56) return "has_website";
-  if (score >= 26) return "outdated";
+  if (score >= 62) return "has_website";
+  if (score >= 22) return "outdated";
   return "no_website";
 }
 
@@ -332,33 +428,31 @@ function normalizeCompany(name: string): string {
  * mot dominant) doit apparaître dans le title, h1 ou body. Indispensable
  * quand on a deviné le domaine (sinon on attribue à tort le site d'un autre).
  */
-function verifyCompanyMatch(html: string, companyName: string): { match: boolean; reason: string } {
-  const normalizedCompany = normalizeCompany(companyName);
-  if (!normalizedCompany) return { match: false, reason: "empty_name" };
+function verifyCompanyMatch(html: string, companyName: string, city?: string): { match: boolean; reason: string } {
+  // On ne raisonne QUE sur les mots distinctifs (ni ville, ni métier générique).
+  // C'est le cœur du correctif : « toulouse » ne prouve plus rien puisqu'il est
+  // exclu — le site de la ville ne sera donc plus attribué à « Mélodie Toulouse ».
+  const tokens = distinctiveTokens(companyName, city);
+  if (tokens.length === 0) return { match: false, reason: "no_distinctive_token" };
 
-  const tokens = normalizedCompany.split(" ").filter((w) => w.length >= 4);
-  if (tokens.length === 0) return { match: false, reason: "no_tokens" };
-
-  // Extrait <title>, <h1>, et un échantillon de texte du body
   const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   const sample = [
     titleMatch?.[1] || "",
     h1Match?.[1] || "",
-    html.slice(0, 6000), // début du body suffisant
+    html.slice(0, 8000),
   ].join(" ");
-  const haystack = normalizeCompany(sample.replace(/<[^>]+>/g, " "));
+  const haystack = normTok(sample.replace(/<[^>]+>/g, " "));
 
-  // Stratégie : au moins 1 token de 5+ chars OU 2 tokens de 4+ chars présents.
-  const longTokens = tokens.filter((t) => t.length >= 5);
-  const longHit = longTokens.find((t) => haystack.includes(t));
-  if (longHit) return { match: true, reason: `match_long_token:${longHit}` };
+  // Un mot distinctif long (6+) présent, OU deux mots distinctifs présents.
+  const longHit = tokens.filter((t) => t.length >= 6).find((t) => haystack.includes(t));
+  if (longHit) return { match: true, reason: `match_distinctive:${longHit}` };
 
-  const shortHits = tokens.filter((t) => haystack.includes(t));
-  if (shortHits.length >= 2) return { match: true, reason: `match_2_tokens:${shortHits.slice(0, 2).join(",")}` };
+  const hits = tokens.filter((t) => haystack.includes(t));
+  if (hits.length >= 2) return { match: true, reason: `match_2_distinctive:${hits.slice(0, 2).join(",")}` };
 
-  // Match très partiel (1 seul token court) → on n'accepte pas
-  return { match: false, reason: shortHits.length === 1 ? `weak_single_short:${shortHits[0]}` : "no_match" };
+  // Un seul mot distinctif court trouvé → insuffisant, on refuse (→ pas de site).
+  return { match: false, reason: hits.length === 1 ? `weak_single:${hits[0]}` : "no_distinctive_match" };
 }
 
 Deno.serve(async (req) => {
@@ -368,9 +462,10 @@ Deno.serve(async (req) => {
   try {
     const {
       company_name,
+      city,               // ville du prospect : exclue des mots distinctifs
       hint_url,           // Pappers : moyennement fiable
       trusted_url,        // Google Places : très fiable (officiel)
-    } = await req.json() as { company_name?: string; hint_url?: string; trusted_url?: string };
+    } = await req.json() as { company_name?: string; city?: string; hint_url?: string; trusted_url?: string };
 
     if (!company_name && !hint_url && !trusted_url) {
       return json({ error: "company_name, hint_url ou trusted_url requis" }, 400);
@@ -418,7 +513,7 @@ Deno.serve(async (req) => {
       const res = await tryFetch(url);
       if (res?.html && res.status < 400) {
         const finalUrl = res.finalUrl || url;
-        const match = verifyCompanyMatch(res.html, company_name);
+        const match = verifyCompanyMatch(res.html, company_name, city);
         if (match.match) {
           let contactHtml: string | undefined;
           try {
@@ -449,12 +544,12 @@ Deno.serve(async (req) => {
     // de l'entreprise. Sinon on considère qu'on s'est trompé de domaine et
     // que l'entreprise n'a PAS de site → cible prime pour Wyngo.
     if (company_name) {
-      const candidates = generateDomainCandidates(company_name);
+      const candidates = generateDomainCandidates(company_name, city);
       for (const url of candidates) {
         const res = await tryFetch(url);
         if (!res || res.status >= 400 || !res.html) continue;
 
-        const match = verifyCompanyMatch(res.html, company_name);
+        const match = verifyCompanyMatch(res.html, company_name, city);
         if (!match.match) {
           signals.push(`guess_rejected:${new URL(url).hostname}:${match.reason}`);
           continue;
