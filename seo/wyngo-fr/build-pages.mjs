@@ -298,6 +298,107 @@ const PAGES = [
       { q: "Un site suffit-il, ou faut-il aussi une fiche Google ?", a: "Les deux se complètent : la fiche Google assure votre présence sur la carte et dans les recherches locales, le site convainc et détaille votre offre. L'idéal est de disposer des deux, cohérents entre eux." },
       { q: "Par où commencer lorsqu'on part de zéro ?", a: "Par les fondations : une fiche Google complète et un site clair, cohérents l'un avec l'autre. C'est le socle sur lequel tout le reste s'appuie ensuite." },
     ],
+  },
+  {
+    slug: "audit-site-internet",
+    title: "Audit de site internet : le diagnostic complet — Wyngo",
+    h1: "Audit de site internet : que faut-il examiner ?",
+    desc: "Un audit évalue performance, référencement, mobile et conversion d'un site. Les points de contrôle qui décident de son efficacité réelle.",
+    reponse:
+      "Un audit de site internet consiste à évaluer objectivement quatre dimensions : la performance technique (vitesse, mobile, sécurité), le référencement (indexation, balises, données structurées), la qualité éditoriale et la capacité de conversion. Chacune se mesure sans jugement esthétique. L'audit révèle pourquoi un site existant ne produit pas les résultats attendus, et hiérarchise les corrections par impact.",
+    sections: [
+      { h: "Ce qu'un audit mesure réellement", p: [
+        "L'apparence d'un site relève du goût ; son efficacité se mesure. Un audit sérieux passe en revue des critères vérifiables : le temps de chargement, l'affichage sur mobile, la présence du protocole HTTPS, les balises de titre et de description, les données structurées lisibles par Google et les moteurs de réponse par IA, la profondeur du contenu, et la clarté des appels à l'action.",
+      ]},
+      { h: "Distinguer le symptôme de la cause", p: [
+        "« Mon site ne rapporte rien » est un symptôme. L'audit en identifie la cause précise : est-il introuvable faute d'indexation ? Trop lent, au point de perdre les visiteurs avant l'affichage ? Dépourvu des signaux que Google attend ? On ne corrige efficacement que ce que l'on a d'abord diagnostiqué.",
+      ]},
+      { h: "Un diagnostic hiérarchisé, pas une liste", p: [
+        "Un audit utile ne se contente pas d'énumérer des défauts : il les classe par gravité et par impact commercial. Certains points bloquent toute visibilité et exigent une correction immédiate ; d'autres relèvent de l'optimisation progressive. Cette hiérarchisation est ce qui transforme un constat en plan d'action.",
+      ]},
+    ],
+    faq: [
+      { q: "À quoi sert un audit de site internet ?", a: "À comprendre, preuves à l'appui, pourquoi un site ne performe pas — et à savoir quelles corrections auront le plus d'effet. C'est l'étape qui précède toute refonte ou optimisation raisonnée." },
+      { q: "Faut-il un audit avant de refaire son site ?", a: "C'est vivement recommandé. Refondre sans diagnostic revient à traiter des symptômes au hasard. L'audit indique ce qui doit être conservé, corrigé ou reconstruit." },
+      { q: "Un site récent a-t-il besoin d'un audit ?", a: "Souvent, oui. L'ancienneté ne garantit rien : un site récent peut être invisible sur Google, lent sur mobile ou dépourvu de données structurées. Seul l'examen le dit." },
+    ],
+  },
+  {
+    slug: "optimiser-referencement-site-existant",
+    title: "Optimiser le référencement d'un site existant — Wyngo",
+    h1: "Comment optimiser le référencement d'un site déjà en ligne ?",
+    desc: "Optimiser un site existant sans tout refaire : indexation, balises, données structurées, contenu, maillage. Les réglages qui gagnent en visibilité.",
+    reponse:
+      "Optimiser le référencement d'un site existant consiste à corriger, sans le reconstruire, les éléments qui limitent sa visibilité : vérifier son indexation par Google, ajuster les balises de titre et de description, ajouter les données structurées manquantes, enrichir un contenu trop pauvre et renforcer les liens entre les pages. Ces réglages se réalisent sur le site en place et produisent des effets mesurables en quelques semaines.",
+    sections: [
+      { h: "S'assurer d'abord que Google voit le site", p: [
+        "Avant toute optimisation, une vérification s'impose : Google indexe-t-il réellement les pages ? Un site absent de l'index ne peut se positionner sur aucune requête. Cela se contrôle dans Search Console. Sans cette base, tout autre réglage est prématuré.",
+      ]},
+      { h: "Les réglages à fort effet de levier", p: [
+        "Certaines corrections demandent peu d'effort pour un gain notable :",
+      ], ul: [
+        "<strong>Balises de titre et de description</strong> — ce que Google affiche dans ses résultats, et ce qui décide du clic.",
+        "<strong>Données structurées</strong> — sans elles, un site reste quasi invisible pour les réponses par IA de Google.",
+        "<strong>Contenu</strong> — un site trop pauvre en texte ne donne à Google aucune matière pour le positionner.",
+        "<strong>Maillage interne</strong> — des liens cohérents entre les pages renforcent leur autorité mutuelle.",
+      ]},
+      { h: "Optimiser, ou refaire ?", p: [
+        "Tout ne se règle pas par l'optimisation. Un site construit sur une base technique obsolète, illisible sur mobile ou impossible à faire évoluer, atteint vite ses limites. La règle est simple : on optimise une base saine, on refait une base défaillante. Un audit préalable tranche la question.",
+      ]},
+    ],
+    faq: [
+      { q: "Peut-on améliorer son référencement sans refaire le site ?", a: "Souvent, oui. Si la base technique est saine, un travail sur l'indexation, les balises, les données structurées et le contenu suffit à gagner en visibilité, sans reconstruction." },
+      { q: "Combien de temps avant de voir les effets d'une optimisation ?", a: "Les corrections techniques sont prises en compte en quelques jours à quelques semaines par Google ; les gains de positionnement se consolident ensuite sur plusieurs semaines." },
+      { q: "Comment savoir si mon site mérite d'être optimisé ou refait ?", a: "Par un audit. Il évalue si la base est récupérable ou si les fondations elles-mêmes limitent le site, et oriente vers la solution la plus rentable." },
+    ],
+  },
+  {
+    slug: "site-internet-lent-performance",
+    title: "Site internet lent : diagnostic et solutions — Wyngo",
+    h1: "Pourquoi un site internet lent fait fuir les clients",
+    desc: "Un site lent perd ses visiteurs et se fait pénaliser par Google. Les causes fréquentes de lenteur et les leviers pour restaurer la performance d'un site.",
+    reponse:
+      "Un site lent perd une part importante de ses visiteurs avant même l'affichage, et Google intègre la vitesse de chargement à son classement. Les causes les plus fréquentes sont des images trop lourdes, l'absence de compression, un hébergement inadapté et un code alourdi par des outils superflus. Restaurer la performance passe par la correction de ces points, mesurables objectivement.",
+    sections: [
+      { h: "La lenteur a un coût direct", p: [
+        "Au-delà de deux à trois secondes de chargement, une proportion croissante de visiteurs abandonnent. Pour une recherche locale, souvent effectuée sur mobile en situation de mobilité, ce délai est fatal : le prospect revient à la liste des résultats et choisit un concurrent. La vitesse n'est pas un détail de confort, c'est un facteur de conversion.",
+      ]},
+      { h: "Les causes les plus fréquentes", p: [
+        "La lenteur provient rarement d'une seule origine. Les responsables habituels : des images non compressées et livrées à leur taille d'origine, l'absence de compression des fichiers, un hébergement mutualisé saturé, et l'accumulation de scripts tiers (widgets, traceurs, animations) qui s'exécutent avant l'affichage.",
+      ]},
+      { h: "Une performance qui se mesure", p: [
+        "Ces facteurs sont quantifiables : Google publie des indicateurs de performance qu'il utilise lui-même pour classer les sites. Un diagnostic chiffré remplace les impressions par des données, et indique précisément quels leviers activer pour ramener le temps de chargement dans les limites acceptables.",
+      ]},
+    ],
+    faq: [
+      { q: "La vitesse d'un site influence-t-elle le référencement ?", a: "Oui. Google intègre officiellement des indicateurs de performance à son classement, en particulier sur mobile. À contenu équivalent, un site rapide est avantagé." },
+      { q: "Quelles sont les principales causes d'un site lent ?", a: "Le plus souvent : des images trop lourdes, l'absence de compression, un hébergement inadapté et un excès de scripts tiers exécutés au chargement." },
+      { q: "Peut-on accélérer un site sans le refaire entièrement ?", a: "Fréquemment, oui. Compresser les images, activer la compression des fichiers et alléger les scripts superflus suffit souvent à améliorer nettement la performance." },
+    ],
+  },
+  {
+    slug: "site-internet-invisible-sur-google",
+    title: "Mon site n'apparaît pas sur Google : causes — Wyngo",
+    h1: "Pourquoi mon site n'apparaît pas sur Google ?",
+    desc: "Un site peut être en ligne sans être visible sur Google. Les causes techniques les plus fréquentes — indexation, balises, contenu — et la manière de les corriger.",
+    reponse:
+      "Un site peut être parfaitement en ligne sans apparaître sur Google. Les causes les plus fréquentes sont techniques : les pages ne sont pas indexées, une balise bloque leur exploration, le contenu est trop pauvre pour être jugé pertinent, ou le site est trop récent pour être encore évalué. Chacune se vérifie dans Google Search Console, et se corrige méthodiquement.",
+    sections: [
+      { h: "En ligne n'est pas synonyme d'indexé", p: [
+        "Une confusion fréquente : un site accessible par son adresse n'est pas nécessairement présent dans l'index de Google. Tant qu'une page n'est pas indexée, elle ne peut apparaître sur aucune recherche. La première vérification consiste donc à confirmer, dans Search Console, que Google connaît et a retenu les pages.",
+      ]},
+      { h: "Les blocages techniques courants", p: [
+        "Plusieurs éléments peuvent empêcher, involontairement, l'apparition d'un site : une balise « noindex » oubliée qui demande à Google de l'ignorer, un fichier robots.txt trop restrictif, l'absence de sitemap, ou des balises de titre manquantes. Ces réglages sont invisibles pour le visiteur mais déterminants pour le moteur.",
+      ]},
+      { h: "Pertinence et ancienneté", p: [
+        "Une fois le site techniquement irréprochable, restent deux facteurs. La pertinence : un contenu trop mince ne donne à Google aucune raison de positionner le site sur une requête. Et le temps : un site récent traverse une période d'évaluation durant laquelle sa visibilité se construit progressivement, à mesure que la confiance s'installe.",
+      ]},
+    ],
+    faq: [
+      { q: "Comment savoir si mon site est indexé par Google ?", a: "En tapant « site:votredomaine.fr » dans Google, ou en consultant Search Console. Si aucune page ne ressort, le site n'est pas indexé et doit être soumis pour exploration." },
+      { q: "Mon site est en ligne mais introuvable, est-ce normal ?", a: "Au début, oui : un site neuf n'est pas indexé instantanément. Passé quelques semaines sans apparaître, il faut vérifier les blocages techniques et l'indexation." },
+      { q: "Que faire si mon site n'apparaît toujours pas ?", a: "Vérifier l'indexation dans Search Console, lever les éventuels blocages (noindex, robots.txt), soumettre un sitemap et renforcer le contenu. Un audit identifie précisément l'obstacle." },
+    ],
   }
 ];
 
@@ -421,7 +522,11 @@ ${corps}
 
 // ── Génération ──
 for (const p of PAGES) {
-  const autres = PAGES.filter((x) => x.slug !== p.slug).slice(0, 4);
+  const i = PAGES.indexOf(p);
+  // Maillage cyclique : chaque page renvoie vers les 4 suivantes (en bouclant).
+  // Les liens internes se répartissent ainsi sur tout le site plutôt que de
+  // pointer toujours vers les 4 mêmes pages.
+  const autres = [...PAGES.slice(i + 1), ...PAGES.slice(0, i)].slice(0, 4);
   writeFileSync(`${p.slug}.html`, render(p, autres));
   console.log("✓", `${p.slug}.html`);
 }
