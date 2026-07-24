@@ -129,6 +129,17 @@ const STATUS_META: Record<
   },
 };
 
+// Garde-fou : borne une promesse dans le temps. Si l'edge function reste
+// bloquée (site lent, recherche d'email qui traîne), on rejette après `ms`
+// au lieu d'attendre indéfiniment — sinon la carte reste « en attente
+// d'enrichissement » pour toujours.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+}
+
 // ─── Composant principal ──────────────────────────────────────────────────
 
 function ChassePage() {
@@ -269,11 +280,11 @@ function ChassePage() {
         //   lui passant le trusted_url depuis Places (s'il y en a un).
         let placesData: any = null;
         try {
-          const placesRes = await supabase.functions.invoke("places-enrich", {
+          const placesRes = await withTimeout(supabase.functions.invoke("places-enrich", {
             body: { name: item.nom, city: item.ville, code_postal: item.code_postal },
-          });
+          }), 12000);
           placesData = placesRes.data;
-        } catch { /* on continue sans Places si ça échoue */ }
+        } catch { /* on continue sans Places si ça échoue / timeout */ }
         const place = placesData?.place;
 
         // Étape 2 : website-checker — on lui passe le trusted_url (Places)
@@ -281,15 +292,15 @@ function ChassePage() {
         //   deviner des domaines qui peuvent appartenir à d'autres entreprises.
         let checkData: any = null;
         try {
-          const checkRes = await supabase.functions.invoke("website-checker", {
+          const checkRes = await withTimeout(supabase.functions.invoke("website-checker", {
             body: {
               company_name: item.nom,
               trusted_url: place?.website || undefined,
               hint_url: item.site_web || undefined,
             },
-          });
+          }), 15000);
           checkData = checkRes.data;
-        } catch { /* on continue */ }
+        } catch { /* on continue / timeout */ }
 
         const status: WebsiteStatus = checkData?.status || "unknown";
         const score: number = checkData?.score ?? 0;
@@ -306,7 +317,7 @@ function ChassePage() {
         let scrapedEmail: string | null = null;  // garde la variable pour compat UI
         let hunterEmail: string | null = null;
         try {
-          const { data: finderData } = await supabase.functions.invoke("email-finder", {
+          const { data: finderData } = await withTimeout(supabase.functions.invoke("email-finder", {
             body: {
               company_name: item.nom,
               city: item.ville || "",
@@ -315,7 +326,7 @@ function ChassePage() {
               dirigeant_last_name: item.dirigeant_principal?.nom || undefined,
               skip_dropcontact: true,
             },
-          });
+          }), 20000);
           const foundEmail = (finderData as { email?: string | null })?.email || null;
           const foundSource = (finderData as { email_source?: string | null })?.email_source || null;
           // On range l'email dans scraped_email (site/PJ/pattern) ou hunter_email
