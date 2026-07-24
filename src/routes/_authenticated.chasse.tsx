@@ -95,15 +95,6 @@ type EnrichedResult = PappersResult & {
 // NAF_PRESETS est maintenant généré depuis le catalogue centralisé
 // `src/lib/trades-catalog.ts` (60+ métiers organisés par catégorie).
 
-// Tranches d'effectif Pappers
-const EFFECTIF_PRESETS: Array<{ label: string; code: string }> = [
-  { label: "Sans salarié", code: "0" },
-  { label: "1 à 2 salariés", code: "01" },
-  { label: "3 à 5 salariés", code: "02" },
-  { label: "6 à 9 salariés", code: "03" },
-  { label: "10 à 19 salariés", code: "11" },
-];
-
 const STATUS_META: Record<
   WebsiteStatus,
   { label: string; emoji: string; cls: string; badge: string; priority: number }
@@ -155,7 +146,6 @@ function ChassePage() {
   const nafLabel = TRADES.find((t) => t.naf === codeNaf)?.label ?? codeNaf;
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
-  const [effectif, setEffectif] = useState("01");
   const [targetCount, setTargetCount] = useState(100); // nb de prospects visés par chasse
 
   // Results — persistés dans localStorage pour ne pas perdre l'historique
@@ -227,7 +217,6 @@ function ChassePage() {
             code_naf: codeNaf,
             ville: ville || undefined,
             code_postal: codePostal || undefined,
-            tranche_effectif: effectif || undefined,
             max_results: targetCount,
             rayon_km: rayon || undefined,
           },
@@ -614,22 +603,6 @@ function ChassePage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="effectif">Effectif</Label>
-              <select
-                id="effectif"
-                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-                value={effectif}
-                onChange={(e) => setEffectif(e.target.value)}
-              >
-                <option value="">— Tous —</option>
-                {EFFECTIF_PRESETS.map((p) => (
-                  <option key={p.code} value={p.code}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="ville">Ville</Label>
               <Input
                 id="ville"
@@ -876,12 +849,9 @@ function ChassePage() {
                           {r.distance_km != null && r.distance_km >= 1 && <span>· à {r.distance_km} km</span>}
                           <span>· {r.libelle_naf || nafLabel}</span>
                         </p>
-                        {r.tranche_effectif && (
+                        {r.date_creation && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            <span className="text-[11px] rounded bg-muted px-1.5 py-0.5">{r.tranche_effectif}</span>
-                            {r.date_creation && (
-                              <span className="text-[11px] rounded bg-muted px-1.5 py-0.5">créée en {String(r.date_creation).slice(0, 4)}</span>
-                            )}
+                            <span className="text-[11px] rounded bg-muted px-1.5 py-0.5">créée en {String(r.date_creation).slice(0, 4)}</span>
                           </div>
                         )}
                         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs">
