@@ -86,82 +86,182 @@ async function fetchWebsiteSnapshot(url: string): Promise<{
   }
 }
 
-// ─── System prompt qui formate l'IA en copywriter Wyngo expert ───
+// ═══════════════════════════════════════════════════════════════════════
+// SCÉNARIOS D'EMAIL — chaque situation du cycle commercial Wyngo.
+// La `mission` dit à l'IA CE QU'IL FAUT ACCOMPLIR ; le cœur "valeurs Wyngo"
+// (transparence, honnêteté, français natif) s'applique à TOUS.
+// `usesContext` = ce scénario s'appuie sur une note fournie par Hugo
+// (compte-rendu d'appel, message reçu du prospect, date de RDV…).
+// ═══════════════════════════════════════════════════════════════════════
+type Scenario = { id: string; label: string; group: string; usesContext: boolean; mission: string };
+
+const SCENARIOS: Record<string, Scenario> = {
+  cold: {
+    id: "cold", label: "Premier contact (cold email)", group: "Prospection", usesContext: false,
+    mission: `Premier email, le prospect ne te connaît pas.
+• Personnalisation RÉELLE dès la 1ère phrase (un détail vu sur son site / son métier).
+• 90 mots MAXIMUM, lu en 15 secondes.
+• Pointe UNE douleur concrète liée au statut de son site (invisible sur Google, site daté…).
+• CTA doux et non commercial : proposer 15 min d'échange, ou une analyse rapide gratuite.
+• Ton humain : "Bonjour M. X, je suis Hugo, j'ai créé Wyngo pour aider…".`,
+  },
+  relance: {
+    id: "relance", label: "Relance (sans réponse)", group: "Prospection", usesContext: false,
+    mission: `Le prospect n'a pas répondu au 1er email. Relance courte et légère.
+• 60 mots max. Pas de reproche, pas de "je me permets de revenir vers vous".
+• Apporte un angle NOUVEAU ou une mini-preuve, ne répète pas le 1er email.
+• Laisse une porte de sortie élégante ("si ce n'est pas le moment, dites-le-moi").`,
+  },
+  reponse_question: {
+    id: "reponse_question", label: "Répondre à une question du prospect", group: "Prospection", usesContext: true,
+    mission: `Le prospect a posé une question ou fait une remarque (voir CONTEXTE fourni par Hugo).
+• Réponds PRÉCISÉMENT et honnêtement à ce qu'il demande, sans esquiver.
+• Reste transparent : si une réponse a des nuances, dis-le.
+• Termine par une relance douce vers la suite (échange, appel).`,
+  },
+  apres_appel_1: {
+    id: "apres_appel_1", label: "Après le 1er appel (concluant)", group: "Cycle d'appel", usesContext: true,
+    mission: `Email de suivi juste après un 1er appel qui s'est bien passé.
+• Remercie sincèrement pour le temps accordé.
+• Rappelle EN 2-3 POINTS ce qui s'est dit (utilise le CONTEXTE fourni par Hugo : ce qui a été abordé, ce qui a intéressé le prospect).
+• Reformule le besoin identifié, pour montrer qu'on a écouté.
+• Propose clairement le 2e appel (échange plus concret / présentation), avec une invitation à caler un créneau.
+• Ton chaleureux et professionnel, jamais familier. 130 mots environ.`,
+  },
+  apres_appel_2: {
+    id: "apres_appel_2", label: "Après le 2e appel (vers la conclusion)", group: "Cycle d'appel", usesContext: true,
+    mission: `Email après un 2e appel, on se rapproche de la décision.
+• Remercie et fais une courte SYNTHÈSE de ce qui a été convenu (utilise le CONTEXTE de Hugo).
+• Rassure sur les garanties RÉELLES de Wyngo : aucun paiement avant validation de la première maquette, code source remis (le site lui appartient).
+• Propose un dernier appel pour finaliser, et amorce les étapes concrètes (proposition / contrat).
+• 150 mots environ, ton confiant et transparent.`,
+  },
+  confirmation_rdv: {
+    id: "confirmation_rdv", label: "Confirmation d'un rendez-vous", group: "Cycle d'appel", usesContext: true,
+    mission: `Confirme un rendez-vous / appel planifié (date, heure, moyen — voir CONTEXTE).
+• Court et clair : rappelle la date et l'heure exactes, et le canal (téléphone, visio, sur place).
+• Précise ce qu'on abordera, pour que le prospect vienne préparé.
+• Propose de décaler facilement si besoin.`,
+  },
+  relance_no_show: {
+    id: "relance_no_show", label: "Relance après RDV manqué", group: "Cycle d'appel", usesContext: false,
+    mission: `Le prospect a manqué le rendez-vous. Relance bienveillante, ZÉRO reproche.
+• Pars du principe qu'il a eu un imprévu ("un imprévu est vite arrivé").
+• Repropose 2 créneaux concrets ou invite à en choisir un.
+• Reste léger et chaleureux, 60 mots max.`,
+  },
+  objection_prix: {
+    id: "objection_prix", label: "Objection : le prix", group: "Objections", usesContext: true,
+    mission: `Le prospect trouve que c'est cher ou hésite sur le budget (voir CONTEXTE).
+• Ne baisse JAMAIS le prix, ne brade pas. Recentre sur la VALEUR et le coût de l'inaction (clients perdus faute de visibilité).
+• Rappelle les garanties qui lèvent le risque : 0 € avant validation de la maquette, code source remis.
+• Transparence totale : explique ce qui est inclus (immersion, textes, photos, référencement, suivi).
+• Termine en proposant d'en reparler, sans pression.`,
+  },
+  objection_reflexion: {
+    id: "objection_reflexion", label: "Objection : « je vais réfléchir »", group: "Objections", usesContext: false,
+    mission: `Le prospect veut réfléchir. Relance qui respecte sa décision tout en levant le doute.
+• Reconnais que c'est une décision importante, sans culpabiliser.
+• Rappelle 1 point qui réduit le risque (0 € avant maquette, engagement limité).
+• Propose de répondre à LA question qui le retient encore.`,
+  },
+  objection_timing: {
+    id: "objection_timing", label: "Objection : « pas le bon moment »", group: "Objections", usesContext: false,
+    mission: `Le prospect dit que ce n'est pas le bon moment. Garde le lien pour plus tard.
+• Comprends et n'insiste pas.
+• Sème une idée utile (ex. la visibilité se construit dans le temps, mieux vaut anticiper).
+• Propose de recontacter à une échéance précise. Chaleureux, sans pression.`,
+  },
+  envoi_contrat: {
+    id: "envoi_contrat", label: "Envoi du contrat", group: "Closing", usesContext: true,
+    mission: `Email qui accompagne l'envoi du contrat / de la proposition (voir CONTEXTE : ce qui a été convenu).
+• Remercie pour la confiance.
+• Récapitule EN CLAIR ce qui est inclus et les grandes lignes convenues (prestation, délais si connus).
+• Explique la marche à suivre pour signer, simplement.
+• Rassure : transparence, aucun engagement caché, code source remis. Ton posé et fiable.`,
+  },
+  presentation_offre: {
+    id: "presentation_offre", label: "Présentation de l'offre / produit", group: "Closing", usesContext: true,
+    mission: `Le prospect a montré de l'intérêt, on lui présente concrètement l'offre Wyngo (voir CONTEXTE).
+• Structure claire : ce qu'il obtient (site sur-mesure, immersion, textes + photos, référencement local, suivi mensuel, code source remis).
+• Mets en avant la MÉTHODE différenciante (journée d'immersion, on vient chez lui).
+• Une seule offre, pas de catalogue. Termine sur la prochaine étape.`,
+  },
+  onboarding: {
+    id: "onboarding", label: "Bienvenue après signature", group: "Après-vente", usesContext: true,
+    mission: `Le prospect vient de signer : email de bienvenue et de mise en route (voir CONTEXTE).
+• Félicite / remercie chaleureusement pour sa confiance.
+• Donne les PROCHAINES ÉTAPES concrètes et rassurantes (ex. on planifie la journée d'immersion).
+• Donne un interlocuteur unique (Hugo) et une disponibilité (réponse sous 24h).
+• Ton enthousiaste mais pro.`,
+  },
+  remerciement: {
+    id: "remerciement", label: "Email de remerciement", group: "Après-vente", usesContext: false,
+    mission: `Email de remerciement simple et sincère (après un échange, un service rendu, une recommandation).
+• Court, chaleureux, authentique. 60 mots max.
+• Pas de vente. Juste de la gratitude et une porte ouverte pour la suite.`,
+  },
+};
+
+const CORE_VALUES = `═══════════════════════════════════════════════════════════════════════
+QUI TU ES — VALEURS NON NÉGOCIABLES
+═══════════════════════════════════════════════════════════════════════
+Tu écris au nom de Wyngo, cabinet français de présence digitale (Toulouse), qui
+crée des sites internet sur-mesure et gère le référencement local des artisans,
+commerçants et TPE. Tu écris à la 1ère personne, comme Hugo, le fondateur.
+
+Wyngo se distingue par la TRANSPARENCE et l'EXIGENCE. Donc, RÈGLES ABSOLUES :
+• N'invente JAMAIS un chiffre, un résultat, une référence client, un témoignage
+  ou une collaboration. Si tu n'as pas la donnée, ne l'invente pas.
+• Ne promets QUE ce qui est réel chez Wyngo : journée d'immersion chez le client,
+  textes et photos produits sur place, référencement local, suivi mensuel,
+  AUCUN paiement avant validation de la première maquette, code source remis
+  (le site appartient au client), sélection de 9 entrepreneurs par trimestre.
+• Français natif impeccable : phrases courtes, pas de langue commerciale ni
+  administrative ("nous serions ravis", "veuillez trouver"), pas de calque
+  anglais, pas d'emoji, pas de mots spam (GRATUIT en capitales, URGENT…).
+• Jamais familier, jamais faussement enthousiaste. Chaleureux et net.`;
+
+const OUTPUT_SPEC = `═══════════════════════════════════════════════════════════════════════
+SORTIE — JSON STRICT
+═══════════════════════════════════════════════════════════════════════
+Retourne un JSON avec EXACTEMENT ces champs :
+- subject : objet de l'email (max 65 caractères, sans le nom du destinataire)
+- body : corps en texte brut, terminant par "Bien cordialement,\\n{{expediteur}}"
+- observations : 3-5 puces expliquant tes choix (angle, ton, éléments repris)
+
+Placeholders à utiliser dans le body :
+- {{prenom}} → prénom du destinataire (salutation)
+- {{expediteur}} → prénom de l'expéditeur (signature) — JAMAIS confondu avec le destinataire
+- {{agence}} → nom du cabinet (au moins 1 fois si naturel)
+- {{entreprise}}, {{ville}} → si pertinent`;
+
+// ─── System prompt : cœur valeurs + mission du scénario choisi ───
 function buildSystemPrompt(ctx: {
   agencyName: string;
   businessBrief?: string | null;
   targetClient?: string | null;
   valueProps?: string | null;
-}): string {
+}, scenarioId: string): string {
+  const scenario = SCENARIOS[scenarioId] || SCENARIOS.cold;
   const hasContext = ctx.businessBrief || ctx.targetClient || ctx.valueProps;
+  const agencyBlock = hasContext
+    ? `${ctx.businessBrief ? `Brief activité :\n${ctx.businessBrief}\n` : ""}${ctx.targetClient ? `Client cible :\n${ctx.targetClient}\n` : ""}${ctx.valueProps ? `Propositions de valeur :\n${ctx.valueProps}\n` : ""}`
+    : "(Utilise ta connaissance de Wyngo, cabinet de création digitale pour TPE françaises.)";
 
-  return `Tu es un copywriter B2B senior en agence française de conseil digital.
-Ton seul métier est d'écrire des cold emails ULTRA-personnalisés qui obtiennent une réponse.
+  return `Tu es le meilleur rédacteur commercial francophone. Tu écris des emails
+qui obtiennent une réponse, sans jamais sonner "commercial" ni robotisé.
 
+${CORE_VALUES}
+
+Contexte agence (nom : ${ctx.agencyName}) :
+${agencyBlock}
 ═══════════════════════════════════════════════════════════════════════
-CONTEXTE — TON AGENCE
+SITUATION À TRAITER : ${scenario.label.toUpperCase()}
 ═══════════════════════════════════════════════════════════════════════
-Nom : ${ctx.agencyName}
-${hasContext ? `
-${ctx.businessBrief ? `Brief activité :\n${ctx.businessBrief}\n` : ""}${ctx.targetClient ? `Client cible :\n${ctx.targetClient}\n` : ""}${ctx.valueProps ? `Propositions de valeur uniques :\n${ctx.valueProps}\n` : ""}` : "(Aucun contexte d'agence renseigné — utilise ton bon sens pour Wyngo, cabinet de création digitale pour TPE françaises.)"}
-═══════════════════════════════════════════════════════════════════════
-LES 7 RÈGLES OBLIGATOIRES D'UN COLD EMAIL EXCELLENT
-═══════════════════════════════════════════════════════════════════════
+${scenario.mission}
 
-1. **Personnalisation RÉELLE en 1ère phrase**
-   ❌ "J'espère que vous allez bien."
-   ✅ "J'ai vu sur le site de [Entreprise] que vous proposez [détail spécifique]…"
-
-2. **PAS plus de 100 mots**. L'email se lit en 15 secondes max.
-
-3. **Identifie une DOULEUR concrète** liée au statut du site web du prospect :
-   • Si statut "no_website" : "vous êtes invisible sur Google → vos concurrents qui ont un site vous prennent vos clients"
-   • Si statut "outdated" : "votre site n'est pas mobile-friendly alors que 65% de vos visiteurs sont sur smartphone"
-   • Mentionne 1 seul angle, pas 3
-
-4. **Apporte un proof point**
-   "On a accompagné [N] [type d'entreprise similaire] qui ont [résultat chiffré]"
-
-5. **CTA soft, pas commercial**
-   ❌ "Souhaitez-vous que je vous envoie un devis ?"
-   ✅ "Êtes-vous ouvert à 15 minutes d'échange la semaine prochaine pour en discuter ?"
-   ou
-   ✅ "Je peux vous envoyer une analyse rapide de votre situation si ça vous intéresse — gratuit, sans engagement."
-
-6. **Ton humain, pas commercial**
-   ❌ "Notre cabinet d'excellence reconnu propose des solutions innovantes…"
-   ✅ "Bonjour M. Martin, je suis Hugo, j'ai créé Wyngo pour aider [profil] à…"
-
-7. **Pas d'emoji, pas de superlatifs, pas de mots déclencheurs spam**
-   Bannis : "GRATUIT", "URGENT", "OFFRE EXCLUSIVE", "PROFITEZ", "DÉCOUVREZ".
-
-═══════════════════════════════════════════════════════════════════════
-EXIGENCES DE FRANÇAIS NATIF
-═══════════════════════════════════════════════════════════════════════
-
-• Pas de calques anglais ("avoir un impact significatif", "à ce stade")
-• Pas de langue administrative ("nous serions ravis", "veuillez trouver")
-• Pas d'abus du participe présent ("souhaitant", "étant donné que")
-• Phrases courtes (max 2 lignes)
-• Conjugaisons vivantes, pas de subjonctif imparfait
-
-═══════════════════════════════════════════════════════════════════════
-SORTIE
-═══════════════════════════════════════════════════════════════════════
-
-Tu dois retourner un JSON avec EXACTEMENT ces champs :
-- subject : objet de l'email (max 60 caractères, sans nom du destinataire)
-- body : corps de l'email en texte brut, terminant par "Bien cordialement,\n[Prénom signataire]" (utilise {{expediteur}} pour le placeholder)
-- observations : tableau des 3-5 observations clés que tu as utilisées pour personnaliser (pour debug)
-
-Le corps doit utiliser ces placeholders :
-- {{prenom}} → prénom du destinataire (à utiliser dans la salutation)
-- {{expediteur}} → ton prénom à la fin
-- {{agence}} → nom de l'agence (à utiliser au moins 1 fois)
-- Tu peux référencer {{entreprise}}, {{poste}}, {{ville}} si pertinent
-
-NE confonds JAMAIS expéditeur et destinataire. Le destinataire = le prospect (le dirigeant qu'on prospecte).
-`;
+${OUTPUT_SPEC}`;
 }
 
 // ─── User prompt = données spécifiques au prospect ───
@@ -179,7 +279,11 @@ function buildUserPrompt(p: {
   website_title?: string | null;
   website_description?: string | null;
   website_excerpt?: string | null;
+  scenarioId?: string;
+  context?: string | null;   // note libre de Hugo (compte-rendu d'appel, message reçu, date…)
 }): string {
+  const scenario = SCENARIOS[p.scenarioId || "cold"] || SCENARIOS.cold;
+  const isCold = scenario.id === "cold";
   const lines: string[] = [];
   lines.push(`# PROSPECT À CONTACTER`);
   lines.push(`Entreprise : ${p.company}`);
@@ -189,49 +293,59 @@ function buildUserPrompt(p: {
   if (p.industry) lines.push(`Secteur d'activité : ${p.industry}`);
   if (p.location) lines.push(`Localisation : ${p.location}`);
 
-  lines.push(``);
-  lines.push(`# STATUT DU SITE WEB (analyse automatique)`);
-  switch (p.website_status) {
-    case "no_website":
-      lines.push(`❌ AUCUN SITE WEB DÉTECTÉ. C'est notre cible PRIME — ce prospect est invisible sur Google.`);
-      lines.push(`Angle email recommandé : la perte de visibilité face aux concurrents qui ont un site.`);
-      break;
-    case "outdated":
-      lines.push(`⚠️ SITE PRÉSENT MAIS OBSOLÈTE (score ${p.website_score}/100).`);
-      if (p.website_url) lines.push(`URL : ${p.website_url}`);
-      if (p.website_signals?.length) {
-        lines.push(`Problèmes détectés :`);
-        for (const s of p.website_signals) {
-          // Traduction des signaux techniques en langage clair
-          if (s === "not_responsive" || s === "partial_viewport") lines.push(`  - Site PAS responsive (mauvaise expérience sur mobile)`);
-          if (s === "http_only") lines.push(`  - Pas de HTTPS (Google pénalise + alerte de sécurité dans Chrome)`);
-          if (s === "legacy_html_tags") lines.push(`  - Code HTML très ancien (balises <font>, <center>…)`);
-          if (s === "table_layout") lines.push(`  - Mise en page en tableaux (technique des années 2000)`);
-          if (s.startsWith("copyright_")) {
-            const year = s.replace("copyright_", "");
-            lines.push(`  - Copyright de ${year} → pas de mise à jour récente`);
-          }
-          if (s.startsWith("wp_") && s.endsWith("_outdated")) {
-            lines.push(`  - Version WordPress obsolète (risque sécurité + bugs)`);
-          }
-          if (s.startsWith("lastmod_") && s.endsWith("y_ago")) {
-            const years = s.match(/lastmod_(\d+)y_ago/)?.[1];
-            lines.push(`  - Site pas mis à jour depuis ${years} ans`);
-          }
-          if (s === "parking_page") lines.push(`  - Page parking (domaine acheté mais pas de vrai site)`);
-        }
-      }
-      lines.push(`Angle email recommandé : moderniser un site qui ne convertit pas / pénalise leur image.`);
-      break;
-    case "has_website":
-      lines.push(`✅ SITE WEB MODERNE détecté (score ${p.website_score}/100). Cible plus difficile.`);
-      lines.push(`Angle email recommandé : amélioration continue, SEO, conversion, automation — pas la refonte.`);
-      break;
-    default:
-      lines.push(`❓ Statut du site inconnu.`);
+  // ─── Contexte fourni par Hugo (déterminant pour les scénarios "chauds") ───
+  if (p.context && p.context.trim()) {
+    lines.push(``);
+    lines.push(`# CONTEXTE DE LA SITUATION (fourni par Hugo — À UTILISER EN PRIORITÉ)`);
+    lines.push(`"""`);
+    lines.push(p.context.trim());
+    lines.push(`"""`);
+    lines.push(`→ Appuie-toi sur ces éléments réels pour rédiger. N'invente rien au-delà.`);
+  } else if (scenario.usesContext) {
+    lines.push(``);
+    lines.push(`# NOTE : aucun détail spécifique fourni pour cette situation.`);
+    lines.push(`→ Reste général mais crédible, sans inventer de faits précis (pas de chiffre, pas de date fictive).`);
   }
 
-  if (p.website_title || p.website_description || p.website_excerpt) {
+  // Le statut du site n'est central QUE pour la prospection à froid (cold /
+  // relance). Pour les scénarios "chauds" (après appel, contrat…), la relation
+  // existe déjà et le compte-rendu de Hugo prime — on n'encombre pas le prompt.
+  if (isCold) {
+    lines.push(``);
+    lines.push(`# STATUT DU SITE WEB (analyse automatique)`);
+    switch (p.website_status) {
+      case "no_website":
+        lines.push(`❌ AUCUN SITE WEB DÉTECTÉ. C'est notre cible PRIME — ce prospect est invisible sur Google.`);
+        lines.push(`Angle email recommandé : la perte de visibilité face aux concurrents qui ont un site.`);
+        break;
+      case "outdated":
+        lines.push(`⚠️ SITE PRÉSENT MAIS OBSOLÈTE (score ${p.website_score}/100).`);
+        if (p.website_url) lines.push(`URL : ${p.website_url}`);
+        if (p.website_signals?.length) {
+          lines.push(`Problèmes détectés :`);
+          for (const s of p.website_signals) {
+            if (s === "not_responsive" || s === "partial_viewport") lines.push(`  - Site PAS responsive (mauvaise expérience sur mobile)`);
+            if (s === "http_only") lines.push(`  - Pas de HTTPS (Google pénalise + alerte de sécurité dans Chrome)`);
+            if (s === "legacy_html_tags") lines.push(`  - Code HTML très ancien (balises <font>, <center>…)`);
+            if (s === "table_layout") lines.push(`  - Mise en page en tableaux (technique des années 2000)`);
+            if (s.startsWith("copyright_")) lines.push(`  - Copyright de ${s.replace("copyright_", "")} → pas de mise à jour récente`);
+            if (s.startsWith("wp_") && s.endsWith("_outdated")) lines.push(`  - Version WordPress obsolète (risque sécurité + bugs)`);
+            if (s.startsWith("lastmod_") && s.endsWith("y_ago")) lines.push(`  - Site pas mis à jour depuis ${s.match(/lastmod_(\d+)y_ago/)?.[1]} ans`);
+            if (s === "parking_page") lines.push(`  - Page parking (domaine acheté mais pas de vrai site)`);
+          }
+        }
+        lines.push(`Angle email recommandé : moderniser un site qui ne convertit pas / pénalise leur image.`);
+        break;
+      case "has_website":
+        lines.push(`✅ SITE WEB détecté (score ${p.website_score}/100).`);
+        lines.push(`Angle email recommandé : amélioration continue, SEO, conversion — pas la refonte.`);
+        break;
+      default:
+        lines.push(`❓ Statut du site inconnu.`);
+    }
+  }
+
+  if (isCold && (p.website_title || p.website_description || p.website_excerpt)) {
     lines.push(``);
     lines.push(`# CONTENU DU SITE (à utiliser pour personnaliser !)`);
     if (p.website_title) lines.push(`Titre page : ${p.website_title}`);
@@ -241,7 +355,7 @@ function buildUserPrompt(p: {
   }
 
   lines.push(``);
-  lines.push(`Génère maintenant l'email cold parfait pour ce prospect en respectant LES 7 RÈGLES.`);
+  lines.push(`Rédige maintenant l'email pour la situation « ${scenario.label} », en respectant les valeurs Wyngo et la mission décrites dans les instructions système.`);
   return lines.join("\n");
 }
 
@@ -343,6 +457,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Liste des situations (métadonnées publiques, pas besoin d'auth).
+    const preBody = await req.clone().json().catch(() => ({}));
+    if (preBody?.list_scenarios) {
+      return json({
+        ok: true,
+        scenarios: Object.values(SCENARIOS).map((s) => ({
+          id: s.id, label: s.label, group: s.group, usesContext: s.usesContext,
+        })),
+      });
+    }
+
     // Auth user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Non autorisé" }, 401);
@@ -353,9 +478,12 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) return json({ error: "Non authentifié" }, 401);
     const userId = userData.user.id;
 
-    const body = await req.json();
+    const body = preBody;
     const prospectId = body?.prospect_id as string | undefined;
     if (!prospectId) return json({ error: "prospect_id requis" }, 400);
+    const scenarioId = (body?.scenario as string | undefined) && SCENARIOS[body.scenario]
+      ? (body.scenario as string) : "cold";
+    const context = (body?.context as string | undefined) || null;
 
     // Charge le prospect (RLS : check côté DB qu'il appartient à l'user)
     const { data: prospect, error: pErr } = await userClient
@@ -401,7 +529,7 @@ Deno.serve(async (req) => {
       businessBrief: agency?.business_brief,
       targetClient: agency?.target_client,
       valueProps: agency?.value_props,
-    });
+    }, scenarioId);
 
     // "Contact" est le placeholder posé par la chasse quand le dirigeant
     // est inconnu — on ne le passe pas à l'IA (sinon "Bonjour Contact").
@@ -424,6 +552,8 @@ Deno.serve(async (req) => {
       website_title: websiteSnapshot.title,
       website_description: websiteSnapshot.description,
       website_excerpt: websiteSnapshot.excerpt,
+      scenarioId,
+      context,
     });
 
     // ⚠️ Pitch / cold emails : on FORCE Gemini (cheap & largement suffisant
@@ -448,6 +578,7 @@ Deno.serve(async (req) => {
       body: generated.result.body,
       observations: generated.result.observations || [],
       model: generated.model,
+      scenario: scenarioId,
       website_snapshot_used: !!(websiteSnapshot.title || websiteSnapshot.excerpt),
     });
   } catch (e) {

@@ -61,8 +61,10 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) return json({ error: "Non authentifié" }, 401);
     const userId = userData.user.id;
 
+    // prospect_id est OPTIONNEL : on peut envoyer à une adresse libre (saisie
+    // manuelle dans l'Inbox) sans qu'elle corresponde à un prospect en base.
     const { prospect_id, to, subject, body, in_reply_to, thread_id } = await req.json();
-    if (!prospect_id || !to || !body) return json({ error: "Missing fields" }, 400);
+    if (!to || !body) return json({ error: "Destinataire (to) et corps (body) requis" }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -111,11 +113,13 @@ Deno.serve(async (req) => {
     // avec les vraies données du prospect avant l'envoi. "Contact" (le
     // placeholder de la chasse quand le dirigeant est inconnu) est traité
     // comme un prénom vide → on ne envoie jamais "Bonjour Contact".
-    const { data: prospect } = await admin
-      .from("prospects")
-      .select("first_name, last_name, company, email, phone, website, title, location")
-      .eq("id", prospect_id)
-      .maybeSingle();
+    const { data: prospect } = prospect_id
+      ? await admin
+          .from("prospects")
+          .select("first_name, last_name, company, email, phone, website, title, location")
+          .eq("id", prospect_id)
+          .maybeSingle()
+      : { data: null };
 
     const cleanName = (v?: string | null) => {
       const s = (v || "").trim();
@@ -189,7 +193,7 @@ Deno.serve(async (req) => {
 
     // Log dans messages — on stocke le body texte original (pas le HTML)
     const { error: insertErr } = await admin.from("messages").insert({
-      prospect_id,
+      prospect_id: prospect_id || null,
       owner_id: userId,
       channel: "email",
       direction: "outbound",

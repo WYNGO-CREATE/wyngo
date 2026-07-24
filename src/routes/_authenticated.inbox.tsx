@@ -937,6 +937,7 @@ function ComposeDialog({
   onCreated: () => void;
 }) {
   const [prospectId, setProspectId] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState(""); // adresse libre (sans prospect)
   const [channel, setChannel] = useState<Channel>("note");
   const [direction, setDirection] = useState<Direction>("outbound");
   const [subject, setSubject] = useState("");
@@ -1008,34 +1009,34 @@ function ComposeDialog({
   };
 
   const reset = () => {
-    setProspectId(""); setChannel("note"); setDirection("outbound");
+    setProspectId(""); setRecipientEmail(""); setChannel("note"); setDirection("outbound");
     setSubject(""); setContent(""); setSendViaGmail(false);
   };
 
-  // Si l'utilisateur passe en canal email avec Gmail connecté, propose l'envoi
+  // Envoi Gmail proposé dès qu'on est sur email/adresse libre, en sortant,
+  // avec un compte Gmail connecté.
   useEffect(() => {
-    if (channel === "email" && gmailConnected && direction === "outbound") {
-      setSendViaGmail(true);
-    } else {
-      setSendViaGmail(false);
-    }
-  }, [channel, gmailConnected, direction]);
+    const wantsEmail = channel === "email" || recipientEmail.trim().length > 0;
+    setSendViaGmail(wantsEmail && gmailConnected && direction === "outbound");
+  }, [channel, gmailConnected, direction, recipientEmail]);
+
+  // Adresse de destination : soit saisie à la main, soit celle du prospect.
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const toEmail = (recipientEmail.trim() || selectedProspect?.email || "").trim();
 
   const submit = async () => {
     if (!ownerId) return;
-    if (!prospectId) { toast.error("Sélectionnez un prospect"); return; }
     if (!content.trim()) { toast.error("Le contenu est vide"); return; }
 
-    // Mode "Envoyer réellement via Gmail"
+    // Mode "Envoyer réellement via Gmail" — adresse libre OU prospect.
     if (sendViaGmail) {
-      if (!selectedProspect?.email) {
-        toast.error("Ce prospect n'a pas d'email enregistré"); return;
-      }
+      if (!toEmail) { toast.error("Indique une adresse email destinataire (ou choisis un prospect)"); return; }
+      if (!emailRe.test(toEmail)) { toast.error("Adresse email invalide"); return; }
       setSubmitting(true);
       const { data, error } = await supabase.functions.invoke("gmail-send", {
         body: {
-          prospect_id: prospectId,
-          to: selectedProspect.email,
+          prospect_id: prospectId || undefined,   // optionnel : envoi à une adresse libre
+          to: toEmail,
           subject: subject.trim(),
           body: content.trim(),
         },
@@ -1044,14 +1045,15 @@ function ComposeDialog({
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Envoi échoué"); return;
       }
-      toast.success(`Email envoyé à ${selectedProspect.email}`);
+      toast.success(`Email envoyé à ${toEmail}`);
       reset();
       onCreated();
       onOpenChange(false);
       return;
     }
 
-    // Mode log manuel (par défaut)
+    // Mode log manuel (par défaut) — nécessite un prospect pour rattacher l'échange.
+    if (!prospectId) { toast.error("Choisis un prospect, ou active l'envoi Gmail pour écrire à une adresse libre."); return; }
     setSubmitting(true);
     const { error } = await supabase.from("messages").insert({
       prospect_id: prospectId,
@@ -1086,11 +1088,27 @@ function ComposeDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Envoi direct à une adresse libre (sans passer par un prospect) */}
           <div className="space-y-2">
-            <Label>Prospect</Label>
+            <Label>Envoyer à une adresse email</Label>
+            <Input
+              type="email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              placeholder="prenom@entreprise.fr — écris directement, sans prospect"
+            />
+            {recipientEmail.trim() && !gmailConnected && (
+              <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                Pour envoyer, connecte d'abord ton compte Gmail (bouton « Connecter Gmail » en haut de l'Inbox).
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>{recipientEmail.trim() ? "Rattacher à un prospect (optionnel)" : "Prospect"}</Label>
             <Select value={prospectId} onValueChange={setProspectId}>
               <SelectTrigger>
-                <SelectValue placeholder="Choisir un prospect" />
+                <SelectValue placeholder={recipientEmail.trim() ? "Aucun — envoi à l'adresse ci-dessus" : "Choisir un prospect"} />
               </SelectTrigger>
               <SelectContent>
                 {prospects.map((p) => (
@@ -1153,9 +1171,9 @@ function ComposeDialog({
             </div>
           )}
 
-          {(channel === "email" || channel === "linkedin") && (
+          {(channel === "email" || channel === "linkedin" || recipientEmail.trim()) && (
             <div className="space-y-2">
-              <Label>Sujet {channel === "email" && sendViaGmail ? "*" : "(optionnel)"}</Label>
+              <Label>Sujet {sendViaGmail ? "*" : "(optionnel)"}</Label>
               <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Ex : Suivi proposition commerciale" />
             </div>
           )}
@@ -1170,7 +1188,7 @@ function ComposeDialog({
             />
           </div>
 
-          {channel === "email" && gmailConnected && direction === "outbound" && (
+          {(channel === "email" || recipientEmail.trim()) && gmailConnected && direction === "outbound" && (
             <label className="flex items-start gap-2 p-3 rounded-md bg-primary/5 border border-primary/20 cursor-pointer">
               <input
                 type="checkbox"
@@ -1184,9 +1202,9 @@ function ComposeDialog({
                   Envoyer réellement via Gmail
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedProspect?.email
-                    ? `L'email sera envoyé à ${selectedProspect.email} depuis votre Gmail.`
-                    : "⚠ Ce prospect n'a pas d'email enregistré."}
+                  {toEmail
+                    ? `L'email partira à ${toEmail} depuis ton Gmail.`
+                    : "⚠ Indique une adresse email destinataire ci-dessus."}
                 </p>
               </div>
             </label>
