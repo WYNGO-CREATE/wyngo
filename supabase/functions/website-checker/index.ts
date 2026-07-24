@@ -545,8 +545,14 @@ Deno.serve(async (req) => {
     // que l'entreprise n'a PAS de site → cible prime pour Wyngo.
     if (company_name) {
       const candidates = generateDomainCandidates(company_name, city);
-      for (const url of candidates) {
-        const res = await tryFetch(url);
+      // On teste tous les domaines candidats EN PARALLÈLE (avant : un par un,
+      // jusqu'à 9 × 6 s = très lent). On parcourt ensuite les réponses dans
+      // l'ordre de priorité (.fr d'abord) pour retenir le 1er qui appartient
+      // vraiment à l'entreprise.
+      const fetched = await Promise.all(
+        candidates.map(async (url) => ({ url, res: await tryFetch(url) })),
+      );
+      for (const { url, res } of fetched) {
         if (!res || res.status >= 400 || !res.html) continue;
 
         const match = verifyCompanyMatch(res.html, company_name, city);
