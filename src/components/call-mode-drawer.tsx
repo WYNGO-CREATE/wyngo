@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Phone, Copy, Check, MessageSquareWarning, Sparkles, Search, Loader2, Wand2, ExternalLink } from "lucide-react";
+import { Phone, Copy, Check, Sparkles, Search, Loader2, Wand2, ExternalLink } from "lucide-react";
+import { CallFiche, type Fiche } from "@/components/call-fiche";
 import { toast } from "sonner";
 import { renderTemplate } from "@/lib/render-template";
 
@@ -42,8 +43,6 @@ export function CallModeDrawer({
   onOpenChange: (v: boolean) => void;
 }) {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"script" | "objection">("script");
-  const [search, setSearch] = useState("");
 
   const { data: scripts = [] } = useQuery({
     queryKey: ["call-scripts-drawer"],
@@ -114,14 +113,9 @@ export function CallModeDrawer({
     [scripts, ctx],
   );
 
-  const filtered = renderedScripts.filter((s) => {
-    if (s.kind !== tab) return false;
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      return s.renderedTitle.toLowerCase().includes(q) || s.renderedContent.toLowerCase().includes(q);
-    }
-    return true;
-  });
+  // La banque d'objections est retirée : on ne garde que les trames d'ouverture,
+  // secondaires — la fiche d'appel (arguments chiffrés) est désormais le cœur.
+  const filtered = renderedScripts.filter((s) => s.kind === "script");
 
   // Group by category
   const grouped: Record<string, typeof renderedScripts> = {};
@@ -144,9 +138,6 @@ export function CallModeDrawer({
     autre:         "Autre",
   };
 
-  const countScript = renderedScripts.filter((s) => s.kind === "script").length;
-  const countObjection = renderedScripts.filter((s) => s.kind === "objection").length;
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -160,74 +151,35 @@ export function CallModeDrawer({
           </SheetTitle>
           <SheetDescription>
             {prospect
-              ? <>Variables remplies pour <strong>{prospect.first_name} {prospect.last_name}</strong>{prospect.company ? ` · ${prospect.company}` : ""}.</>
-              : "Sélectionnez un prospect pour personnaliser les scripts."}
+              ? <>Fiche d'arguments pour <strong>{prospect.first_name} {prospect.last_name}</strong>{prospect.company ? ` · ${prospect.company}` : ""}.</>
+              : "Sélectionnez un prospect pour générer sa fiche d'appel."}
           </SheetDescription>
-
-          {/* Tabs */}
-          <div className="inline-flex rounded-md border bg-card overflow-hidden mt-3 w-fit">
-            <button
-              onClick={() => setTab("script")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition ${
-                tab === "script"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Scripts <span className="text-[10px] bg-background/40 px-1.5 py-0.5 rounded">{countScript}</span>
-            </button>
-            <button
-              onClick={() => setTab("objection")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition ${
-                tab === "objection"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              <MessageSquareWarning className="h-3.5 w-3.5" />
-              Objections <span className="text-[10px] bg-background/40 px-1.5 py-0.5 rounded">{countObjection}</span>
-            </button>
-          </div>
-
-          {/* Search */}
-          {tab === "objection" && (
-            <div className="relative mt-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher : prix, timing, décideur…"
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-md border bg-background"
-              />
-            </div>
-          )}
         </SheetHeader>
 
-        <div className="px-6 py-5">
-          {prospect && <MarketPanel prospectId={prospect.id} />}
-          {scripts.length === 0 ? (
-            <EmptyHint />
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-12 text-center">
-              Aucun résultat{search ? ` pour « ${search} »` : ""}.
-            </p>
-          ) : (
-            <div className="space-y-7">
-              {Object.entries(grouped).map(([cat, items]) => (
-                <div key={cat}>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    {CAT_LABELS[cat] || cat} <span className="text-muted-foreground/60">({items.length})</span>
-                  </h3>
-                  <div className="space-y-3">
-                    {items.map((s) => (
-                      <ScriptItem key={s.id} script={s} />
-                    ))}
+        <div className="px-6 py-5 space-y-6">
+          {/* LA FICHE — le cœur : analyse marché + arguments chiffrés */}
+          {prospect && <MarketPanel prospectId={prospect.id} prospectName={prospect.first_name} />}
+
+          {/* Trames d'ouverture — secondaires, repliées visuellement */}
+          {filtered.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground list-none flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" /> Trames d'ouverture ({filtered.length})
+                <span className="text-muted-foreground/50 group-open:hidden">· afficher</span>
+              </summary>
+              <div className="space-y-5 mt-3">
+                {Object.entries(grouped).map(([cat, items]) => (
+                  <div key={cat}>
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      {CAT_LABELS[cat] || cat} <span className="text-muted-foreground/60">({items.length})</span>
+                    </h3>
+                    <div className="space-y-3">
+                      {items.map((s) => (<ScriptItem key={s.id} script={s} />))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </details>
           )}
         </div>
       </SheetContent>
@@ -236,11 +188,11 @@ export function CallModeDrawer({
 }
 
 // Analyse marché (concurrents réels vérifiés) + script sur-mesure, dans le Mode appel.
-function MarketPanel({ prospectId }: { prospectId: string }) {
+function MarketPanel({ prospectId, prospectName }: { prospectId: string; prospectName?: string | null }) {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<{
     competitors?: { name: string; website: string; reviews: number }[];
-    script?: string | null;
+    fiche?: Fiche | null;
     warning?: string;
     query?: string;
     error?: string;
@@ -290,16 +242,9 @@ function MarketPanel({ prospectId }: { prospectId: string }) {
           ))}
         </div>
       )}
-      {res?.script && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">Script sur-mesure</p>
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1"
-              onClick={() => navigator.clipboard.writeText(res.script!).then(() => toast.success("Script copié")).catch(() => toast.error("Copie impossible"))}>
-              <Copy className="h-3 w-3" /> Copier
-            </Button>
-          </div>
-          <div className="max-h-96 overflow-auto rounded border bg-background/60 p-3 text-sm leading-relaxed whitespace-pre-wrap">{res.script}</div>
+      {res?.fiche && (
+        <div className="rounded border bg-background/60 p-3">
+          <CallFiche fiche={res.fiche} prospectName={prospectName} />
         </div>
       )}
     </div>

@@ -66,56 +66,93 @@ async function isLive(url: string): Promise<boolean> {
   } catch { return false; }
 }
 
+// Statistiques RÉELLES et largement documentées du marché digital local.
+// L'IA n'utilise QUE celles-ci (ou un raisonnement direct), jamais de chiffre
+// inventé ni de promesse de ROI chiffrée propre au prospect.
+const STATS_MARCHE = `- Environ 46 % des recherches sur Google ont une intention locale (source : Google).
+- 97 % des consommateurs cherchent un commerce local sur internet avant de s'y rendre (BrightLocal).
+- 76 % des personnes qui font une recherche locale sur smartphone visitent un commerce dans les 24 h, et 28 % de ces recherches aboutissent à un achat (Think with Google).
+- Plus de 60 % des recherches se font aujourd'hui sur mobile.
+- 75 % des internautes ne vont jamais au-delà de la 1re page de Google.
+- La 1re position sur Google capte à elle seule une large majorité des clics de la page.
+- Google déploie ses "Aperçus IA" (AI Overviews) : l'IA répond désormais directement et ne cite que les entreprises qu'elle identifie comme sources fiables. Une entreprise absente ou invisible en ligne n'est jamais proposée par cette IA.`;
+
+type Fiche = {
+  accroche: string;
+  chiffres: { stat: string; punch: string }[];
+  concurrents: string;
+  atouts: string[];
+  close: string;
+};
+
 async function generateScript(args: {
   prenom: string; company: string; metier: string; ville: string; website: string | null;
   competitors: Competitor[]; philosophy: string; dos: string; donts: string;
-}): Promise<string> {
+}): Promise<Fiche | null> {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!key) return "";
+  if (!key) return null;
   const compList = args.competitors
-    .map((c, i) => `${i + 1}. ${c.name} — ${c.reviews} avis Google${c.rating ? ` (${c.rating}/5)` : ""} — site en ligne : ${c.website}`)
+    .map((c, i) => `${i + 1}. ${c.name} — ${c.reviews} avis Google${c.rating ? ` (${c.rating}/5)` : ""}`)
     .join("\n");
 
-  const prompt = `Tu es le meilleur formateur de vente téléphonique de France. Tu rédiges un SCRIPT D'APPEL de prospection 100% personnalisé pour UN prospect précis, pour le cabinet Wyngo (création de sites web sur-mesure + référencement local, basé à Toulouse). Le script doit être efficace, dense et prêt à être lu au téléphone (concis, sans remplissage — vise l'essentiel qui convainc), avec un ton parlé, calme, sûr et humain.
+  const prompt = `Tu es un directeur commercial d'élite. Tu prépares une FICHE D'APPEL — pas un script à lire mot à mot, mais une fiche d'aide-mémoire ultra-efficace, qui donne à celui qui appelle LES ARGUMENTS CHIFFRÉS pour convaincre en 30 secondes. Cabinet : Wyngo (création de sites web sur-mesure + référencement local, Toulouse).
 
-RÈGLES ABSOLUES (non négociables) :
-- Tu n'utilises QUE les concurrents listés ci-dessous. Ils sont RÉELS et vérifiés. Tu n'inventes JAMAIS un nom, un chiffre, une référence ou une statistique.
-- Tu ne dis JAMAIS que Wyngo travaille, collabore ou a un lien avec ces concurrents. Ils sont présentés comme les acteurs qui DOMINENT déjà le web sur le secteur du prospect — pour créer l'urgence et prouver qu'on connaît son marché mieux que lui.
-- Tu respectes À LA LETTRE la philosophie, le "toujours faire" et le "ne jamais faire" ci-dessous.
-- Laisse la variable {{expediteur}} telle quelle (c'est celui qui appelle). Le prénom et l'entreprise du prospect sont connus : écris-les en clair.
+RÈGLES ABSOLUES :
+- Tu n'INVENTES JAMAIS de chiffre. Tu utilises UNIQUEMENT les statistiques réelles fournies ci-dessous, en choisissant les 3 ou 4 les plus percutantes pour CE métier, et tu les formules de façon parlante pour son secteur.
+- Tu ne promets JAMAIS un résultat chiffré propre au prospect ("vous gagnerez X €"). Tu parles de ce que le marché montre, et de ce qu'il RISQUE de perdre en restant absent.
+- Concurrents : tu n'utilises QUE ceux listés (réels, vérifiés). Tu ne dis JAMAIS que Wyngo collabore avec eux — ils DOMINENT déjà le web, pas lui.
+- Ton : direct, sûr, humain. Chaque phrase doit servir à convaincre. Zéro remplissage.
 
 ── LE PROSPECT ──
-Interlocuteur : ${args.prenom || "le dirigeant"}
-Entreprise : ${args.company}
-Métier : ${args.metier}
-Ville : ${args.ville}
-Site web actuel : ${args.website || "aucun / introuvable sur le web"}
+Interlocuteur : ${args.prenom || "le dirigeant"} · Entreprise : ${args.company} · Métier : ${args.metier} · Ville : ${args.ville}
+Site actuel : ${args.website || "aucun / introuvable en ligne"}
 
-── SES CONCURRENTS QUI DOMINENT LE WEB (réels, vérifiés, site en ligne) ──
-${compList}
+── STATISTIQUES RÉELLES UTILISABLES (n'en invente aucune autre) ──
+${STATS_MARCHE}
 
-${args.philosophy ? `── PHILOSOPHIE DE VENTE DU FONDATEUR (respecte-la à la lettre) ──\n${args.philosophy}\n` : ""}
-${args.dos ? `── TOUJOURS FAIRE ──\n${args.dos}\n` : ""}
-${args.donts ? `── NE JAMAIS FAIRE ──\n${args.donts}\n` : ""}
+── CONCURRENTS QUI DOMINENT LE WEB (réels, vérifiés) ──
+${compList || "(aucun concurrent vérifié — n'en cite aucun, reste sur les statistiques)"}
 
-STRUCTURE (développe chaque phase, style parlé, prêt à lire) :
-PHASE 1 — Accroche : transparence du fondateur, parle immédiatement de LUI, de son métier et de sa ville.
-PHASE 2 — Le déclic : nomme 2 ou 3 de ces concurrents qui trustent Google sur "${args.metier} ${args.ville}", et fais-lui réaliser que lui n'y est pas — donc il perd chaque jour des clients qui vont chez eux.
-PHASE 3 — La vision Wyngo + l'angle "vous faire arriver en tête sur Google" et l'urgence de l'IA de Google.
-PHASE 4 — L'offre irrésistible : la maquette offerte (risque zéro) + notre marque de fabrique, on vient une demi-journée chez lui.
-PHASE 5 — Le close : verrouiller un rendez-vous en proposant 2 créneaux précis.
-Puis 2-3 réponses aux objections les plus probables pour CE métier.
+${args.philosophy ? `── PHILOSOPHIE DE VENTE (respecte-la) ──\n${args.philosophy}\n` : ""}${args.dos ? `── TOUJOURS FAIRE ──\n${args.dos}\n` : ""}${args.donts ? `── NE JAMAIS FAIRE ──\n${args.donts}\n` : ""}
 
-Rends UNIQUEMENT le script, sans préambule ni commentaire.`;
+ARGUMENTS WYNGO À METTRE EN AVANT (uniques et vrais) :
+- Un site SUR-MESURE, DURABLE et dans l'air du temps — pensé pour durer, pas un template jetable.
+- Notre marque de fabrique : on vient une demi-journée CHEZ LUI (immersion) — personne ne fait ça.
+- Optimisé pour le nouveau moteur IA de Google (les Aperçus IA) — pour exister là où se joue l'avenir de la recherche.
+- Risque zéro : la première maquette est offerte, aucun paiement avant qu'il valide. Le code source lui appartient.
+
+Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
+{
+  "accroche": "Bonjour {{prospect}}, je suis {{expediteur}}, fondateur de Wyngo. [1 formule de politesse courte]. J'ai regardé de près le secteur de ${args.metier} à ${args.ville}, et il y a quelque chose que je voulais vous partager.",
+  "chiffres": [ { "stat": "le chiffre clé formulé simplement", "punch": "ce que ça veut dire concrètement pour LUI (ce qu'il rate / risque)" } ],
+  "concurrents": "1 phrase nommant 2-3 concurrents qui captent déjà cette demande à ${args.ville} (ou \\"\\" si aucun concurrent fourni)",
+  "atouts": [ "4 à 5 atouts Wyngo, chacun en une formule courte et percutante" ],
+  "close": "1 phrase de clôture qui propose de bloquer un créneau, simple et directe"
+}
+Le champ "chiffres" contient 3 ou 4 objets. Réponds en français, {{prospect}} et {{expediteur}} laissés tels quels.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }),
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${await res.text()}`);
   const d = await res.json();
-  return d.content?.[0]?.text?.trim() || "";
+  const text = d.content?.[0]?.text?.trim() || "";
+  // Extrait le JSON même si le modèle l'entoure de texte.
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const f = JSON.parse(m[0]) as Fiche;
+    if (!f.accroche || !Array.isArray(f.chiffres)) return null;
+    return {
+      accroche: f.accroche,
+      chiffres: (f.chiffres || []).slice(0, 4),
+      concurrents: f.concurrents || "",
+      atouts: (f.atouts || []).slice(0, 6),
+      close: f.close || "",
+    };
+  } catch { return null; }
 }
 
 // Extrait un métier PROPRE (1-3 mots, façon Google Maps) depuis ce que contient
@@ -245,9 +282,9 @@ Deno.serve(async (req) => {
     const svc = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: settings } = await svc.from("agency_settings").select("philosophy, call_dos, call_donts").eq("id", true).maybeSingle();
 
-    let script: string | null = null;
+    let fiche: Fiche | null = null;
     try {
-      script = await generateScript({
+      fiche = await generateScript({
         prenom: prospect.first_name && prospect.first_name.toLowerCase() !== "contact" ? prospect.first_name : "",
         company: prospect.company || "votre entreprise",
         metier, ville,
@@ -258,11 +295,11 @@ Deno.serve(async (req) => {
         donts: settings?.call_donts || "",
       });
     } catch (e) {
-      script = null;
-      console.error("script gen failed", e);
+      fiche = null;
+      console.error("fiche gen failed", e);
     }
 
-    return new Response(JSON.stringify({ competitors: verified, script, query }), { status: 200, headers: cors });
+    return new Response(JSON.stringify({ competitors: verified, fiche, query }), { status: 200, headers: cors });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: cors });
   }

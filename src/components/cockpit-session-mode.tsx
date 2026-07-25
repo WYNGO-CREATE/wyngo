@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CallFiche, type Fiche } from "@/components/call-fiche";
 
 const APP_URL = "https://wyngo.bold-unit-739e.workers.dev";
 
@@ -336,7 +337,7 @@ export function CockpitSessionMode({
           <PreCallChecklist key={current.prospect.id} company={current.prospect.company} />
 
           {/* ─── ANALYSE MARCHÉ + SCRIPT SUR-MESURE ─── */}
-          <MarketScriptPanel key={"ms-" + current.prospect.id} prospectId={current.prospect.id} />
+          <MarketScriptPanel key={"ms-" + current.prospect.id} prospectId={current.prospect.id} prospectName={current.prospect.first_name} />
 
           {/* ─── APPELER ─── */}
           {phone ? (
@@ -404,11 +405,11 @@ export function CockpitSessionMode({
 // ─── Analyse marché (concurrents réels vérifiés) + script sur-mesure ───
 type MarketRes = {
   competitors?: { name: string; website: string; rating: number | null; reviews: number }[];
-  script?: string | null;
+  fiche?: Fiche | null;
   warning?: string;
   error?: string;
 };
-function MarketScriptPanel({ prospectId }: { prospectId: string }) {
+function MarketScriptPanel({ prospectId, prospectName }: { prospectId: string; prospectName?: string | null }) {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<MarketRes | null>(null);
   const run = async () => {
@@ -448,16 +449,9 @@ function MarketScriptPanel({ prospectId }: { prospectId: string }) {
           ))}
         </div>
       )}
-      {res?.script && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Script sur-mesure — {res.script.length.toLocaleString("fr-FR")} car.</p>
-            <Button size="sm" variant="ghost" className="h-6 text-[11px] gap-1"
-              onClick={() => navigator.clipboard.writeText(res.script!).then(() => toast.success("Script copié")).catch(() => toast.error("Copie impossible"))}>
-              <Copy className="size-3" /> Copier
-            </Button>
-          </div>
-          <div className="max-h-72 overflow-auto rounded border bg-background/60 p-2.5 text-[12px] leading-relaxed whitespace-pre-wrap">{res.script}</div>
+      {res?.fiche && (
+        <div className="max-h-[28rem] overflow-auto rounded border bg-background/60 p-2.5">
+          <CallFiche fiche={res.fiche} prospectName={prospectName} />
         </div>
       )}
     </div>
