@@ -20,7 +20,7 @@ export type Fiche = {
   close: string;
   questions?: string[];
   valeur?: { axe: string; detail: string }[];
-  paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string }[];
+  paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string; detail?: { poste: string; h: number }[] }[];
   cout_dev?: string;
 };
 
@@ -59,7 +59,10 @@ export function CallFiche({
     if (fiche.valeur?.length) { lines.push("\nLA VALEUR RÉELLE"); for (const v of fiche.valeur) lines.push(`[${v.axe}] ${v.detail}`); }
     if (fiche.paliers?.length) {
       lines.push("\nJUSTIFICATION DU PRIX");
-      for (const t of fiche.paliers) lines.push(`• ${t.nom} — ${t.prix} (${t.heures})\n  ${t.inclus}`);
+      for (const t of fiche.paliers) {
+        lines.push(`• ${t.nom} — ${t.prix} (${t.heures})\n  ${t.inclus}`);
+        if (t.detail?.length) for (const d of t.detail) lines.push(`    - ${d.poste} : ${d.h} h`);
+      }
       if (fiche.cout_dev) lines.push(fiche.cout_dev);
     }
     if (fiche.close) lines.push("\nCLOSE\n" + fill(fiche.close, p, e));
@@ -180,6 +183,21 @@ export function CallFiche({
                 <p className="text-[10.5px] text-muted-foreground">{t.heures}</p>
                 <p className="text-[11.5px] leading-snug mt-1">{t.inclus}</p>
                 <p className="text-[11px] italic text-muted-foreground mt-1">Pour : {t.pour}</p>
+                {t.detail && t.detail.length > 0 && (
+                  <details className="mt-1.5 group">
+                    <summary className="cursor-pointer text-[10.5px] font-semibold text-violet-700 dark:text-violet-400 list-none select-none">
+                      Détail technique ({t.detail.reduce((s, d) => s + d.h, 0)} h) <span className="text-muted-foreground/60 group-open:hidden">· déplier</span>
+                    </summary>
+                    <ul className="mt-1 space-y-0.5">
+                      {t.detail.map((d, k) => (
+                        <li key={k} className="flex justify-between gap-2 text-[10.5px] leading-snug text-muted-foreground">
+                          <span>{d.poste}</span>
+                          <span className="shrink-0 tabular-nums font-medium text-foreground">{d.h} h</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </div>
             ))}
           </div>

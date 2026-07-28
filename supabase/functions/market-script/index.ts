@@ -86,30 +86,62 @@ type Fiche = {
   // ── Justification du prix (ajout : positionnement haut de gamme) ──
   questions?: string[];                          // 5 questions d'audit par métier (IA)
   valeur?: { axe: string; detail: string }[];    // axes temps/argent/visibilité (IA)
-  paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string }[]; // fixe (code)
+  paliers?: Palier[]; // fixe (code)
   cout_dev?: string;                             // base 21 €/h, argument interne
 };
 
-// Paliers de prix — FIXES (jamais inventés par l'IA). Base : développeur 21 €/h.
-// De 2 144 € (site performance) à 8 230 €+ (écosystème sur-mesure).
-const PALIERS = [
+type Palier = {
+  nom: string; prix: string; heures: string; inclus: string; pour: string;
+  detail: { poste: string; h: number }[];        // décomposition technique (lots × heures)
+};
+
+// Paliers — FIXES (jamais inventés par l'IA). Base réelle : développeur 21 €/h.
+// Chaque prix est DÉCORTIQUÉ en lots techniques × heures → total défendable au centime.
+// Palier 2 = Palier 1 + ses lots ; Palier 3 = Palier 2 + les siens (cumulatif).
+const LOTS_1 = [
+  { poste: "Cadrage & immersion terrain (recueil besoins, arborescence)", h: 8 },
+  { poste: "Design UI sur-mesure + système de composants réutilisables", h: 20 },
+  { poste: "Intégration front haute performance (chargement < 1 s, Core Web Vitals, lazy-load, images optimisées)", h: 28 },
+  { poste: "Rédaction guidée & intégration du contenu", h: 10 },
+  { poste: "SEO technique (données structurées, schema, sitemap, robots, balises)", h: 10 },
+  { poste: "Sous-site de tracking (visites, sources, conversions en direct)", h: 12 },
+  { poste: "Accessibilité (WCAG : navigation clavier, contrastes, lecteurs d'écran)", h: 6 },
+  { poste: "Recette, tests multi-navigateurs & mobile, mise en ligne, formation", h: 8 },
+];
+const LOTS_2 = [
+  { poste: "Automatisation emails & formulaires (workflows, notifications, relances)", h: 18 },
+  { poste: "Connexion API à un outil existant (OAuth, webhooks, synchro agenda/CRM)", h: 40 },
+  { poste: "Tableau de bord temps réel (pipeline de données + visualisations)", h: 30 },
+  { poste: "Durcissement sécurité & tests d'intégration bout-en-bout", h: 14 },
+  { poste: "Documentation technique & formation approfondie", h: 10 },
+];
+const LOTS_3 = [
+  { poste: "Conception outil métier (spécifications, modèle de données, API back-end)", h: 60 },
+  { poste: "Développement de l'outil (logique métier, rôles & permissions, CRUD complet)", h: 70 },
+  { poste: "Interconnexion complète ERP + facturation (mapping, synchro bidirectionnelle, gestion des erreurs)", h: 30 },
+  { poste: "Portail client sécurisé (authentification dédiée, espace privé)", h: 18 },
+];
+const PALIERS: Palier[] = [
   {
-    nom: "Site Performance", prix: "dès 2 144 €", heures: "~100 h de développement",
-    inclus: "Site sur-mesure, chargement < 1 s, mobile parfait, SEO de base, textes guidés, et le sous-site de tracking des performances inclus.",
+    nom: "Site Performance", prix: "2 144 €", heures: "102 h × 21 €/h",
+    inclus: "Site sur-mesure, chargement < 1 s, mobile parfait, SEO technique, textes guidés, et le sous-site de tracking des performances inclus.",
     pour: "Une entreprise établie qui veut une vitrine premium qui convertit vraiment.",
+    detail: LOTS_1,
   },
   {
-    nom: "Système Connecté", prix: "dès 4 500 €", heures: "~215 h de développement",
+    nom: "Système Connecté", prix: "4 500 €", heures: "214 h × 21 €/h",
     inclus: "Tout le Site Performance + automatisation des emails et formulaires, connexion à un outil déjà utilisé (agenda, CRM), et tableau de bord de suivi en temps réel.",
     pour: "Une entreprise qui perd du temps en saisie manuelle et veut automatiser sa relation client.",
+    detail: [...LOTS_1, ...LOTS_2],
   },
   {
-    nom: "Écosystème sur-mesure", prix: "8 230 € et +", heures: "~390 h et +",
+    nom: "Écosystème sur-mesure", prix: "8 230 € et +", heures: "392 h × 21 €/h et +",
     inclus: "Tout le Système Connecté + un outil métier sur-mesure (suivi de commandes, compta, portail client), interconnexion complète avec les outils internes (ERP, facturation) — fin de la double saisie, automatisations avancées.",
     pour: "Une PME, un cabinet ou une clinique qui veut un système digital complet, taillé pour son organisation.",
+    detail: [...LOTS_1, ...LOTS_2, ...LOTS_3],
   },
 ];
-const COUT_DEV = "Base réelle : développement expert à 21 €/h. Rien qu'en temps technique, un projet représente déjà des centaines d'heures — c'est de l'ingénierie, pas un template. (Argument interne : le prix se justifie par le travail ET le résultat, pas par les heures seules.)";
+const COUT_DEV = "Chaque prix se décompose en lots techniques réels à 21 €/h — c'est de l'ingénierie chiffrée, pas un tarif au doigt mouillé. (Interne : garde le détail des heures pour DÉFENDRE le prix face à une objection ; à l'oral, vends le résultat, pas les heures.)";
 
 async function generateScript(args: {
   prenom: string; company: string; metier: string; ville: string; website: string | null;
