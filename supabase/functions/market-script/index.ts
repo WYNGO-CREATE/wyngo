@@ -83,7 +83,33 @@ type Fiche = {
   concurrents: string;
   atouts: string[];
   close: string;
+  // ── Justification du prix (ajout : positionnement haut de gamme) ──
+  questions?: string[];                          // 5 questions d'audit par métier (IA)
+  valeur?: { axe: string; detail: string }[];    // axes temps/argent/visibilité (IA)
+  paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string }[]; // fixe (code)
+  cout_dev?: string;                             // base 21 €/h, argument interne
 };
+
+// Paliers de prix — FIXES (jamais inventés par l'IA). Base : développeur 21 €/h.
+// De 2 144 € (site performance) à 8 230 €+ (écosystème sur-mesure).
+const PALIERS = [
+  {
+    nom: "Site Performance", prix: "dès 2 144 €", heures: "~100 h de développement",
+    inclus: "Site sur-mesure, chargement < 1 s, mobile parfait, SEO de base, textes guidés, et le sous-site de tracking des performances inclus.",
+    pour: "Une entreprise établie qui veut une vitrine premium qui convertit vraiment.",
+  },
+  {
+    nom: "Système Connecté", prix: "dès 4 500 €", heures: "~215 h de développement",
+    inclus: "Tout le Site Performance + automatisation des emails et formulaires, connexion à un outil déjà utilisé (agenda, CRM), et tableau de bord de suivi en temps réel.",
+    pour: "Une entreprise qui perd du temps en saisie manuelle et veut automatiser sa relation client.",
+  },
+  {
+    nom: "Écosystème sur-mesure", prix: "8 230 € et +", heures: "~390 h et +",
+    inclus: "Tout le Système Connecté + un outil métier sur-mesure (suivi de commandes, compta, portail client), interconnexion complète avec les outils internes (ERP, facturation) — fin de la double saisie, automatisations avancées.",
+    pour: "Une PME, un cabinet ou une clinique qui veut un système digital complet, taillé pour son organisation.",
+  },
+];
+const COUT_DEV = "Base réelle : développement expert à 21 €/h. Rien qu'en temps technique, un projet représente déjà des centaines d'heures — c'est de l'ingénierie, pas un template. (Argument interne : le prix se justifie par le travail ET le résultat, pas par les heures seules.)";
 
 async function generateScript(args: {
   prenom: string; company: string; metier: string; ville: string; website: string | null;
@@ -115,21 +141,25 @@ ${compList || "(aucun concurrent vérifié — n'en cite aucun, reste sur les st
 
 ${args.philosophy ? `── PHILOSOPHIE DE VENTE (respecte-la) ──\n${args.philosophy}\n` : ""}${args.dos ? `── TOUJOURS FAIRE ──\n${args.dos}\n` : ""}${args.donts ? `── NE JAMAIS FAIRE ──\n${args.donts}\n` : ""}
 
-ARGUMENTS WYNGO À METTRE EN AVANT (uniques et vrais) :
-- Un site SUR-MESURE, DURABLE et dans l'air du temps — pensé pour durer, pas un template jetable.
-- Notre marque de fabrique : on vient une demi-journée CHEZ LUI (immersion) — personne ne fait ça.
-- Optimisé pour le nouveau moteur IA de Google (les Aperçus IA) — pour exister là où se joue l'avenir de la recherche.
-- Risque zéro : la première maquette est offerte, aucun paiement avant qu'il valide. Le code source lui appartient.
+POSITIONNEMENT WYNGO (haut de gamme — on ne vend PAS un "site vitrine", on vend un SYSTÈME DIGITAL, un investissement à ROI) :
+- On vend des RÉSULTATS, pas du code : plus de clients captés, plus de conversions, moins de charge mentale administrative.
+- Interconnexion (la grande force) : on relie le site aux outils internes du client (CRM, facturation, agenda, ERP) → fin de la double saisie, des dizaines d'heures gagnées par mois.
+- Clés en main premium : SEO de base inclus, copywriting intégré, automatisation des emails de contact.
+- Performance pure : chargement sous la seconde, accessibilité parfaite, domination sur mobile.
+- Sur-mesure et adaptable : on s'adapte aux outils déjà utilisés, on peut fusionner une base existante, voire créer un outil métier (suivi de commandes, compta, portail client).
+- Toujours inclus : un sous-site de TRACKING pour que le client mesure lui-même les performances de ce qu'on lui livre.
 
 Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
 {
   "accroche": "Bonjour {{prospect}}, je suis {{expediteur}}, fondateur de Wyngo. [1 formule de politesse courte]. J'ai regardé de près le secteur de ${args.metier} à ${args.ville}, et il y a quelque chose que je voulais vous partager.",
   "chiffres": [ { "stat": "le chiffre clé formulé simplement", "punch": "ce que ça veut dire concrètement pour LUI (ce qu'il rate / risque)" } ],
   "concurrents": "1 phrase nommant 2-3 concurrents qui captent déjà cette demande à ${args.ville} (ou \\"\\" si aucun concurrent fourni)",
-  "atouts": [ "4 à 5 atouts Wyngo, chacun en une formule courte et percutante" ],
+  "atouts": [ "4 à 5 atouts Wyngo issus du positionnement ci-dessus, chacun en une formule courte et percutante" ],
+  "questions": [ "EXACTEMENT 5 questions d'audit courtes et ORIENTÉES, taillées pour le métier « ${args.metier} », qui font émerger un besoin de système digital (temps perdu en admin, double saisie, suivi client, prise de RDV, gestion des commandes/devis, visibilité). Chaque question doit ouvrir sur une douleur qu'un système Wyngo résout." ],
+  "valeur": [ { "axe": "Temps" ou "Argent" ou "Visibilité", "detail": "bénéfice concret et crédible pour CE métier (ex : heures d'administratif économisées, clients captés, double saisie supprimée) — sans promettre de chiffre inventé" } ],
   "close": "1 phrase de clôture qui propose de bloquer un créneau, simple et directe"
 }
-Le champ "chiffres" contient 3 ou 4 objets. Réponds en français, {{prospect}} et {{expediteur}} laissés tels quels.`;
+"chiffres" = 3 ou 4 objets. "questions" = EXACTEMENT 5. "valeur" = 3 objets (idéalement Temps, Argent, Visibilité). Réponds en français, {{prospect}} et {{expediteur}} laissés tels quels.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -151,6 +181,10 @@ Le champ "chiffres" contient 3 ou 4 objets. Réponds en français, {{prospect}} 
       concurrents: f.concurrents || "",
       atouts: (f.atouts || []).slice(0, 6),
       close: f.close || "",
+      questions: (f.questions || []).slice(0, 5),
+      valeur: (f.valeur || []).slice(0, 3),
+      paliers: PALIERS,
+      cout_dev: COUT_DEV,
     };
   } catch { return null; }
 }

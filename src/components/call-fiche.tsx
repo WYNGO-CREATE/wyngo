@@ -8,7 +8,7 @@
  * l'appelant.
  */
 
-import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target } from "lucide-react";
+import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target, HelpCircle, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +18,10 @@ export type Fiche = {
   concurrents: string;
   atouts: string[];
   close: string;
+  questions?: string[];
+  valeur?: { axe: string; detail: string }[];
+  paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string }[];
+  cout_dev?: string;
 };
 
 function fill(text: string, prospect: string, expediteur: string): string {
@@ -51,6 +55,13 @@ export function CallFiche({
     }
     if (fiche.concurrents) lines.push("\nCONCURRENTS\n" + fill(fiche.concurrents, p, e));
     if (fiche.atouts?.length) { lines.push("\nCE QU'ON A D'UNIQUE"); for (const a of fiche.atouts) lines.push(`• ${fill(a, p, e)}`); }
+    if (fiche.questions?.length) { lines.push("\nAUDIT RAPIDE (à lui poser)"); fiche.questions.forEach((q, i) => lines.push(`${i + 1}. ${q}`)); }
+    if (fiche.valeur?.length) { lines.push("\nLA VALEUR RÉELLE"); for (const v of fiche.valeur) lines.push(`[${v.axe}] ${v.detail}`); }
+    if (fiche.paliers?.length) {
+      lines.push("\nJUSTIFICATION DU PRIX");
+      for (const t of fiche.paliers) lines.push(`• ${t.nom} — ${t.prix} (${t.heures})\n  ${t.inclus}`);
+      if (fiche.cout_dev) lines.push(fiche.cout_dev);
+    }
     if (fiche.close) lines.push("\nCLOSE\n" + fill(fiche.close, p, e));
     return lines.join("\n");
   };
@@ -116,6 +127,65 @@ export function CallFiche({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Audit rapide — 5 questions à poser */}
+      {fiche.questions && fiche.questions.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
+            <HelpCircle className="size-3" /> Audit rapide — à lui poser
+          </p>
+          <ol className="space-y-1.5">
+            {fiche.questions.map((q, i) => (
+              <li key={i} className="flex gap-2 text-[12.5px] leading-snug">
+                <span className="shrink-0 size-4 rounded-full bg-sky-100 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                <span>{fill(q, p, e)}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* La valeur réelle — temps / argent / visibilité */}
+      {fiche.valeur && fiche.valeur.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
+            <TrendingUp className="size-3" /> La valeur réelle
+          </p>
+          <div className="space-y-1.5">
+            {fiche.valeur.map((v, i) => (
+              <div key={i} className="rounded-md border bg-background/70 px-2.5 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">{v.axe}</span>
+                <p className="text-[12.5px] leading-snug text-foreground mt-0.5">{v.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Justification du prix — paliers (base 21 €/h) */}
+      {fiche.paliers && fiche.paliers.length > 0 && (
+        <div className="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/40 dark:bg-violet-950/20 p-2.5">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-violet-700 dark:text-violet-400 mb-2 inline-flex items-center gap-1">
+            <Receipt className="size-3" /> Justification du prix
+          </p>
+          <div className="space-y-2">
+            {fiche.paliers.map((t, i) => (
+              <div key={i} className="rounded-md border bg-background/70 px-2.5 py-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[13px] font-semibold">{t.nom}</span>
+                  <span className="text-[13px] font-bold text-violet-700 dark:text-violet-300 shrink-0">{t.prix}</span>
+                </div>
+                <p className="text-[10.5px] text-muted-foreground">{t.heures}</p>
+                <p className="text-[11.5px] leading-snug mt-1">{t.inclus}</p>
+                <p className="text-[11px] italic text-muted-foreground mt-1">Pour : {t.pour}</p>
+              </div>
+            ))}
+          </div>
+          {fiche.cout_dev && (
+            <p className="text-[10.5px] leading-snug text-violet-800/80 dark:text-violet-300/80 mt-2 border-t border-violet-200/60 dark:border-violet-900/40 pt-1.5">{fiche.cout_dev}</p>
+          )}
         </div>
       )}
 
