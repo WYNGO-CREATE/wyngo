@@ -8,7 +8,7 @@
  * l'appelant.
  */
 
-import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target, HelpCircle, Receipt } from "lucide-react";
+import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target, HelpCircle, Receipt, PlusCircle, ShieldCheck, Gift, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +22,10 @@ export type Fiche = {
   valeur?: { axe: string; detail: string }[];
   paliers?: { nom: string; prix: string; heures: string; inclus: string; pour: string; detail?: { poste: string; h: number }[] }[];
   cout_dev?: string;
+  options?: { option: string; h: number }[];
+  garanties?: string[];
+  inclus_offert?: string[];
+  cout_inaction?: string;
 };
 
 function fill(text: string, prospect: string, expediteur: string): string {
@@ -65,6 +69,10 @@ export function CallFiche({
       }
       if (fiche.cout_dev) lines.push(fiche.cout_dev);
     }
+    if (fiche.options?.length) { lines.push("\nOPTIONS À LA CARTE (× 21 €/h)"); for (const o of fiche.options) lines.push(`• ${o.option} : ${o.h} h · +${o.h * 21} €`); }
+    if (fiche.inclus_offert?.length) { lines.push("\nTOUJOURS INCLUS, SANS SUPPLÉMENT"); for (const x of fiche.inclus_offert) lines.push(`✓ ${x}`); }
+    if (fiche.garanties?.length) { lines.push("\nNOS ENGAGEMENTS"); for (const g of fiche.garanties) lines.push(`• ${g}`); }
+    if (fiche.cout_inaction) lines.push("\nLE COÛT DE NE RIEN FAIRE\n" + fill(fiche.cout_inaction, p, e));
     if (fiche.close) lines.push("\nCLOSE\n" + fill(fiche.close, p, e));
     return lines.join("\n");
   };
@@ -204,6 +212,62 @@ export function CallFiche({
           {fiche.cout_dev && (
             <p className="text-[10.5px] leading-snug text-violet-800/80 dark:text-violet-300/80 mt-2 border-t border-violet-200/60 dark:border-violet-900/40 pt-1.5">{fiche.cout_dev}</p>
           )}
+        </div>
+      )}
+
+      {/* Catalogue d'options — chiffrées à l'heure (× 21 €/h) */}
+      {fiche.options && fiche.options.length > 0 && (
+        <details className="group">
+          <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider font-semibold text-muted-foreground inline-flex items-center gap-1">
+            <PlusCircle className="size-3" /> Options à la carte <span className="text-muted-foreground/60 group-open:hidden">· déplier</span>
+          </summary>
+          <div className="mt-1.5 rounded-md border bg-background/70 divide-y">
+            {fiche.options.map((o, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 px-2.5 py-1.5">
+                <span className="text-[11.5px] leading-snug">{o.option}</span>
+                <span className="shrink-0 text-[11.5px] tabular-nums text-muted-foreground">{o.h} h · <span className="font-semibold text-foreground">+{(o.h * 21).toLocaleString("fr-FR")} €</span></span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">Chaque option = heures × 21 €/h. Le devis monte sans jamais être arbitraire.</p>
+        </details>
+      )}
+
+      {/* Toujours inclus, sans supplément */}
+      {fiche.inclus_offert && fiche.inclus_offert.length > 0 && (
+        <div className="rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-900/40 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400 mb-1 inline-flex items-center gap-1">
+            <Gift className="size-3" /> Toujours inclus, sans supplément
+          </p>
+          <ul className="space-y-0.5">
+            {fiche.inclus_offert.map((x, i) => (
+              <li key={i} className="text-[11.5px] leading-snug flex gap-1.5"><span className="text-emerald-600 mt-[3px]">✓</span><span>{x}</span></li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Garanties / engagements */}
+      {fiche.garanties && fiche.garanties.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
+            <ShieldCheck className="size-3" /> Nos engagements
+          </p>
+          <ul className="space-y-1">
+            {fiche.garanties.map((g, i) => (
+              <li key={i} className="flex gap-1.5 text-[12.5px] leading-snug"><ShieldCheck className="size-3 shrink-0 mt-0.5 text-sky-600" /><span>{g}</span></li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Coût de l'inaction */}
+      {fiche.cout_inaction?.trim() && (
+        <div className="rounded-md bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/40 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-400 mb-0.5 inline-flex items-center gap-1">
+            <AlertTriangle className="size-3" /> Le coût de ne rien faire
+          </p>
+          <p className="text-[12.5px] leading-snug">{fill(fiche.cout_inaction, p, e)}</p>
         </div>
       )}
 

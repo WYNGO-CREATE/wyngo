@@ -88,7 +88,40 @@ type Fiche = {
   valeur?: { axe: string; detail: string }[];    // axes temps/argent/visibilité (IA)
   paliers?: Palier[]; // fixe (code)
   cout_dev?: string;                             // base 21 €/h, argument interne
+  options?: { option: string; h: number }[];     // catalogue d'options chiffrées (code)
+  garanties?: string[];                          // engagements (code)
+  inclus_offert?: string[];                      // services inclus gratuitement (code)
+  cout_inaction?: string;                        // closing : coût de ne pas agir (IA, par métier)
 };
+
+// Catalogue d'options — chiffrées à l'heure (× 21 €/h). Le devis grandit sans arbitraire.
+const OPTIONS = [
+  { option: "Réservation / prise de RDV en ligne (agenda synchronisé)", h: 40 },
+  { option: "Paiement en ligne sécurisé", h: 25 },
+  { option: "Site multilingue", h: 30 },
+  { option: "Blog / espace d'actualités éditable (CMS)", h: 20 },
+  { option: "Espace membre / espace client privé", h: 35 },
+  { option: "Boutique en ligne / catalogue produits", h: 55 },
+  { option: "Système d'avis clients + collecte automatisée", h: 18 },
+  { option: "Newsletter & automatisation d'emailing", h: 22 },
+  { option: "Export comptable / connexion à la facturation", h: 28 },
+  { option: "Assistant / chatbot IA sur-mesure", h: 45 },
+];
+
+// Engagements — dont la garantie de performance (risque zéro : il la tient déjà).
+const GARANTIES = [
+  "Chargement sous la seconde — garanti, ou on retravaille jusqu'à l'atteindre.",
+  "Aucun paiement avant que vous ayez validé la première maquette.",
+  "Le code source vous appartient — vous n'êtes prisonnier de personne.",
+];
+
+// Ex-« Pilotage » : ces services deviennent INCLUS gratuitement (différenciateur).
+const INCLUS_OFFERT = [
+  "Hébergement de votre site",
+  "Tableau de bord de suivi des performances (votre sous-site de tracking)",
+  "Maintenance technique et mises à jour de sécurité",
+  "Petites évolutions et corrections",
+];
 
 type Palier = {
   nom: string; prix: string; heures: string; inclus: string; pour: string;
@@ -189,6 +222,7 @@ Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
   "atouts": [ "4 à 5 atouts Wyngo issus du positionnement ci-dessus, chacun en une formule courte et percutante" ],
   "questions": [ "EXACTEMENT 5 questions d'audit courtes et ORIENTÉES, taillées pour le métier « ${args.metier} », qui font émerger un besoin de système digital (temps perdu en admin, double saisie, suivi client, prise de RDV, gestion des commandes/devis, visibilité). Chaque question doit ouvrir sur une douleur qu'un système Wyngo résout." ],
   "valeur": [ { "axe": "Temps" ou "Argent" ou "Visibilité", "detail": "bénéfice concret et crédible pour CE métier (ex : heures d'administratif économisées, clients captés, double saisie supprimée) — sans promettre de chiffre inventé" } ],
+  "cout_inaction": "1 phrase de closing sur le COÛT DE NE PAS AGIR, propre au métier « ${args.metier} » : ce qu'il perd CHAQUE MOIS en restant ainsi (heures de double saisie / d'administratif + clients captés par les concurrents visibles). En ordres de grandeur crédibles, JAMAIS de chiffre précis inventé.",
   "close": "1 phrase de clôture qui propose de bloquer un créneau, simple et directe"
 }
 "chiffres" = 3 ou 4 objets. "questions" = EXACTEMENT 5. "valeur" = 3 objets (idéalement Temps, Argent, Visibilité). Réponds en français, {{prospect}} et {{expediteur}} laissés tels quels.`;
@@ -217,6 +251,10 @@ Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
       valeur: (f.valeur || []).slice(0, 3),
       paliers: PALIERS,
       cout_dev: COUT_DEV,
+      options: OPTIONS,
+      garanties: GARANTIES,
+      inclus_offert: INCLUS_OFFERT,
+      cout_inaction: (f as { cout_inaction?: string }).cout_inaction || "",
     };
   } catch { return null; }
 }
