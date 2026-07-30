@@ -189,6 +189,7 @@ async function actionSearch(params: {
   max_results?: number;  // objectif de prospects utiles
   rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
   mots_cles?: string;    // métier mal capté par le code NAF → recherche par mots-clés
+  naf_exclus?: string;   // préfixes NAF à écarter en mode mots-clés (séparés par |)
   with_site_web?: boolean | null;
 }) {
   const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 300);
@@ -210,12 +211,25 @@ async function actionSearch(params: {
   // NAF ramène alors les mauvaises entreprises. Dans ce cas on interroge par
   // MOTS-CLÉS sur le(s) département(s) de la zone, sans filtre NAF — le filtre
   // géographique sur le résultat reste appliqué plus bas.
-  const motsCles = (params.mots_cles || "").trim();
+  // Plusieurs VARIANTES possibles, séparées par « | » : un même métier se nomme
+  // de plusieurs façons (« gestion de patrimoine », « gestion privée »…). On
+  // interroge chaque variante — ça élargit la moisson SANS élargir le bruit,
+  // contrairement à un mot-clé trop générique (« patrimoine » seul ramène 55 %
+  // de SCI et de sociétés de location, inexploitables).
+  const variantes = (params.mots_cles || "")
+    .split("|").map((v) => v.trim()).filter(Boolean);
+  // En mode mots-clés, la recherche plein texte attrape aussi des sociétés
+  // hors cible (SCI, promotion immobilière, holdings) qui partagent le
+  // vocabulaire. On écarte ces codes-là : mieux vaut 40 vrais prospects que
+  // 55 dont 15 feront perdre un appel.
+  const exclus = (params.naf_exclus || "")
+    .split("|").map((v) => v.trim()).filter(Boolean);
+  const motsCles = variantes.length > 0;
   const MAX_COMMUNES = 60;
   const cibles: Array<{ q: string; cp?: string; dept?: string; sansNaf?: boolean }> = motsCles
     ? (zone
-        ? zone.depts.map((d) => ({ q: motsCles, dept: d, sansNaf: true }))
-        : [{ q: motsCles, cp: (params.code_postal || "").trim() || undefined, sansNaf: true }])
+        ? zone.depts.flatMap((d) => variantes.map((v) => ({ q: v, dept: d, sansNaf: true })))
+        : variantes.map((v) => ({ q: v, cp: (params.code_postal || "").trim() || undefined, sansNaf: true })))
     : zone
     ? (() => {
         const centre = normCity(zone.centerName);
@@ -268,6 +282,7 @@ async function actionSearch(params: {
           ? zone.names.has(nv)
           : (!villeDemandee || nv.includes(villeDemandee));
         if (!dansZone) { rejected++; continue; }
+        if (exclus.length && e.naf && exclus.some((p) => e.naf!.startsWith(p))) { rejected++; continue; }
         if (e.siren && seen.has(e.siren)) continue;
         if (e.siren) seen.add(e.siren);
         if (e.ville) communesTouchees.add(e.ville);

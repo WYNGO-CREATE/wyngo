@@ -58,6 +58,8 @@ export type Trade = {
    * entreprises (ex. un CGP déclaré en assurance → on trouve des assureurs).
    */
   keywords?: string;
+  /** Préfixes NAF à écarter en mode mots-clés (SCI, promotion immo, holdings…). */
+  excludeNaf?: string;
 };
 
 export const TRADES: Trade[] = [
@@ -330,7 +332,7 @@ export const TRADES: Trade[] = [
   { id: "formation_pro", label: "Organisme de formation professionnelle", naf: "85.59A", category: "Services aux entreprises", sector: "service" },
   { id: "courtier_assurance", label: "Courtier en assurance", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
   { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19A", category: "Finance & patrimoine", sector: "service" },
-  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service", keywords: "gestion de patrimoine" },
+  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service", keywords: "gestion de patrimoine|gestion privée|conseil patrimonial|conseiller patrimonial", excludeNaf: "68.20|68.10|41.|64.20|43.|90." },
   { id: "logistique", label: "Logistique - Transport", naf: "52.29B", category: "Services aux entreprises", sector: "service" },
 
   // ════════════════════════════════════════════════════════════════════

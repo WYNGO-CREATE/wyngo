@@ -158,6 +158,7 @@ function ChassePage() {
   const nafLabel = selectedTrade?.label ?? codeNaf;
   // Métier mal capté par son code NAF → la recherche bascule en mots-clés.
   const motsCles = selectedTrade?.keywords;
+  const nafExclus = selectedTrade?.excludeNaf;
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
   const [targetCount, setTargetCount] = useState(100); // nb de prospects visés par chasse
@@ -234,6 +235,7 @@ function ChassePage() {
             max_results: targetCount,
             rayon_km: rayon || undefined,
             mots_cles: motsCles || undefined,
+            naf_exclus: nafExclus || undefined,
           },
         },
       });
