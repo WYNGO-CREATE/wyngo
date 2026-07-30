@@ -39,6 +39,7 @@ export type TradeCategory =
   | "Tourisme & hébergement"
   | "Services aux particuliers"
   | "Services aux entreprises"
+  | "Finance & patrimoine"
   | "Numérique & tech"
   | "Immobilier"
   | "Agriculture & production"
@@ -320,9 +321,9 @@ export const TRADES: Trade[] = [
   { id: "rh_recrutement", label: "Cabinet RH - Recrutement", naf: "78.10Z", category: "Services aux entreprises", sector: "service" },
   { id: "interim", label: "Agence d'intérim", naf: "78.20Z", category: "Services aux entreprises", sector: "service" },
   { id: "formation_pro", label: "Organisme de formation professionnelle", naf: "85.59A", category: "Services aux entreprises", sector: "service" },
-  { id: "courtier_assurance", label: "Courtier en assurance", naf: "66.22Z", category: "Services aux entreprises", sector: "service" },
-  { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19A", category: "Services aux entreprises", sector: "service" },
-  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Services aux entreprises", sector: "service" },
+  { id: "courtier_assurance", label: "Courtier en assurance", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19A", category: "Finance & patrimoine", sector: "service" },
+  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
   { id: "logistique", label: "Logistique - Transport", naf: "52.29B", category: "Services aux entreprises", sector: "service" },
 
   // ════════════════════════════════════════════════════════════════════
@@ -416,6 +417,17 @@ export const TRADES: Trade[] = [
   // ── Immobilier : gestion de copropriété (portail client = palier 3) ──
   { id: "syndic-copropriete", label: "Syndic de copropriété", naf: "68.32A", category: "Immobilier", sector: "service" },
 
+
+  // ════════════════════════════════════════════════════════════════════
+  // FINANCE & PATRIMOINE — cabinets établis, besoin de portail sécurisé
+  // ════════════════════════════════════════════════════════════════════
+  { id: "intermediaire-financier", label: "Intermédiaire en services financiers", naf: "66.19B", category: "Finance & patrimoine", sector: "service" },
+  { id: "gestion-portefeuille", label: "Société de gestion de portefeuille", naf: "66.30Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "agent-assurance", label: "Agent général d'assurance", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "expert-assurance", label: "Expert en assurance - Évaluation des risques", naf: "66.21Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "recouvrement-creances", label: "Société de recouvrement de créances", naf: "82.91Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "domiciliation-entreprises", label: "Cabinet de domiciliation d'entreprises", naf: "82.11Z", category: "Finance & patrimoine", sector: "service" },
+
 ];
 
 /** Toutes les catégories dans l'ordre canonique pour les optgroups. */
@@ -435,6 +447,7 @@ export const TRADE_CATEGORIES: TradeCategory[] = [
   "Tourisme & hébergement",
   "Services aux particuliers",
   "Services aux entreprises",
+  "Finance & patrimoine",
   "Numérique & tech",
   "Immobilier",
   "Agriculture & production",
