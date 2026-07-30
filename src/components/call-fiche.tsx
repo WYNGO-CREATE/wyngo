@@ -8,7 +8,7 @@
  * l'appelant.
  */
 
-import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target, HelpCircle, Receipt, PlusCircle, ShieldCheck, Gift, AlertTriangle } from "lucide-react";
+import { Copy, Phone, TrendingUp, Zap, Users, Sparkles, Target, HelpCircle, Receipt, PlusCircle, ShieldCheck, Gift, AlertTriangle, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +25,8 @@ export type Fiche = {
   options?: { option: string; h: number }[];
   garanties?: string[];
   inclus_offert?: string[];
+  inclus_note?: string;
+  comparatif?: string[];
   cout_inaction?: string;
 };
 
@@ -70,7 +72,12 @@ export function CallFiche({
       if (fiche.cout_dev) lines.push(fiche.cout_dev);
     }
     if (fiche.options?.length) { lines.push("\nOPTIONS À LA CARTE (× 21 €/h)"); for (const o of fiche.options) lines.push(`• ${o.option} : ${o.h} h · +${o.h * 21} €`); }
-    if (fiche.inclus_offert?.length) { lines.push("\nTOUJOURS INCLUS, SANS SUPPLÉMENT"); for (const x of fiche.inclus_offert) lines.push(`✓ ${x}`); }
+    if (fiche.inclus_offert?.length) {
+      lines.push("\nGARANTIE 2 ANS — INCLUS, SANS SUPPLÉMENT");
+      for (const x of fiche.inclus_offert) lines.push(`✓ ${x}`);
+      if (fiche.inclus_note) lines.push(fiche.inclus_note);
+    }
+    if (fiche.comparatif?.length) { lines.push("\nCE QUI NOUS DIFFÉRENCIE"); for (const c of fiche.comparatif) lines.push(`• ${c}`); }
     if (fiche.garanties?.length) { lines.push("\nNOS ENGAGEMENTS"); for (const g of fiche.garanties) lines.push(`• ${g}`); }
     if (fiche.cout_inaction) lines.push("\nLE COÛT DE NE RIEN FAIRE\n" + fill(fiche.cout_inaction, p, e));
     if (fiche.close) lines.push("\nCLOSE\n" + fill(fiche.close, p, e));
@@ -233,15 +240,34 @@ export function CallFiche({
         </details>
       )}
 
-      {/* Toujours inclus, sans supplément */}
+      {/* Garantie 2 ans — ce qui est inclus, sans supplément */}
       {fiche.inclus_offert && fiche.inclus_offert.length > 0 && (
         <div className="rounded-md bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-900/40 px-2.5 py-2">
           <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400 mb-1 inline-flex items-center gap-1">
-            <Gift className="size-3" /> Toujours inclus, sans supplément
+            <Gift className="size-3" /> Garantie 2 ans — inclus, sans supplément
           </p>
           <ul className="space-y-0.5">
             {fiche.inclus_offert.map((x, i) => (
               <li key={i} className="text-[11.5px] leading-snug flex gap-1.5"><span className="text-emerald-600 mt-[3px]">✓</span><span>{x}</span></li>
+            ))}
+          </ul>
+          {fiche.inclus_note && (
+            <p className="text-[10px] leading-snug italic text-emerald-800/70 dark:text-emerald-300/70 mt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/40 pt-1.5">{fiche.inclus_note}</p>
+          )}
+        </div>
+      )}
+
+      {/* Comparatif — ce qu'il vit ailleurs */}
+      {fiche.comparatif && fiche.comparatif.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">
+            <Scale className="size-3" /> Ce qui nous différencie
+          </p>
+          <ul className="space-y-1">
+            {fiche.comparatif.map((c, i) => (
+              <li key={i} className="flex gap-1.5 text-[12px] leading-snug text-muted-foreground">
+                <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-violet-500" /><span>{c}</span>
+              </li>
             ))}
           </ul>
         </div>

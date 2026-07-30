@@ -89,8 +89,10 @@ type Fiche = {
   paliers?: Palier[]; // fixe (code)
   cout_dev?: string;                             // base 21 €/h, argument interne
   options?: { option: string; h: number }[];     // catalogue d'options chiffrées (code)
-  garanties?: string[];                          // engagements (code)
-  inclus_offert?: string[];                      // services inclus gratuitement (code)
+  garanties?: string[];                          // engagements, dont garantie 2 ans (code)
+  inclus_offert?: string[];                      // inclus pendant les 2 ans (code)
+  inclus_note?: string;                          // précision garantie 2 ans (code)
+  comparatif?: string[];                         // ce qu'il vit ailleurs (code)
   cout_inaction?: string;                        // closing : coût de ne pas agir (IA, par métier)
 };
 
@@ -108,19 +110,30 @@ const OPTIONS = [
   { option: "Assistant / chatbot IA sur-mesure", h: 45 },
 ];
 
-// Engagements — dont la garantie de performance (risque zéro : il la tient déjà).
+// Engagements — la GARANTIE 2 ANS en tête, puis la perf (risque zéro : il la tient déjà).
 const GARANTIES = [
+  "Garantie 2 ans incluse — on reste à vos côtés 2 ans minimum, sans un euro de plus.",
+  "Au bout des 2 ans, on renouvelle ensemble — et on définit le montant selon ce dont vous avez réellement besoin à ce moment-là.",
   "Chargement sous la seconde — garanti, ou on retravaille jusqu'à l'atteindre.",
   "Aucun paiement avant que vous ayez validé la première maquette.",
   "Le code source vous appartient — vous n'êtes prisonnier de personne.",
 ];
 
-// Ex-« Pilotage » : ces services deviennent INCLUS gratuitement (différenciateur).
+// Ce que couvre la garantie 2 ans — INCLUS, sans supplément (différenciateur fort).
 const INCLUS_OFFERT = [
   "Hébergement de votre site",
   "Tableau de bord de suivi des performances (votre sous-site de tracking)",
   "Maintenance technique et mises à jour de sécurité",
-  "Petites évolutions et corrections",
+  "Ajustements et petites évolutions : couleurs, textes, ajouts ponctuels",
+];
+const INCLUS_NOTE = "Compris pendant les 2 ans de garantie, sans surcoût. (À préciser seulement s'il pose la question : une refonte majeure ou un changement complet d'orientation du site fait l'objet d'un devis à part — ce n'est pas un argument, mais autant être clair si le sujet vient.)";
+
+// Comparatif — ce que le prospect vit ailleurs, sans inventer de tarif concurrent.
+const COMPARATIF = [
+  "Beaucoup d'agences facturent un abonnement de maintenance mensuel, à vie. Ici, tout est inclus 2 ans — puis on rediscute selon vos besoins réels.",
+  "Sur une plateforme en ligne ou un template, vous restez locataire : vous n'avez pas le code. Ici, il vous appartient.",
+  "Vous parlez au fondateur du début à la fin — pas à un chargé de compte qui change tous les six mois.",
+  "On ne prend que 9 entrepreneurs par trimestre : c'est ce qui nous permet de venir chez vous et de faire du sur-mesure réel.",
 ];
 
 type Palier = {
@@ -213,6 +226,9 @@ POSITIONNEMENT WYNGO (haut de gamme — on ne vend PAS un "site vitrine", on ven
 - Performance pure : chargement sous la seconde, accessibilité parfaite, domination sur mobile.
 - Sur-mesure et adaptable : on s'adapte aux outils déjà utilisés, on peut fusionner une base existante, voire créer un outil métier (suivi de commandes, compta, portail client).
 - Toujours inclus : un sous-site de TRACKING pour que le client mesure lui-même les performances de ce qu'on lui livre.
+- GARANTIE 2 ANS INCLUSE : on reste à ses côtés 2 ans minimum, sans surcoût — hébergement, maintenance, sécurité, ajustements (couleurs, textes, petits ajouts) et suivi compris. Au bout de 2 ans, renouvellement dont le montant se définit ensemble selon ses besoins réels. C'est un engagement de durée que quasiment personne ne prend : on ne livre pas puis on disparaît.
+- Interlocuteur unique : le fondateur du début à la fin, réponse sous 24 h.
+- Sélection volontaire : 9 entrepreneurs par trimestre seulement — c'est ce qui permet l'immersion sur place et le vrai sur-mesure.
 
 Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
 {
@@ -254,6 +270,8 @@ Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
       options: OPTIONS,
       garanties: GARANTIES,
       inclus_offert: INCLUS_OFFERT,
+      inclus_note: INCLUS_NOTE,
+      comparatif: COMPARATIF,
       cout_inaction: (f as { cout_inaction?: string }).cout_inaction || "",
     };
   } catch { return null; }
