@@ -25,7 +25,7 @@ const money = (n: number) => (Number(n) || 0).toLocaleString("fr-FR", { style: "
 
 const STATUS_LABELS: { key: string; label: string; cls: string }[] = [
   { key: "nouveau", label: "Nouveaux", cls: "bg-slate-400" },
-  { key: "en_cours", label: "En cours", cls: "bg-sky-500" },
+  { key: "en_cours", label: "Appelés sans réponse", cls: "bg-sky-500" },
   { key: "a_relancer", label: "À relancer", cls: "bg-amber-500" },
   { key: "interesse", label: "Intéressés", cls: "bg-violet-500" },
   { key: "converti", label: "Convertis (clients)", cls: "bg-emerald-500" },

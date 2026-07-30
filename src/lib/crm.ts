@@ -11,7 +11,7 @@ export type ProspectStatus = (typeof PROSPECT_STATUSES)[number];
 
 export const STATUS_LABELS: Record<ProspectStatus, string> = {
   nouveau: "Nouveau",
-  en_cours: "En cours",
+  en_cours: "Appelé mais pas répondu",
   interesse: "Intéressé",
   converti: "Converti",
   perdu: "Perdu",
@@ -80,7 +80,7 @@ export function suggestNextAction(ctx: NextActionContext): NextActionSuggestion 
       return { label: "Premier appel", tone: "info", reason: "Aucun contact encore" };
     case "en_cours":
       if (daysSince > 7) return { label: "Rappeler — silence radio", tone: "warn", reason: `${daysSince}j sans contact` };
-      return { label: "Relancer sous 3j", tone: "info", reason: "Échange en cours" };
+      return { label: "Rappeler sous 3j", tone: "info", reason: "Appelé, sans réponse" };
     case "interesse":
       return { label: "Envoyer mail post-call", tone: "success", reason: "Prospect chaud" };
     case "a_relancer":

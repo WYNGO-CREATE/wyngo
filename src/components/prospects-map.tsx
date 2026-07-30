@@ -58,7 +58,7 @@ export function ProspectsMap({ prospects }: { prospects: P[] }) {
 
   const legend = [
     { k: "converti", l: "Clients" }, { k: "interesse", l: "Intéressés" }, { k: "a_relancer", l: "À relancer" },
-    { k: "en_cours", l: "En cours" }, { k: "nouveau", l: "Nouveaux" },
+    { k: "en_cours", l: "Appelés, sans réponse" }, { k: "nouveau", l: "Nouveaux" },
   ];
 
   return (
