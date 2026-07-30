@@ -188,6 +188,7 @@ async function actionSearch(params: {
   par_page?: number;
   max_results?: number;  // objectif de prospects utiles
   rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
+  mots_cles?: string;    // métier mal capté par le code NAF → recherche par mots-clés
   with_site_web?: boolean | null;
 }) {
   const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 300);
@@ -202,8 +203,20 @@ async function actionSearch(params: {
   // entreprises se concentrent dans les communes peuplées — scanner un hameau
   // pour trouver un grossiste ne rapporte rien. On borne donc le balayage aux
   // MAX_COMMUNES plus peuplées, en gardant toujours la commune de départ.
+  // ── MODE MOTS-CLÉS ──
+  // Certains métiers ne sont PAS discriminés par leur code NAF : un conseiller
+  // en gestion de patrimoine peut être déclaré en conseil, en immobilier ou en
+  // assurance (vérifié sur 1 441 cabinets : aucun code dominant). Chercher par
+  // NAF ramène alors les mauvaises entreprises. Dans ce cas on interroge par
+  // MOTS-CLÉS sur le(s) département(s) de la zone, sans filtre NAF — le filtre
+  // géographique sur le résultat reste appliqué plus bas.
+  const motsCles = (params.mots_cles || "").trim();
   const MAX_COMMUNES = 60;
-  const cibles: Array<{ q: string; cp?: string }> = zone
+  const cibles: Array<{ q: string; cp?: string; dept?: string; sansNaf?: boolean }> = motsCles
+    ? (zone
+        ? zone.depts.map((d) => ({ q: motsCles, dept: d, sansNaf: true }))
+        : [{ q: motsCles, cp: (params.code_postal || "").trim() || undefined, sansNaf: true }])
+    : zone
     ? (() => {
         const centre = normCity(zone.centerName);
         const triees = [...zone.communes].sort((a, b) => {
@@ -231,11 +244,15 @@ async function actionSearch(params: {
     if (collected.length >= target) break;
     if (!cible.q) continue;
 
-    for (let page = 1; page <= 3 && collected.length < target; page++) {
+    // En mode mots-clés on balaie peu de cibles (1 par département) : on peut
+    // donc paginer plus profond pour ramener autant de prospects.
+    const maxPages = cible.sansNaf ? 8 : 3;
+    for (let page = 1; page <= maxPages && collected.length < target; page++) {
       const { results } = await searchEntreprises({
         q: cible.q,
-        naf: params.code_naf,
+        naf: cible.sansNaf ? undefined : params.code_naf,
         codePostal: cible.cp,
+        departement: cible.dept,
         trancheEffectif: params.tranche_effectif,
         page,
         perPage: 25,

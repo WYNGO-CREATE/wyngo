@@ -51,6 +51,13 @@ export type Trade = {
   naf: string;
   category: TradeCategory;
   sector: VisualSector;
+  /**
+   * Métier mal discriminé par son code NAF (déclarations éparpillées).
+   * Quand ce champ est renseigné, la Chasse classique cherche par MOTS-CLÉS
+   * dans la zone plutôt que par code NAF — sinon elle ramène les mauvaises
+   * entreprises (ex. un CGP déclaré en assurance → on trouve des assureurs).
+   */
+  keywords?: string;
 };
 
 export const TRADES: Trade[] = [
@@ -323,7 +330,7 @@ export const TRADES: Trade[] = [
   { id: "formation_pro", label: "Organisme de formation professionnelle", naf: "85.59A", category: "Services aux entreprises", sector: "service" },
   { id: "courtier_assurance", label: "Courtier en assurance", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
   { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19A", category: "Finance & patrimoine", sector: "service" },
-  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
+  { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service", keywords: "gestion de patrimoine" },
   { id: "logistique", label: "Logistique - Transport", naf: "52.29B", category: "Services aux entreprises", sector: "service" },
 
   // ════════════════════════════════════════════════════════════════════

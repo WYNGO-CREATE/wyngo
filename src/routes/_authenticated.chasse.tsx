@@ -154,7 +154,10 @@ function ChassePage() {
   const [rayon, setRayon] = useState(30);
   // L'API officielle ne renvoie pas le libellé du code NAF : on retombe sur le
   // métier sélectionné dans la liste, qui dit exactement la même chose.
-  const nafLabel = TRADES.find((t) => t.naf === codeNaf)?.label ?? codeNaf;
+  const selectedTrade = TRADES.find((t) => t.naf === codeNaf);
+  const nafLabel = selectedTrade?.label ?? codeNaf;
+  // Métier mal capté par son code NAF → la recherche bascule en mots-clés.
+  const motsCles = selectedTrade?.keywords;
   // Toggle pour afficher le champ "code NAF custom" (caché par défaut pour UX épurée)
   const [showCustomNaf, setShowCustomNaf] = useState(false);
   const [targetCount, setTargetCount] = useState(100); // nb de prospects visés par chasse
@@ -230,6 +233,7 @@ function ChassePage() {
             code_postal: codePostal || undefined,
             max_results: targetCount,
             rayon_km: rayon || undefined,
+            mots_cles: motsCles || undefined,
           },
         },
       });
