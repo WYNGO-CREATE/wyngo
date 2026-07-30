@@ -197,8 +197,24 @@ async function actionSearch(params: {
   // L'API officielle n'applique ses filtres géographiques QUE si elle reçoit
   // aussi un mot-clé. On interroge donc commune par commune (les plus peuplées
   // d'abord, c'est là que sont les entreprises), jusqu'à atteindre l'objectif.
+  // ⚠️ PERFORMANCE : sur un métier rare, l'objectif n'est jamais atteint et on
+  // balayait les ~230 communes de la zone (jusqu'à 78 s mesurées). Or les
+  // entreprises se concentrent dans les communes peuplées — scanner un hameau
+  // pour trouver un grossiste ne rapporte rien. On borne donc le balayage aux
+  // MAX_COMMUNES plus peuplées, en gardant toujours la commune de départ.
+  const MAX_COMMUNES = 60;
   const cibles: Array<{ q: string; cp?: string }> = zone
-    ? zone.communes.map((c) => ({ q: c.nom, cp: c.cps[0] }))
+    ? (() => {
+        const centre = normCity(zone.centerName);
+        const triees = [...zone.communes].sort((a, b) => {
+          // la commune de départ passe toujours en premier
+          const ac = normCity(a.nom) === centre ? 1 : 0;
+          const bc = normCity(b.nom) === centre ? 1 : 0;
+          if (ac !== bc) return bc - ac;
+          return (b.pop || 0) - (a.pop || 0);
+        });
+        return triees.slice(0, MAX_COMMUNES).map((c) => ({ q: c.nom, cp: c.cps[0] }));
+      })()
     : [{
         q: (params.ville || params.code_postal || "").trim(),
         cp: (params.code_postal || "").trim() || undefined,

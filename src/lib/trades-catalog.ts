@@ -28,9 +28,11 @@ export type TradeCategory =
   | "Restauration & boissons"
   | "Beauté & bien-être"
   | "Commerce de détail"
+  | "Négoce & distribution"
   | "Mode & textile"
   | "Artisanat & bâtiment"
   | "Artisanat d'art"
+  | "Industrie & fabrication"
   | "Auto & moto"
   | "Santé & soins"
   | "Sport & loisirs"
@@ -372,6 +374,48 @@ export const TRADES: Trade[] = [
   { id: "educateur_canin", label: "Éducateur canin - Dresseur", naf: "96.09Z", category: "Animaux", sector: "service" },
   { id: "comportementaliste_animal", label: "Comportementaliste animal", naf: "96.09Z", category: "Animaux", sector: "service" },
   { id: "pet_sitter", label: "Pet-sitter - Visites à domicile", naf: "96.09Z", category: "Animaux", sector: "service" },
+
+  // ════════════════════════════════════════════════════════════════════
+  // SANTÉ STRUCTURÉE — structures à budget, fort besoin d'interconnexion
+  // ════════════════════════════════════════════════════════════════════
+  { id: "clinique-privee", label: "Clinique privée", naf: "86.10Z", category: "Santé & soins", sector: "service" },
+  { id: "maison-sante", label: "Maison de santé pluridisciplinaire", naf: "86.21Z", category: "Santé & soins", sector: "service" },
+  { id: "centre-dentaire", label: "Centre dentaire", naf: "86.23Z", category: "Santé & soins", sector: "service" },
+  { id: "centre-imagerie", label: "Centre d'imagerie médicale - Radiologie", naf: "86.22A", category: "Santé & soins", sector: "service" },
+  { id: "laboratoire-analyses", label: "Laboratoire d'analyses médicales", naf: "86.90B", category: "Santé & soins", sector: "service" },
+  { id: "centre-reeducation", label: "Centre de rééducation - Soins de suite", naf: "86.90E", category: "Santé & soins", sector: "service" },
+  { id: "ehpad", label: "EHPAD - Maison de retraite médicalisée", naf: "87.10A", category: "Santé & soins", sector: "service" },
+  { id: "residence-senior", label: "Résidence senior", naf: "87.30A", category: "Santé & soins", sector: "service" },
+
+  // ════════════════════════════════════════════════════════════════════
+  // NÉGOCE & DISTRIBUTION — B2B, panier élevé, besoin catalogue + stock
+  // ════════════════════════════════════════════════════════════════════
+  { id: "negoce-materiaux", label: "Négoce de matériaux de construction", naf: "46.73A", category: "Négoce & distribution", sector: "commerce" },
+  { id: "grossiste-quincaillerie", label: "Grossiste quincaillerie - Outillage pro", naf: "46.74A", category: "Négoce & distribution", sector: "commerce" },
+  { id: "fournitures-industrielles", label: "Fournitures et équipements industriels", naf: "46.69C", category: "Négoce & distribution", sector: "commerce" },
+  { id: "grossiste-alimentaire", label: "Grossiste alimentaire", naf: "46.39B", category: "Négoce & distribution", sector: "commerce" },
+  { id: "grossiste-entretien", label: "Grossiste produits d'entretien - Hygiène", naf: "46.44Z", category: "Négoce & distribution", sector: "commerce" },
+  { id: "grossiste-boissons", label: "Grossiste boissons - Vins et spiritueux", naf: "46.34Z", category: "Négoce & distribution", sector: "commerce" },
+  { id: "equipement-chr", label: "Matériel de restauration professionnel - CHR", naf: "46.69B", category: "Négoce & distribution", sector: "commerce" },
+  { id: "distributeur-pieces-auto", label: "Distributeur de pièces automobiles", naf: "45.31Z", category: "Négoce & distribution", sector: "commerce" },
+  { id: "distributeur-medical", label: "Distributeur de matériel médical", naf: "46.46Z", category: "Négoce & distribution", sector: "commerce" },
+  { id: "mobilier-bureau-pro", label: "Mobilier et fournitures de bureau", naf: "46.65Z", category: "Négoce & distribution", sector: "commerce" },
+
+  // ════════════════════════════════════════════════════════════════════
+  // INDUSTRIE & FABRICATION — PME établies, sites souvent très datés
+  // ════════════════════════════════════════════════════════════════════
+  { id: "usinage-precision", label: "Usinage - Mécanique de précision", naf: "25.62B", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "tolerie-chaudronnerie", label: "Tôlerie - Chaudronnerie", naf: "25.11Z", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "traitement-surface", label: "Traitement et revêtement de surface", naf: "25.61Z", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "plasturgie", label: "Plasturgie - Pièces techniques plastique", naf: "22.29A", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "agroalimentaire-transfo", label: "Transformation agroalimentaire", naf: "10.89Z", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "fabricant-mobilier", label: "Fabricant de mobilier", naf: "31.09B", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "menuiserie-industrielle", label: "Menuiserie industrielle - Charpente", naf: "16.23Z", category: "Industrie & fabrication", sector: "artisan" },
+  { id: "maintenance-industrielle", label: "Maintenance industrielle", naf: "33.12Z", category: "Industrie & fabrication", sector: "artisan" },
+
+  // ── Immobilier : gestion de copropriété (portail client = palier 3) ──
+  { id: "syndic-copropriete", label: "Syndic de copropriété", naf: "68.32A", category: "Immobilier", sector: "service" },
+
 ];
 
 /** Toutes les catégories dans l'ordre canonique pour les optgroups. */
@@ -380,9 +424,11 @@ export const TRADE_CATEGORIES: TradeCategory[] = [
   "Restauration & boissons",
   "Beauté & bien-être",
   "Commerce de détail",
+  "Négoce & distribution",
   "Mode & textile",
   "Artisanat & bâtiment",
   "Artisanat d'art",
+  "Industrie & fabrication",
   "Auto & moto",
   "Santé & soins",
   "Sport & loisirs",
