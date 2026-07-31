@@ -25,44 +25,48 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 // ── Banque de statistiques RÉELLES et sourcées (jamais d'invention) ──────
 // Chiffres largement repris dans le secteur du marketing local FR. L'IA ne
 // peut citer QUE ces faits (ou les données propres du prospect).
+// Banque de statistiques RÉELLES et sourcées. Le chiffre et sa phrase sont
+// séparés : l'IA ne choisit qu'un NUMÉRO dans cette liste, le code recopie le
+// reste. Elle ne peut donc plus recoller le chiffre d'un fait sur la phrase
+// d'un autre — c'est arrivé, et ça produit une statistique fausse à l'écran.
 const FACTS = [
-  // ── Recherche locale & intention d'achat ──
-  { stat: "87 % des Français consultent Internet avant de choisir un commerce ou un artisan local", source: "Solocal / Opinionway", theme: "local" },
-  { stat: "4 recherches Google sur 5 ont une intention locale", source: "Google", theme: "local" },
-  { stat: "76 % des personnes qui font une recherche locale sur smartphone visitent un établissement dans les 24 h", source: "Google", theme: "local" },
-  { stat: "28 % des recherches locales aboutissent à un achat", source: "Google", theme: "local" },
-  { stat: "« près de moi » : ces recherches ont été multipliées par 2 ces dernières années", source: "Google", theme: "local" },
-  // ── Site web : crédibilité & conversion ──
-  { stat: "75 % des internautes jugent la crédibilité d'une entreprise à partir du design de son site web", source: "Université de Stanford", theme: "site" },
-  { stat: "Il faut 0,05 seconde à un visiteur pour se faire une opinion sur un site", source: "Google / étude EPFL", theme: "site" },
-  { stat: "Un site qui met plus de 3 s à charger fait fuir 53 % des visiteurs mobiles", source: "Google", theme: "site" },
-  { stat: "Plus de 60 % du trafic web provient désormais du mobile", source: "Statista", theme: "site" },
-  // ── Coût de l'absence de site ──
-  { stat: "Environ 1 TPE française sur 3 n'a toujours pas de site web", source: "Baromètre France Num", theme: "absence" },
-  { stat: "Les TPE/PME ayant une présence en ligne avancée croissent jusqu'à 2× plus vite que les autres", source: "France Num / Bpifrance", theme: "absence" },
-  { stat: "Sans site, une entreprise est jugée moins fiable par plus de la moitié des consommateurs", source: "Visual Objects", theme: "absence" },
-  // ── Avis & réputation (Google) ──
-  { stat: "Gagner 1 étoile sur Google peut augmenter le chiffre d'affaires de 5 à 9 %", source: "Harvard Business School", theme: "avis" },
-  { stat: "88 % des consommateurs font autant confiance aux avis en ligne qu'à une recommandation personnelle", source: "BrightLocal", theme: "avis" },
-  { stat: "Une fiche Google Business complète reçoit 7× plus de clics qu'une fiche incomplète", source: "Google", theme: "avis" },
-  { stat: "Le 1er résultat sur Google capte à lui seul environ 28 % des clics", source: "Sistrix", theme: "avis" },
-  // ── Exemples par secteur (à n'utiliser que si le métier correspond) ──
-  { stat: "9 personnes sur 10 lisent les avis en ligne avant de choisir un restaurant", source: "TripAdvisor", theme: "restauration" },
-  { stat: "Plus de 8 Français sur 10 recherchent un artisan sur Internet avant de le contacter", source: "Opinionway pour Solocal", theme: "artisanat / BTP" },
-  { stat: "Plus de la moitié des prises de rendez-vous en coiffure/beauté se font désormais en ligne", source: "Planity / secteur beauté", theme: "beauté / coiffure" },
-  { stat: "80 % des consommateurs se renseignent en ligne avant d'acheter en magasin (effet ROPO)", source: "Google", theme: "commerce / retail" },
-  // ── Recherche & visibilité ──
-  { stat: "97 % des consommateurs recherchent en ligne les entreprises locales", source: "BrightLocal", theme: "local" },
-  { stat: "46 % des recherches effectuées sur Google concernent une information locale", source: "Google", theme: "local" },
-  { stat: "68 % des expériences en ligne commencent par un moteur de recherche", source: "BrightEdge", theme: "local" },
-  { stat: "Les 3 premiers résultats naturels de Google captent plus de la moitié des clics", source: "Sistrix", theme: "local" },
-  { stat: "Une recherche locale sur mobile sur deux aboutit à une visite dans la journée", source: "Google", theme: "local" },
-  // ── Site : vitesse et confiance ──
-  { stat: "Le taux de conversion baisse d'environ 4,4 % par seconde de chargement supplémentaire", source: "Portent", theme: "site" },
-  { stat: "Une fiche Google Business avec photos génère jusqu'à 42 % de demandes d'itinéraire en plus", source: "Google", theme: "avis" },
-  { stat: "Un consommateur lit en moyenne une dizaine d'avis avant d'accorder sa confiance à une entreprise locale", source: "BrightLocal", theme: "avis" },
-  { stat: "73 % des consommateurs ne tiennent compte que des avis publiés dans le mois", source: "BrightLocal", theme: "avis" },
+  // ── Recherche locale & intention ──
+  { fig: "87 %", txt: "des Français consultent Internet avant de choisir un commerce ou un artisan local", source: "Solocal / Opinionway", theme: "local" },
+  { fig: "4 sur 5", txt: "des recherches Google ont une intention locale", source: "Google", theme: "local" },
+  { fig: "76 %", txt: "des personnes qui font une recherche locale sur smartphone visitent un établissement dans les 24 h", source: "Google", theme: "local" },
+  { fig: "28 %", txt: "des recherches locales aboutissent à un achat", source: "Google", theme: "local" },
+  { fig: "× 2", txt: "les recherches « près de moi » ont doublé ces dernières années", source: "Google", theme: "local" },
+  { fig: "97 %", txt: "des consommateurs recherchent en ligne les entreprises locales", source: "BrightLocal", theme: "local" },
+  { fig: "46 %", txt: "des recherches effectuées sur Google concernent une information locale", source: "Google", theme: "local" },
+  { fig: "68 %", txt: "des expériences en ligne commencent par un moteur de recherche", source: "BrightEdge", theme: "local" },
+  { fig: "1 sur 2", txt: "des recherches locales sur mobile aboutissent à une visite dans la journée", source: "Google", theme: "local" },
+  { fig: "90 %", txt: "des recherches effectuées en France passent par Google", source: "StatCounter", theme: "local" },
+  // ── Le site : crédibilité, vitesse, mobile ──
+  { fig: "75 %", txt: "des internautes jugent la crédibilité d'une entreprise à partir du design de son site", source: "Université de Stanford", theme: "site" },
+  { fig: "0,05 s", txt: "le temps qu'il faut à un visiteur pour se faire une opinion sur un site", source: "Google / étude EPFL", theme: "site" },
+  { fig: "53 %", txt: "des visiteurs mobiles abandonnent un site qui met plus de 3 secondes à charger", source: "Google", theme: "site" },
+  { fig: "60 %", txt: "du trafic web provient désormais du mobile", source: "Statista", theme: "site" },
+  { fig: "− 4,4 %", txt: "de conversion par seconde de chargement supplémentaire", source: "Portent", theme: "site" },
+  // ── L'absence de site ──
+  { fig: "1 sur 3", txt: "des TPE françaises n'ont toujours pas de site web", source: "Baromètre France Num", theme: "absence" },
+  { fig: "× 2", txt: "les TPE et PME ayant une présence en ligne avancée croissent jusqu'à deux fois plus vite", source: "France Num / Bpifrance", theme: "absence" },
+  { fig: "1 sur 2", txt: "des consommateurs jugent une entreprise moins fiable si elle n'a pas de site", source: "Visual Objects", theme: "absence" },
+  // ── Avis & réputation ──
+  { fig: "+ 5 à 9 %", txt: "de chiffre d'affaires pour une étoile gagnée sur Google", source: "Harvard Business School", theme: "avis" },
+  { fig: "88 %", txt: "des consommateurs font autant confiance aux avis en ligne qu'à une recommandation personnelle", source: "BrightLocal", theme: "avis" },
+  { fig: "× 7", txt: "de clics pour une fiche Google Business complète plutôt qu'incomplète", source: "Google", theme: "avis" },
+  { fig: "28 %", txt: "des clics vont au premier résultat de Google", source: "Sistrix", theme: "avis" },
+  { fig: "1 sur 2", txt: "des clics vont aux trois premiers résultats naturels de Google", source: "Sistrix", theme: "avis" },
+  { fig: "+ 42 %", txt: "de demandes d'itinéraire pour une fiche Google Business avec photos", source: "Google", theme: "avis" },
+  { fig: "10 avis", txt: "lus en moyenne avant d'accorder sa confiance à une entreprise locale", source: "BrightLocal", theme: "avis" },
+  { fig: "73 %", txt: "des consommateurs ne tiennent compte que des avis publiés dans le mois", source: "BrightLocal", theme: "avis" },
+  // ── Par secteur (à n'utiliser que si le métier correspond) ──
+  { fig: "9 sur 10", txt: "lisent les avis en ligne avant de choisir un restaurant", source: "TripAdvisor", theme: "restauration" },
+  { fig: "8 sur 10", txt: "des Français recherchent un artisan sur Internet avant de le contacter", source: "Opinionway pour Solocal", theme: "artisanat / BTP" },
+  { fig: "1 sur 2", txt: "des prises de rendez-vous en coiffure et beauté se font en ligne", source: "Planity / secteur beauté", theme: "beauté / coiffure" },
+  { fig: "80 %", txt: "des consommateurs se renseignent en ligne avant d'acheter en magasin", source: "Google", theme: "commerce / retail" },
 ];
+
 
 // ── L'offre Wyngo : constantes FIXES injectées dans la présentation.
 //    L'IA ne doit RIEN inventer ici : ni prix, ni délai, ni garantie.
@@ -237,17 +241,6 @@ Deno.serve(async (req) => {
     const prixDit = mode === "tranche" ? `${baseMin} € à ${baseMax} €`
       : mode === "apartir" ? `à partir de ${baseMin} €` : `${baseMin} €`;
 
-    // Ce qu'un client lui rapporte : c'est LUI qui donne le chiffre, on fait
-    // juste la multiplication. Rien d'inventé, et c'est son propre argent.
-    const valeurClient = num(R.valeur_client);
-    const eur = (n: number) => `${n.toLocaleString("fr-FR").replace(/\u202f/g, " ")} €`;
-    const ARITHMETIQUE = valeurClient ? `
-── L'ARITHMÉTIQUE DE SON PROPRE ARGENT (chiffre qu'IL a donné : un client lui rapporte environ ${eur(valeurClient)}) ──
-• 1 client de plus par mois = ${eur(valeurClient * 12)} sur un an
-• 1 client de plus par semaine = ${eur(valeurClient * 52)} sur un an
-• Le site (${prixDit}) est remboursé dès ${Math.max(1, Math.ceil(baseMin / valeurClient))} client${Math.ceil(baseMin / valeurClient) > 1 ? "s" : ""} gagné${Math.ceil(baseMin / valeurClient) > 1 ? "s" : ""}
-Ces trois lignes sont les SEULS calculs autorisés. Formule-les TOUJOURS en gain possible (« un client de plus par mois, c'est X sur l'année »), JAMAIS en perte (« ce que vous perdez », « ce qui part ailleurs ») : on montre ce qu'il y a à gagner, on ne culpabilise pas.` : "";
-
     const OFFRE_BLOC = `
 ── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
 Le site lui-même : ${prixDit}, une fois, sans abonnement.
@@ -334,14 +327,15 @@ LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
 2. kind="constat" : « Votre situation aujourd'hui ». UNIQUEMENT DES DONNÉES.
    - 5 bullets, et TOUS portent un "figure" ET un "source". Aucun bullet sans chiffre : pas de scène racontée, pas de mise en situation, pas de commentaire. Le commercial commente lui-même à l'oral.
-   - "figure" = le chiffre seul (ex "87 %", "1 sur 3", "0,05 s"). "text" = ce que ce chiffre dit, en UNE ligne courte, sans répéter le chiffre. "source" = obligatoire, l'organisme exact.
-   - Choisis dans FACTS les chiffres qui concernent SA situation : absence ou faiblesse de sa présence en ligne, crédibilité, vitesse, comportement des clients avant de choisir. Adapte la formulation à son métier (parle de ses clients à lui), mais reste factuel.
-   - Si le bloc ARITHMÉTIQUE est fourni, un des 5 bullets porte SON chiffre à lui : figure = le montant annuel, text = « un client de plus par mois sur l'année », source = « Votre chiffre, donné au 1er rendez-vous ». En gain, jamais en perte.
+   - Pour CHAQUE bullet tu renvoies UNIQUEMENT "fact" : le numéro du fait dans la liste FACTS. Tu n'écris ni le chiffre, ni la phrase, ni la source — le code les recopie mot pour mot. C'est ce qui garantit qu'aucune statistique ne sera déformée.
+   - Tu peux ajouter "angle" : une incise de 8 mots maximum reliant le fait à son métier (ex « avant même de pousser votre porte »). Sans aucun chiffre dedans. Facultatif, et pas sur les 5.
+   - Choisis les faits qui concernent SA situation : absence ou faiblesse de présence en ligne, crédibilité, vitesse, comportement des clients avant de choisir. Cinq faits DIFFÉRENTS, jamais deux qui disent la même chose.
+   - Aucun calcul, aucune projection de revenu, aucune estimation de ce que le site lui rapporterait : ce genre de chiffre sonne faux et dessert la présentation.
 
 3. kind="marche" : « L'opportunité à [sa ville] ». UNIQUEMENT DES DONNÉES, mêmes règles.
-   - 5 bullets, TOUS avec "figure" + "source". Aucune phrase d'accroche, aucune projection, aucun « vous pourriez ».
-   - Choisis les chiffres qui montrent le VOLUME et l'INTENTION de la recherche locale : part des recherches locales, passage à l'acte, délai de contact, poids du mobile, poids des avis.
-   - Un seul bullet peut, à la place d'un chiffre de FACTS, porter en "figure" une requête entre guillemets telle que ses clients la tapent (ex "« plombier Toulouse »") avec en "text" ce que cette recherche représente, et en "source" « Recherches typiques de votre métier ». Pas plus d'un.
+   - 5 bullets, mêmes règles : "fact" (le numéro) et éventuellement "angle". Aucune phrase d'accroche, aucune projection, aucun « vous pourriez ».
+   - Choisis les faits qui montrent le VOLUME et l'INTENTION de la recherche locale.
+   - UN SEUL bullet peut faire exception : à la place de "fact", tu donnes "figure" = une requête entre guillemets telle que ses clients la tapent (ex "« plombier Toulouse »"), "text" = ce que cette recherche représente, "source" = "Recherches typiques de votre métier". Un seul, jamais deux.
    - Aucun chiffre hors de FACTS. Aucun volume de recherche inventé.
 
 4. kind="site" : titre « Ce qu'on peut construire pour vous » (« peut », c'est une proposition, pas une décision). Le sous-titre dit que c'est ce qu'on a imaginé AVANT le rendez-vous, à partir de ce qu'il a raconté, et que tout reste discutable avec lui.
@@ -370,7 +364,6 @@ EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect v
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
 
-${ARITHMETIQUE}
 
 RÉCAP DU 1ER RENDEZ-VOUS — saisi à la main par le commercial, c'est LA source à suivre :
 ${RECAP_BLOC}
@@ -384,7 +377,7 @@ NOTES D'APPEL ENREGISTRÉES DANS LE CRM (complément, secondaire par rapport au 
 ${callNotes || "(aucune)"}
 
 FACTS (les SEULS chiffres de marché autorisés — [thème] aide à choisir selon le métier, avec sources) :
-${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.stat} — Source : ${f.source}`).join("\n")}
+${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.fig} — ${f.txt} (Source : ${f.source})`).join("\n")}
 
 L'OFFRE WYNGO (prix, méthode, inclus, engagements — VALEURS EXACTES, aucune invention) :
 ${OFFRE_BLOC}
@@ -408,7 +401,9 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
                 items: {
                   type: "object",
                   properties: {
-                    text: { type: "string", description: "Phrase courte" },
+                    fact: { type: "integer", description: "Diapos 'constat' et 'marche' UNIQUEMENT : le NUMÉRO du fait choisi dans la liste FACTS. Le chiffre, la phrase et la source seront recopiés depuis la liste — tu ne les écris pas." },
+                    angle: { type: "string", description: "Avec 'fact' : une incise très courte (8 mots max) qui relie ce fait à son métier. Optionnelle. N'y mets aucun chiffre." },
+                    text: { type: "string", description: "Phrase courte. Inutile si 'fact' est fourni." },
                     figure: { type: "string", description: "Chiffre clé éventuel, ex '87 %'. Ne le répète PAS au début de 'text' : il est déjà affiché en grand à côté." },
                     source: { type: "string", description: "Source du chiffre (obligatoire si figure)" },
                   },
@@ -483,9 +478,24 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
     };
 
     // Le panier est attaché à sa diapo : le rendu n'a besoin de rien d'autre.
+    // Le chiffre, la phrase et la source sont recopiés depuis FACTS à partir du
+    // seul numéro choisi par l'IA : une statistique déformée devient impossible.
+    const depuisFaits = (sl: Record<string, unknown>) => {
+      const bs = Array.isArray(sl.bullets) ? (sl.bullets as Array<Record<string, unknown>>) : [];
+      const out = bs.map((b) => {
+        const i = typeof b.fact === "number" ? b.fact - 1 : -1;
+        const f = FACTS[i];
+        if (!f) return b.figure || b.text ? b : null;
+        const angle = typeof b.angle === "string" && b.angle.trim() && !/\d/.test(b.angle) ? ` — ${b.angle.trim()}` : "";
+        return { text: `${f.txt}${angle}`, figure: f.fig, source: f.source };
+      }).filter(Boolean);
+      return { ...sl, bullets: out };
+    };
+
     const slides = (tool.input.slides as Array<Record<string, unknown>>).map((sl) =>
       sl?.kind === "panier" ? { ...sl, panier, bullets: PANIER_BULLETS }
       : sl?.kind === "technique" ? { kind: "technique", title: TECHNIQUE_TITRE, subtitle: TECHNIQUE_SOUS_TITRE, bullets: TECHNIQUE_BULLETS }
+      : sl?.kind === "constat" || sl?.kind === "marche" ? depuisFaits(sl)
       : sl?.kind === "realisations" ? { kind: "realisations", title: "Ce qu'on a déjà livré", subtitle: null, bullets: [] }
       : sl,
     );

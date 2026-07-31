@@ -28,7 +28,7 @@ type Prospect = { id: string; company: string | null; first_name: string | null;
 type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null; recap: Recap | null };
 
 type QA = { q: string; r: string };
-type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; valeur_client?: string; prix_min?: string; prix_max?: string; budget_non_aborde?: string; prix_mode?: string };
+type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string; budget_non_aborde?: string; prix_mode?: string };
 
 const MODES = [
   { v: "tranche", l: "Une fourchette" },
@@ -36,7 +36,7 @@ const MODES = [
   { v: "fixe", l: "Prix fixe" },
 ];
 
-const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", valeur_client: "", prix_min: "1800", prix_max: "2400", budget_non_aborde: "", prix_mode: "tranche" };
+const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400", budget_non_aborde: "", prix_mode: "tranche" };
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
@@ -143,13 +143,6 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
           <Label className="text-xs">Qui décide</Label>
           <Input placeholder="Ex : lui + son associé" value={recap.decideur} onChange={(e) => champ("decideur", e.target.value)} className="text-sm" />
         </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">Ce que lui rapporte un client — en moyenne</Label>
-        <Input inputMode="numeric" placeholder="Ex : 1500" value={recap.valeur_client}
-          onChange={(e) => champ("valeur_client", e.target.value)} className="text-sm" />
-        <p className="text-[11px] text-muted-foreground">Le chiffre le plus utile de tout le récap. Il sert à calculer, avec <b>son</b> argent, ce que lui coûte un client manqué par mois — et en combien de clients le site est remboursé. Laisse vide si tu ne le sais pas.</p>
       </div>
 
       <div className="space-y-1.5">
