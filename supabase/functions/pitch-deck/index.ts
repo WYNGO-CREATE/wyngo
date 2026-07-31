@@ -51,6 +51,35 @@ const FACTS = [
   { stat: "80 % des consommateurs se renseignent en ligne avant d'acheter en magasin (effet ROPO)", source: "Google", theme: "commerce / retail" },
 ];
 
+// ── L'offre Wyngo : constantes FIXES injectées dans la présentation.
+//    L'IA ne doit RIEN inventer ici : ni prix, ni délai, ni garantie.
+const PALIERS = [
+  { nom: "Site Performance", prix: "2 144 €", heures: "102 h", pour: "une vitrine premium qui convertit vraiment",
+    inclus: "Site sur-mesure, chargement sous la seconde, mobile parfait, SEO technique, textes et photos, tableau de bord de suivi." },
+  { nom: "Système Connecté", prix: "4 500 €", heures: "214 h", pour: "supprimer la saisie manuelle et automatiser la relation client",
+    inclus: "Tout le Site Performance + automatisation des emails et formulaires, connexion à un outil déjà utilisé (agenda, CRM), tableau de bord temps réel." },
+  { nom: "Écosystème sur-mesure", prix: "8 230 € et +", heures: "392 h", pour: "un système digital complet, taillé sur l'organisation",
+    inclus: "Tout le Système Connecté + outil métier sur-mesure, interconnexion ERP et facturation, portail client sécurisé." },
+];
+const METHODE = [
+  { etape: "La journée d'immersion", detail: "On vient chez vous. On observe votre métier, on écoute vos clients, on rédige vos textes et on produit vos photos sur place." },
+  { etape: "La première maquette — sous 48 h", detail: "Vous voyez le résultat avant de payer le moindre euro. Vous validez, ou on retravaille." },
+  { etape: "La mise en ligne — sous 21 jours", detail: "Développement, référencement technique, tests, mise en ligne et formation." },
+  { etape: "Le suivi", detail: "On reste à vos côtés 2 ans, sans surcoût. Un interlocuteur unique, réponse sous 24 h." },
+];
+const INCLUS = [
+  "Hébergement de votre site",
+  "Tableau de bord de suivi des performances",
+  "Maintenance technique et mises à jour de sécurité",
+  "Ajustements et petites évolutions (couleurs, textes, ajouts ponctuels)",
+];
+const ENGAGEMENTS = [
+  "Garantie 2 ans incluse — on reste à vos côtés 2 ans minimum, sans un euro de plus.",
+  "Chargement sous la seconde — garanti, ou on retravaille jusqu'à l'atteindre.",
+  "Aucun paiement avant que vous ayez validé la première maquette.",
+  "Le code source vous appartient — vous n'êtes prisonnier de personne.",
+];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
@@ -92,8 +121,29 @@ Deno.serve(async (req) => {
       notes_crm: p.notes || null,
     };
 
+    const OFFRE_BLOC = `
+── PALIERS (prix EXACTS, n'en invente aucun autre) ──
+${PALIERS.map((t) => `• ${t.nom} — ${t.prix} (${t.heures} de développement) — pour ${t.pour}. Comprend : ${t.inclus}`).join("\n")}
+
+── MÉTHODE (les 4 étapes, délais EXACTS) ──
+${METHODE.map((m, i) => `${i + 1}. ${m.etape} : ${m.detail}`).join("\n")}
+
+── TOUJOURS INCLUS ──
+${INCLUS.map((x) => `• ${x}`).join("\n")}
+
+── ENGAGEMENTS ──
+${ENGAGEMENTS.map((x) => `• ${x}`).join("\n")}`;
+
     const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
-Tu produis une présentation de vente de 4 diapos pour le 2e rendez-vous, ULTRA adaptée à CE prospect, pour le convaincre de lancer son site avec Wyngo.
+Tu produis une présentation de vente de 8 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
+
+OBJECTIF UNIQUE DE CE RENDEZ-VOUS : qu'il accepte de caler un 3e appel pour finaliser (contrat). On ne cherche PAS à faire signer aujourd'hui.
+
+POSITIONNEMENT — on ne vend pas « un site » mais un SYSTÈME DIGITAL qui rapporte :
+- des résultats (clients captés, conversions), pas du code ;
+- l'interconnexion avec ses outils existants (agenda, CRM, facturation) → fin de la double saisie, des heures gagnées chaque mois ;
+- la performance (chargement sous la seconde) et la visibilité, y compris dans les réponses IA de Google ;
+- un tableau de bord pour qu'il MESURE lui-même ce que ça lui rapporte.
 
 RÈGLE ABSOLUE — zéro blabla, zéro chiffre inventé :
 - Tu ne cites QUE des chiffres présents dans la liste FACTS fournie (avec leur source exacte), OU les données réelles du prospect.
@@ -112,11 +162,17 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 - Reformule le bénéfice pour CE métier précis (parle de ses clients à lui).
 - Interdits : bullet vague sans chiffre ni intérêt concret, chiffre sans source, superlatif creux.
 
-Les 4 diapos (dans cet ordre, via l'outil) :
-1. kind="constat" : la situation RÉELLE du prospect (secteur, ville, site actuel ou absence) et ce que ça lui coûte CONCRÈTEMENT. 2 chiffres "figure"+"source" qui frappent.
-2. kind="marche" : le marché chiffré de SON secteur en local — 2-3 chiffres "figure"+"source" formulés comme une opportunité directe pour lui.
-3. kind="site" : 3-4 bénéfices très concrets de son futur site (le mockup s'affiche à côté). Bénéfices liés à son métier (ex : prise de contact, réservations, devis, visibilité Google).
-4. kind="offre" : la proposition Wyngo + l'impact attendu (prudent, ancré sur les FACTS) + prochaine étape claire et engageante.`;
+LES 8 DIAPOS (dans cet ordre exact, via l'outil) :
+1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du 1ER APPEL avec SES mots (résumé fourni) : son besoin, ce qui l'a intéressé, ses réserves. Aucun chiffre ici. Si le résumé d'appel est vide, reste sur son métier et sa situation, sans inventer de propos.
+2. kind="constat" : sa situation RÉELLE (site actuel ou absence, visibilité) et ce que ça lui coûte. 2 chiffres "figure"+"source".
+3. kind="marche" : le marché chiffré de SON secteur en local, formulé comme une opportunité. 2-3 chiffres "figure"+"source".
+4. kind="site" : « Ce qu'on construit pour vous » — 3-4 bénéfices très concrets liés à SON métier (le mockup s'affiche à côté). Parle système : captation de clients, automatisation, temps gagné.
+5. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
+6. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
+7. kind="prix" : « Votre investissement ». Choisis UN SEUL palier parmi PALIERS, celui qui correspond vraiment à son besoin, et annonce son prix EXACT tel que fourni. Explique en une phrase pourquoi celui-là. Puis un bullet de mise en perspective : à quoi ça correspond en clients gagnés ou en heures d'administratif économisées — SANS jamais promettre un chiffre de résultat.
+8. kind="etape" : « La prochaine étape » — proposer de caler un 3e échange pour finaliser, et rappeler qu'aucun paiement n'intervient avant qu'il ait validé la maquette. Ton engageant, simple, sans pression.
+
+EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect va probablement poser (adaptées à son métier et à ce qui s'est dit au 1er appel), chacune avec une réponse courte, honnête et factuelle. Cette fiche NE SERA PAS affichée au client : c'est l'antisèche du commercial. N'y invente aucun chiffre ni engagement au-delà de ce qui est fourni.`;
 
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
@@ -124,8 +180,11 @@ ${JSON.stringify(ctx, null, 2)}
 CE QUI S'EST DIT AUX APPELS PRÉCÉDENTS (résumés — base-toi dessus pour adapter le pitch) :
 ${callNotes || "(aucun résumé d'appel disponible — adapte au secteur et à la ville)"}
 
-FACTS (les SEULS chiffres autorisés — [thème] aide à choisir selon le métier, avec sources) :
+FACTS (les SEULS chiffres de marché autorisés — [thème] aide à choisir selon le métier, avec sources) :
 ${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.stat} — Source : ${f.source}`).join("\n")}
+
+L'OFFRE WYNGO (prix, méthode, inclus, engagements — VALEURS EXACTES, aucune invention) :
+${OFFRE_BLOC}
 
 Génère la présentation via l'outil "build_deck". Tout doit être taillé pour ${ctx.entreprise} (${ctx.secteur}, ${ctx.ville}). Reprends ce qui s'est dit aux appels pour que ${ctx.interlocuteur || "le dirigeant"} se sente compris.`;
 
@@ -138,7 +197,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
           items: {
             type: "object",
             properties: {
-              kind: { type: "string", enum: ["constat", "marche", "site", "offre"] },
+              kind: { type: "string", enum: ["recap", "constat", "marche", "site", "methode", "inclus", "prix", "etape"] },
               title: { type: "string" },
               subtitle: { type: "string" },
               bullets: {
@@ -157,15 +216,27 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
             required: ["kind", "title", "bullets"],
           },
         },
+        questions: {
+          type: "array",
+          description: "6 à 8 questions probables du prospect + réponse courte et factuelle (fiche privée du commercial, non affichée au client)",
+          items: {
+            type: "object",
+            properties: {
+              q: { type: "string" },
+              r: { type: "string" },
+            },
+            required: ["q", "r"],
+          },
+        },
       },
-      required: ["headline", "slides"],
+      required: ["headline", "slides", "questions"],
     };
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL, max_tokens: 2000, temperature: 0.5, system,
+        model: ANTHROPIC_MODEL, max_tokens: 6000, temperature: 0.5, system,
         messages: [{ role: "user", content: user }],
         tools: [{ name: "build_deck", description: "Construit la présentation de vente.", input_schema: SCHEMA }],
         tool_choice: { type: "tool", name: "build_deck" },
@@ -176,17 +247,22 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
       return json({ error: "ai_error", message: "Génération impossible, réessaie." });
     }
     const c = await res.json();
-    const tool = (c.content || []).find((x: { type: string }) => x.type === "tool_use") as { input?: { headline?: string; slides?: unknown[] } } | undefined;
+    const tool = (c.content || []).find((x: { type: string }) => x.type === "tool_use") as { input?: { headline?: string; slides?: unknown[]; questions?: unknown[] } } | undefined;
     if (!tool?.input?.slides) return json({ error: "ai_empty", message: "Réponse IA vide, réessaie." });
 
     const headline = String(tool.input.headline || ctx.entreprise);
     const slides = tool.input.slides;
+    // La fiche « questions » est rangée AVEC les diapos (colonne jsonb existante,
+    // pas de migration) sous un kind dédié. Le rendu du deck l'ignore : elle ne
+    // doit jamais s'afficher à l'écran partagé, c'est l'antisèche du commercial.
+    const questions = Array.isArray(tool.input.questions) ? tool.input.questions : [];
+    const stored = [...(slides as unknown[]), { kind: "faq", title: "Questions probables", bullets: [], questions }];
 
     const { data: deck } = await admin.from("pitch_decks").insert({
-      owner_id: userId, prospect_id, headline, slides, preview_slug: prev?.slug || null, model: ANTHROPIC_MODEL,
+      owner_id: userId, prospect_id, headline, slides: stored, preview_slug: prev?.slug || null, model: ANTHROPIC_MODEL,
     }).select("id").single();
 
-    return json({ ok: true, id: deck?.id, headline, slides, preview_slug: prev?.slug || null });
+    return json({ ok: true, id: deck?.id, headline, slides, questions, preview_slug: prev?.slug || null });
   } catch (e) {
     console.error("[pitch-deck] uncaught", e);
     return json({ error: "server_error", message: String(e) });

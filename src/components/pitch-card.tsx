@@ -1,14 +1,16 @@
 /**
  * ─── Carte « Présentation de vente » (fiche prospect) ─────────────────
- * Génère un deck de 4 diapos pour le 2e RDV (chiffres réels sourcés +
- * mockup du futur site). Présentation plein écran + export PDF.
+ * Génère un deck de 8 diapos pour le 2e RDV en visio (chiffres réels
+ * sourcés + mockup du futur site) et une fiche réponses PRIVÉE aux
+ * questions probables du prospect. Présentation plein écran + export PDF.
  */
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail } from "lucide-react";
+import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail, HelpCircle, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -17,14 +19,25 @@ import { renderPitchHtml, type PitchDeck } from "@/lib/pitch-html";
 type Prospect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email?: string | null; brief_activity?: string | null; industry?: string | null; location?: string | null };
 type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null };
 
+type QA = { q: string; r: string };
+
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
+  const [qaOpen, setQaOpen] = useState(false);
   const clientName = prospect.company || `${prospect.first_name || ""} ${prospect.last_name || ""}`.trim() || "Client";
 
   const { data: deck } = useQuery({
     queryKey: ["pitch-deck", prospect.id],
     queryFn: async () => (await supabase.from("pitch_decks").select("id, headline, slides, preview_slug, created_at, sent_at").eq("prospect_id", prospect.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as DeckRow | null,
   });
+
+  // L'antisèche est stockée avec les diapos sous { kind: "faq" } : on l'en ressort
+  // pour l'afficher ici, côté CRM — jamais dans le deck partagé au prospect.
+  const qa: QA[] = (() => {
+    const arr = Array.isArray(deck?.slides) ? (deck!.slides as Array<{ kind?: string; questions?: QA[] }>) : [];
+    const f = arr.find((s) => s?.kind === "faq");
+    return Array.isArray(f?.questions) ? f!.questions! : [];
+  })();
 
   // Dernier aperçu de site (mockup le plus à jour)
   const { data: preview } = useQuery({
@@ -83,7 +96,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
       <CardContent className="space-y-3">
         {!deck ? (
           <>
-            <p className="text-sm text-muted-foreground">Génère une présentation de 4 diapos taillée pour ce client : son constat, des <b>chiffres réels sourcés</b> de son marché, son <b>futur site</b>, et ton offre. À présenter pendant le 2e appel.</p>
+            <p className="text-sm text-muted-foreground">Génère une présentation de 8 diapos taillée pour ce client : sa situation, des <b>chiffres réels sourcés</b>, son <b>futur site</b>, la méthode, le prix et la prochaine étape — plus une <b>fiche réponses privée</b> aux questions qu'il va poser. À présenter en visio pendant le 2e appel.</p>
             <Button size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
               {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Générer la présentation
             </Button>
@@ -101,6 +114,28 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
                 {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Régénérer
               </Button>
             </div>
+            {qa.length > 0 && (
+              <div className="rounded-md border bg-muted/30">
+                <button type="button" onClick={() => setQaOpen((o) => !o)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium">
+                  <HelpCircle className="h-3.5 w-3.5 text-violet-600" />
+                  Fiche réponses — {qa.length} questions probables
+                  <span className="ml-auto flex items-center gap-1 font-normal text-muted-foreground">
+                    pour toi uniquement <ChevronDown className={`h-3.5 w-3.5 transition-transform ${qaOpen ? "rotate-180" : ""}`} />
+                  </span>
+                </button>
+                {qaOpen && (
+                  <div className="space-y-2.5 border-t px-3 py-2.5">
+                    {qa.map((item, i) => (
+                      <div key={i}>
+                        <p className="text-xs font-medium">{item.q}</p>
+                        <p className="text-xs text-muted-foreground">{item.r}</p>
+                      </div>
+                    ))}
+                    <p className="border-t pt-2 text-[10px] text-muted-foreground">Cette fiche ne s'affiche jamais dans la présentation partagée à l'écran.</p>
+                  </div>
+                )}
+              </div>
+            )}
             {deck.sent_at && <p className="text-[11px] text-emerald-600">✓ Envoyée au prospect le {format(new Date(deck.sent_at), "PP 'à' HH'h'mm", { locale: fr })}</p>}
             <p className="text-[11px] text-muted-foreground border-t pt-2">Chiffres issus de sources reconnues (Google, BrightLocal, France Num…). Vérifie ceux que tu cites si besoin.</p>
           </>

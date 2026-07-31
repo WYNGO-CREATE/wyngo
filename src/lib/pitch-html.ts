@@ -5,13 +5,18 @@
  */
 
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
-export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[] };
+export type PitchQA = { q: string; r: string };
+export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[]; questions?: PitchQA[] };
 export type PitchDeck = { headline: string; slides: PitchSlide[]; preview_slug?: string | null };
 export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null; previewUrl?: string | null };
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
-const TAGS: Record<string, string> = { constat: "Le constat", marche: "Le marché", site: "Votre futur site", offre: "Notre proposition" };
+const TAGS: Record<string, string> = {
+  recap: "Ce qu'on s'est dit", constat: "Le constat", marche: "Le marché",
+  site: "Ce qu'on construit", methode: "La méthode", inclus: "Ce qui est compris",
+  prix: "Votre investissement", etape: "La suite", offre: "Notre proposition",
+};
 
 function kpiCards(bullets: PitchBullet[]): string {
   return `<div class="kpis">${bullets.map((b) => `<div class="kpi">
@@ -42,12 +47,14 @@ function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): 
   }
 
   const body = `${kpis.length ? kpiCards(kpis) : ""}${plain.length ? pointList(plain) : ""}`;
-  return `<section class="slide ${s.kind === "offre" ? "offer" : ""}">${head}<div class="body">${body}</div>
+  return `<section class="slide ${s.kind === "offre" || s.kind === "prix" || s.kind === "etape" ? "offer" : ""}">${head}<div class="body">${body}</div>
     <div class="foot"><span>${esc(meta.clientName)}</span><span class="wm">Wyngo</span></div></section>`;
 }
 
 export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
-  const slides = Array.isArray(deck.slides) ? deck.slides : [];
+  // La fiche « questions » est stockée avec les diapos mais reste PRIVÉE :
+  // on l'exclut du rendu, sinon elle s'afficherait au prospect en partage d'écran.
+  const slides = (Array.isArray(deck.slides) ? deck.slides : []).filter((s) => s.kind !== "faq");
   const total = slides.length + 1;
   const cover = `<section class="slide cover">
     <div class="c-brand">Wyngo</div>
@@ -61,26 +68,26 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 <title>Présentation — ${esc(meta.clientName)}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{--v1:#6d28d9;--v2:#a855f7;--ink:#0f172a;--muted:#64748b}
+  :root{--v1:#1B4BE3;--v2:#4C7DF0;--ink:#141410;--muted:#6b6a63}
   html,body{height:100%}
-  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#0a0a12;color:var(--ink)}
-  .bar2{position:fixed;top:0;left:0;right:0;height:46px;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;font-size:12.5px}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#12120f;color:var(--ink)}
+  .bar2{position:fixed;top:0;left:0;right:0;height:46px;background:#141410;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;font-size:12.5px}
   .bar2 b{font-weight:700}
-  .bar2 .grp button{background:#fff;color:#0f172a;border:0;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;margin-left:8px;font-size:12.5px}
+  .bar2 .grp button{background:#fff;color:#141410;border:0;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;margin-left:8px;font-size:12.5px}
   .stage{position:fixed;inset:46px 0 52px 0;display:flex;align-items:center;justify-content:center;padding:2.4vmin}
   .slide{display:none;width:100%;height:100%;max-width:1180px;background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.5);
     padding:clamp(26px,4.6vmin,60px) clamp(30px,5.4vmin,76px);position:relative;overflow:auto;flex-direction:column;justify-content:center}
   .slide.active{display:flex}
   .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(var(--v1),var(--v2))}
   .s-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(10px,1.6vmin,18px)}
-  .tag{font-size:clamp(10px,1.35vmin,13px);font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--v1);background:#f3e8ff;padding:5px 13px;border-radius:999px}
+  .tag{font-size:clamp(10px,1.35vmin,13px);font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--v1);background:#eaf0fe;padding:5px 13px;border-radius:999px}
   .s-no{font-size:clamp(10px,1.25vmin,12px);color:#94a3b8;font-variant-numeric:tabular-nums}
   h1{font-size:clamp(30px,5.6vmin,60px);line-height:1.06;letter-spacing:-1.5px}
-  h2{font-size:clamp(24px,3.9vmin,44px);line-height:1.12;letter-spacing:-.6px;color:#0f172a}
+  h2{font-size:clamp(24px,3.9vmin,44px);line-height:1.12;letter-spacing:-.6px;color:#141410}
   .sub{font-size:clamp(14px,1.9vmin,20px);color:var(--muted);margin-top:clamp(6px,1vmin,12px);max-width:52ch}
   .body{margin-top:clamp(14px,2.4vmin,30px)}
   .kpis{display:flex;gap:clamp(12px,1.8vmin,22px);flex-wrap:wrap}
-  .kpi{flex:1;min-width:150px;background:linear-gradient(180deg,#faf5ff,#fff);border:1px solid #eddcff;border-radius:16px;padding:clamp(14px,2.2vmin,24px)}
+  .kpi{flex:1;min-width:150px;background:linear-gradient(180deg,#F7F4EC,#fff);border:1px solid #e4ddca;border-radius:16px;padding:clamp(14px,2.2vmin,24px)}
   .kpi-fig{font-size:clamp(30px,5.2vmin,52px);font-weight:800;color:var(--v1);line-height:1;letter-spacing:-1.5px;background:linear-gradient(120deg,var(--v1),var(--v2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .kpi-txt{font-size:clamp(13px,1.6vmin,16px);color:#334155;margin-top:clamp(8px,1.2vmin,12px);line-height:1.4}
   .src,.src-inline{font-size:clamp(10px,1.15vmin,12px);color:#94a3b8}
@@ -88,11 +95,11 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   ul.pts{list-style:none;display:flex;flex-direction:column;gap:clamp(10px,1.7vmin,18px)}
   ul.pts li{display:flex;gap:14px;font-size:clamp(15px,2.05vmin,21px);line-height:1.4;color:#1e293b}
   ul.pts .dot{flex:none;width:14px;height:14px;margin-top:.4em;border-radius:5px;background:linear-gradient(var(--v1),var(--v2))}
-  .cover{background:radial-gradient(1200px 600px at 15% -10%,#5b21b6,transparent),linear-gradient(135deg,#1e1b4b,#3b0764);color:#fff;justify-content:center}
-  .cover::before{background:linear-gradient(#a78bfa,#e9d5ff)}
+  .cover{background:radial-gradient(1200px 600px at 15% -10%,#1B4BE3,transparent),linear-gradient(135deg,#141410,#1a2340);color:#fff;justify-content:center}
+  .cover::before{background:linear-gradient(#4C7DF0,#F7F4EC)}
   .c-brand{font-weight:800;font-size:clamp(16px,2vmin,22px);letter-spacing:.5px;opacity:.85;margin-bottom:clamp(18px,3vmin,30px)}
   .cover h1{color:#fff;max-width:18ch}
-  .c-for{color:#e9d5ff;font-size:clamp(14px,1.9vmin,19px);margin-top:clamp(12px,2vmin,20px)}
+  .c-for{color:#cfd9f7;font-size:clamp(14px,1.9vmin,19px);margin-top:clamp(12px,2vmin,20px)}
   .c-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:clamp(14px,2vmin,20px)}
   .c-chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 14px;border-radius:999px;font-size:clamp(12px,1.5vmin,14px)}
   .site-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(18px,3vmin,34px);align-items:center;margin-top:clamp(12px,2vmin,22px);flex:1;min-height:0}
@@ -101,10 +108,10 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   .mockup .bar span{width:9px;height:9px;border-radius:50%;background:#cbd5e1}
   .mockup iframe{width:100%;flex:1;min-height:240px;border:0;display:block;background:#fff}
   .mockup.empty{display:flex;align-items:center;justify-content:center;min-height:280px;color:#94a3b8;font-size:14px;text-align:center;padding:24px}
-  .offer .body{background:linear-gradient(180deg,#faf5ff,#fff);border:1px solid #eddcff;border-radius:18px;padding:clamp(18px,2.6vmin,30px)}
+  .offer .body{background:linear-gradient(180deg,#F7F4EC,#fff);border:1px solid #e4ddca;border-radius:18px;padding:clamp(18px,2.6vmin,30px)}
   .foot{position:absolute;left:clamp(30px,5.4vmin,76px);right:clamp(30px,5.4vmin,76px);bottom:clamp(16px,2.2vmin,26px);display:flex;justify-content:space-between;font-size:clamp(10px,1.2vmin,12px);color:#94a3b8}
-  .foot .wm{font-weight:700;color:#c4b5fd}
-  .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#0f172a;color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
+  .foot .wm{font-weight:700;color:#4C7DF0}
+  .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#141410;color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
   .nav button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
   .nav .count{font-size:13px;font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
   .fsExit{display:none;position:fixed;top:12px;right:14px;z-index:60;background:rgba(15,23,42,.88);color:#fff;border:0;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
