@@ -32,12 +32,24 @@ const TAGS: Record<string, string> = {
   panier: "Votre investissement", prix: "Votre investissement", offre: "Notre proposition",
 };
 
+/** L'IA répète parfois le chiffre en tête du texte : il s'afficherait deux fois
+ *  (« 87 % » en gros, puis « 87 % des Français… » juste à côté). */
+function sansDoublon(b: PitchBullet): string {
+  const t = String(b.text ?? "");
+  const f = String(b.figure ?? "").replace(/[\u00a0\u202f]/g, " ").trim();
+  if (!f) return t;
+  const norm = t.replace(/[\u00a0\u202f]/g, " ");
+  if (!norm.toLowerCase().startsWith(f.toLowerCase())) return t;
+  const reste = norm.slice(f.length).replace(/^[\s,;:—–-]+/, "");
+  return reste ? reste.charAt(0).toUpperCase() + reste.slice(1) : t;
+}
+
 function statBlocks(bullets: PitchBullet[]): string {
   // Un seul chiffre → bloc large et lisible ; plusieurs → une rangée de cartes.
   const wide = bullets.length === 1;
   return `<div class="stats ${wide ? "one" : ""}">${bullets.map((b) => `<div class="stat">
     <div class="fig">${esc(b.figure)}</div>
-    <div class="txt">${esc(b.text)}${b.source ? `<div class="src">Source — ${esc(b.source)}</div>` : ""}</div>
+    <div class="txt">${esc(sansDoublon(b))}${b.source ? `<div class="src">Source — ${esc(b.source)}</div>` : ""}</div>
   </div>`).join("")}</div>`;
 }
 
