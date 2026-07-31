@@ -419,7 +419,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
       return json({ error: "ai_error", message: "Génération impossible, réessaie." });
     }
     const c = await res.json();
-    const tool = (c.content || []).find((x: { type: string }) => x.type === "tool_use") as { input?: { headline?: string; slides?: unknown[]; questions?: unknown[] } } | undefined;
+    const tool = (c.content || []).find((x: { type: string }) => x.type === "tool_use") as { input?: { headline?: string; slides?: unknown[]; options?: unknown[]; questions?: unknown[] } } | undefined;
     if (!tool?.input?.slides) return json({ error: "ai_empty", message: "Réponse IA vide, réessaie." });
 
     const headline = String(tool.input.headline || ctx.entreprise);
@@ -450,7 +450,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
 
     const { data: deck } = await admin.from("pitch_decks").insert({
       owner_id: userId, prospect_id, headline, slides: stored, preview_slug: prev?.slug || null, model: ANTHROPIC_MODEL,
-      recap: recapLignes.length || palierImpose ? { ...R } : null,
+      recap: Object.keys(R).length ? { ...R } : null,
     }).select("id").single();
 
     return json({ ok: true, id: deck?.id, headline, slides, questions, preview_slug: prev?.slug || null });

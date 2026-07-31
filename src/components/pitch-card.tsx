@@ -58,7 +58,12 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
   const gen = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("pitch-deck", { body: { prospect_id: prospect.id, recap } });
-      if (error) throw new Error(error.message);
+      // « Failed to send a request » = la fonction n'a pas répondu du tout
+      // (indisponible ou coupée) : autant le dire clairement plutôt que
+      // laisser le message technique brut.
+      if (error) throw new Error(/failed to send/i.test(error.message)
+        ? "Le service de génération n'a pas répondu. Réessaie dans une minute — si ça persiste, préviens-moi."
+        : error.message);
       const res = data as { ok?: boolean; error?: string; message?: string };
       if (res?.error) throw new Error(res.message || "Génération impossible.");
       return res;
