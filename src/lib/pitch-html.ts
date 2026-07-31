@@ -10,16 +10,25 @@
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
 export type PitchQA = { q: string; r: string };
 export type PitchOption = { id: string; label: string; prix: number; quoi: string };
-export type PitchPanier = { base_min: number; base_max: number; options: PitchOption[] };
+export type PitchPanier = { base_min: number; base_max: number; options: PitchOption[]; base_inclus?: string[]; variation?: string[] };
 export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[]; questions?: PitchQA[]; panier?: PitchPanier };
 export type PitchDeck = { headline: string; slides: PitchSlide[]; preview_slug?: string | null };
-export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null };
+export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null; origin?: string | null };
+
+/** Sites réellement livrés — montrés et cliquables pendant la visio. */
+const REALISATIONS = [
+  { nom: "Archimaides", url: "https://www.archimaides.com", quoi: "Architecte d'intérieur, Toulouse", img: "archimaides" },
+  { nom: "Don Demeure", url: "https://don-demeure.vercel.app", quoi: "Patrimoine & immobilier", img: "don-demeure" },
+  { nom: "Mission Magis", url: "https://missionmagis.com", quoi: "Lavage automobile à domicile", img: "mission-magis" },
+  { nom: "Artefact Neural", url: "https://artefactneural.com", quoi: "Studio technologique", img: "artefact-neural" },
+];
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 const TAGS: Record<string, string> = {
   recap: "Ce qu'on s'est dit", constat: "Le constat", marche: "Le marché",
   site: "Ce qu'on construit", methode: "La méthode", inclus: "Ce qui est compris",
+  realisations: "Nos réalisations", technique: "Notre savoir-faire",
   panier: "Votre investissement", prix: "Votre investissement", offre: "Notre proposition",
 };
 
@@ -44,6 +53,13 @@ function panierHtml(p: PitchPanier): string {
       <div class="base-l">Le site</div>
       <div class="base-p">${eur(p.base_min)} <span>à</span> ${eur(p.base_max)}</div>
     </div>
+    ${(p.base_inclus?.length || p.variation?.length) ? `<div class="cols">
+      ${p.base_inclus?.length ? `<div class="col"><div class="col-h">Compris dès ${eur(p.base_min)}</div>
+        <ul>${p.base_inclus.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+      ${p.variation?.length ? `<div class="col alt"><div class="col-h">Ce qui fait monter vers ${eur(p.base_max)}</div>
+        <ul>${p.variation.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    </div>` : ""}
+    <div class="opt-h">Les options — vous composez</div>
     <div class="opts">${p.options.map((o) => `<label class="opt">
       <input type="checkbox" class="ck" data-prix="${o.prix}">
       <span class="box"></span>
@@ -53,6 +69,13 @@ function panierHtml(p: PitchPanier): string {
     <div class="tot"><span class="tot-l">Total</span>
       <span class="tot-p"><span id="tmin" data-base="${p.base_min}">${eur(p.base_min)}</span> <span class="sep">à</span> <span id="tmax" data-base="${p.base_max}">${eur(p.base_max)}</span></span></div>
   </div>`;
+}
+
+function realisationsHtml(origin: string): string {
+  return `<div class="reals">${REALISATIONS.map((r) => `<a class="real" href="${esc(r.url)}" target="_blank" rel="noopener">
+    <span class="r-shot"><img src="${esc(origin)}/realisations/${r.img}.jpg" alt="${esc(r.nom)}"></span>
+    <span class="r-meta"><span class="r-n">${esc(r.nom)}</span><span class="r-q">${esc(r.quoi)}</span></span>
+  </a>`).join("")}</div>`;
 }
 
 function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): string {
@@ -75,9 +98,11 @@ function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): 
 
   const body = s.kind === "panier" && s.panier
     ? `${plain.length ? pointList(plain) : ""}${panierHtml(s.panier)}`
-    : `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
+    : s.kind === "realisations"
+      ? `${plain.length ? pointList(plain) : ""}${realisationsHtml(meta.origin || "")}`
+      : `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
 
-  return `<section class="slide ${s.kind === "panier" ? "wide" : ""}">
+  return `<section class="slide ${s.kind === "panier" || s.kind === "realisations" ? "wide" : ""}">
     <aside class="side">
       <div class="brand">Wyngo</div>
       ${tag ? `<div class="tag">${tag}</div>` : ""}
@@ -213,6 +238,31 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   .tot-p{font-size:clamp(21px,2.8vmin,33px);font-weight:800;letter-spacing:-1.2px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .tot-p .sep{font-size:.55em;font-weight:600;color:#bdb8ac;margin:0 3px}
 
+  /* ── Réalisations : cliquables, on peut ouvrir le site en direct ── */
+  .reals{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.5vmin,18px);margin-top:clamp(12px,2vmin,24px)}
+  .real{display:flex;flex-direction:column;text-decoration:none;color:inherit;border:1px solid var(--line);
+    border-radius:13px;overflow:hidden;background:#fff;transition:box-shadow .15s,transform .15s}
+  .real:hover{box-shadow:0 10px 26px rgba(20,20,16,.16);transform:translateY(-2px)}
+  .r-shot{display:block;aspect-ratio:16/9;background:var(--cream);overflow:hidden}
+  .r-shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .r-meta{padding:clamp(8px,1.15vmin,13px) clamp(9px,1.3vmin,15px);display:flex;flex-direction:column;gap:2px;
+    border-top:1px solid var(--line)}
+  .r-n{font-size:clamp(12px,1.5vmin,15px);font-weight:700}
+  .r-q{font-size:clamp(10.5px,1.25vmin,12.5px);color:var(--muted);line-height:1.35}
+
+  /* ── Panier : détail de la tranche ── */
+  .cols{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+  .col{padding:clamp(10px,1.5vmin,18px) clamp(13px,1.9vmin,22px)}
+  .col.alt{border-left:1px solid var(--line);background:#fcfbf7}
+  .col-h{font-size:clamp(10px,1.2vmin,12px);letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+    color:#8a8577;margin-bottom:clamp(6px,.9vmin,10px)}
+  .col ul{list-style:none;display:flex;flex-direction:column;gap:clamp(3px,.5vmin,6px)}
+  .col li{font-size:clamp(10.5px,1.3vmin,13.5px);line-height:1.4;color:#2a2721;padding-left:13px;position:relative}
+  .col li::before{content:"";position:absolute;left:0;top:.5em;width:5px;height:5px;border-radius:2px;background:var(--co)}
+  .col.alt li::before{background:#c9c2ae}
+  .opt-h{font-size:clamp(10px,1.2vmin,12px);letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+    color:#8a8577;padding:clamp(9px,1.3vmin,15px) clamp(13px,1.9vmin,22px) clamp(4px,.6vmin,7px)}
+
   /* ── Couverture ── */
   .cover .main{justify-content:center;background:var(--cream)}
   .c-kicker{font-size:clamp(11px,1.35vmin,13px);letter-spacing:.18em;text-transform:uppercase;color:#8a8577;font-weight:700}
@@ -260,6 +310,9 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     ul.pts .li-txt{font-size:15.5px}
     .pricebox{padding:18px 20px;gap:14px}
     .pricebox .amt{font-size:34px}
+    .reals{grid-template-columns:1fr 1fr;gap:10px}
+    .cols{grid-template-columns:1fr}
+    .col.alt{border-left:0;border-top:1px solid var(--line)}
     .opts{grid-template-columns:1fr}
     .opt:nth-child(odd){border-right:0}
     .cover .main{justify-content:flex-start;min-height:52vh}
@@ -275,7 +328,10 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
       box-shadow:none;page-break-after:always;break-after:page;overflow:hidden}
     .slide:last-child{page-break-after:auto;break-after:auto}
     .main{overflow:hidden}
-    .side,.cover .side,.cover .main,.stat,.pricebox{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .side,.cover .side,.cover .main,.stat,.pricebox,.base,.col.alt,.tot,.opt .ck:checked~.box{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .slide.wide .fit{zoom:.78}
+    .opt{padding-top:6px;padding-bottom:6px}
+    .real:hover{box-shadow:none;transform:none}
   }
 </style></head>
 <body>

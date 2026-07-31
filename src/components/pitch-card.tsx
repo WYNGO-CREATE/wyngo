@@ -70,7 +70,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
   const buildHtml = (): string | null => {
     if (!deck) return null;
     const d: PitchDeck = { headline: deck.headline || clientName, slides: (Array.isArray(deck.slides) ? deck.slides : []) as PitchDeck["slides"] };
-    return renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location });
+    return renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location, origin: window.location.origin });
   };
 
   const present = () => {

@@ -72,19 +72,78 @@ const METHODE = [
 
 // ── Le panier : base modulable + options chiffrées à l'heure (× 21 €/h).
 //    Le prospect coche en direct pendant la visio, le total bouge sous ses yeux.
-const TAUX_HORAIRE = 21;
-const OPTIONS = [
-  { id: "resa",       label: "Réservation / prise de rendez-vous en ligne", h: 40, quoi: "Un agenda synchronisé : vos clients réservent leur créneau seuls, même la nuit." },
-  { id: "paiement",   label: "Paiement en ligne sécurisé",                  h: 25, quoi: "Encaisser un acompte ou une commande directement depuis le site." },
-  { id: "boutique",   label: "Boutique en ligne / catalogue produits",      h: 55, quoi: "Vendre vos produits en ligne, avec fiches, stocks et commandes." },
-  { id: "avis",       label: "Avis clients + collecte automatisée",         h: 18, quoi: "Vos avis Google affichés sur le site, et une relance automatique après chaque prestation." },
-  { id: "blog",       label: "Blog / actualités éditable",                  h: 20, quoi: "Publier vous-même vos nouveautés — et gagner des positions sur Google." },
-  { id: "newsletter", label: "Newsletter & emails automatiques",            h: 22, quoi: "Garder le lien avec vos clients sans y penser (relances, offres, rappels)." },
-  { id: "membre",     label: "Espace client privé",                         h: 35, quoi: "Chaque client retrouve ses documents, ses devis et son historique." },
-  { id: "compta",     label: "Export comptable / lien facturation",         h: 28, quoi: "Fini la double saisie : les données partent vers votre outil de facturation." },
-  { id: "chatbot",    label: "Assistant IA sur-mesure",                     h: 45, quoi: "Il répond aux questions courantes de vos visiteurs 24 h/24 et qualifie les demandes." },
-  { id: "multilingue",label: "Site multilingue",                            h: 30, quoi: "Toucher une clientèle étrangère ou frontalière dans sa langue." },
+// Ce que comprend la base, au plancher de la tranche. La collecte d'avis est
+// OFFERTE : elle ne se facture plus en option.
+const BASE_INCLUS = [
+  "Un design dessiné pour vous — aucun modèle tout fait, aucun thème racheté",
+  "Vos textes rédigés à partir de ce que vous nous racontez de votre métier",
+  "Parfait sur mobile, et chargé en moins d'une seconde",
+  "Référencement local, pour sortir sur les recherches de votre ville",
+  "Vos avis Google affichés et collectés automatiquement — offert",
+  "Un tableau de bord pour suivre vos visiteurs et vos demandes",
+  "Hébergement, maintenance et garantie 2 ans",
 ];
+
+// Ce qui fait monter vers le haut de la tranche — le prospect doit comprendre
+// d'où vient l'écart, sinon la fourchette a l'air arbitraire.
+const VARIATION = [
+  "Le nombre de pages : une vitrine de 4 à 5 pages, ou un site complet de 10 à 12",
+  "La quantité de contenu à écrire : quelques paragraphes, ou chacune de vos prestations détaillée",
+  "Les animations et les effets sur-mesure : une mise en page sobre, ou un site qui bouge et réagit",
+  "Le volume de photos à préparer, retoucher et optimiser",
+  "Le nombre de formulaires, ou un vrai parcours de demande de devis",
+  "Plusieurs établissements ou plusieurs zones d'intervention à traiter séparément",
+];
+
+// Options — prix divisés par deux par rapport au barème horaire d'origine.
+const OPTIONS = [
+  { id: "resa",       label: "Réservation / prise de rendez-vous en ligne", prix: 420, quoi: "Un agenda synchronisé : vos clients réservent leur créneau seuls, même la nuit." },
+  { id: "devis",      label: "Demande de devis guidée",                     prix: 310, quoi: "Le visiteur décrit son besoin étape par étape ; vous recevez une demande déjà qualifiée." },
+  { id: "equipe",     label: "Espace interne pour vous et votre équipe",    prix: 470, quoi: "Un espace privé qui centralise tout : dossiers en cours, devis, factures, avancement — chacun voit ce qui le concerne." },
+  { id: "membre",     label: "Espace client privé",                         prix: 370, quoi: "Chaque client retrouve ses documents, ses devis et son historique." },
+  { id: "paiement",   label: "Paiement en ligne sécurisé",                  prix: 260, quoi: "Encaisser un acompte ou une commande directement depuis le site." },
+  { id: "boutique",   label: "Boutique en ligne / catalogue produits",      prix: 580, quoi: "Vendre vos produits en ligne, avec fiches, stocks et commandes." },
+  { id: "galerie",    label: "Galerie de réalisations avant / après",       prix: 190, quoi: "Vos chantiers mis en valeur, avec le glissement avant-après qui fait la démonstration." },
+  { id: "blog",       label: "Blog / actualités éditable",                  prix: 210, quoi: "Publier vous-même vos nouveautés — et gagner des positions sur Google." },
+  { id: "newsletter", label: "Newsletter & emails automatiques",            prix: 230, quoi: "Garder le lien avec vos clients sans y penser (relances, offres, rappels)." },
+  { id: "compta",     label: "Export comptable / lien facturation",         prix: 290, quoi: "Fini la double saisie : les données partent vers votre outil de facturation." },
+  { id: "chatbot",    label: "Assistant IA sur-mesure",                     prix: 470, quoi: "Il répond aux questions courantes de vos visiteurs 24 h/24 et qualifie les demandes." },
+  { id: "multilingue",label: "Site multilingue",                            prix: 310, quoi: "Toucher une clientèle étrangère ou frontalière dans sa langue." },
+];
+
+// Ce qu'on sait faire techniquement, dit simplement. L'IA pioche dedans et
+// relie au métier — elle n'invente aucune capacité.
+const TECHNIQUE = [
+  "Des animations qui réagissent au visiteur : un élément qui apparaît au bon moment, une image qui se transforme quand on descend dans la page",
+  "De la 3D directement dans le navigateur, sans rien installer : faire tourner un produit, une pièce, un aménagement",
+  "Des outils sur-mesure : un simulateur, un configurateur, un calculateur qui donne une estimation en direct",
+  "Un site qui se met à jour tout seul depuis vos données : tarifs, stocks, disponibilités, plannings",
+  "Des pages qui s'adaptent à qui regarde : quelqu'un qui arrive de Toulouse ne voit pas la même chose que quelqu'un de Bordeaux",
+  "Une connexion à vos outils existants — agenda, facturation, messagerie — pour supprimer la double saisie",
+  "Une recherche instantanée dans un catalogue, même avec des milliers de références",
+  "Des formulaires intelligents, qui changent leurs questions selon les réponses précédentes",
+  "Un espace privé sécurisé, avec des droits différents selon la personne",
+  "Un site installable sur le téléphone comme une application, qui fonctionne même avec une connexion faible",
+  "Des cartes interactives : zones d'intervention, points de vente, itinéraires",
+  "Une accessibilité réelle : lisible au clavier, compatible avec les lecteurs d'écran",
+];
+
+// Les puces de la diapo panier sont FIXES : l'IA y résumait systématiquement
+// la colonne « ce qui fait monter le prix », affichée juste en dessous.
+const PANIER_BULLETS = [
+  { text: "Vous composez vous-même : cochez ce qui vous sert, le total se recalcule sous vos yeux." },
+  { text: "Vous pouvez commencer par la base seule, et ajouter plus tard quand le besoin arrive." },
+  { text: "Aucun paiement avant que vous ayez validé la première maquette." },
+];
+
+// Nos réalisations — sites réellement livrés, montrés et navigables en visio.
+const REALISATIONS = [
+  { nom: "Archimaides", url: "https://www.archimaides.com", quoi: "Architecte d'intérieur à Toulouse" },
+  { nom: "Don Demeure", url: "https://don-demeure.vercel.app", quoi: "Patrimoine et immobilier" },
+  { nom: "Mission Magis", url: "https://missionmagis.com", quoi: "Lavage automobile à domicile" },
+  { nom: "Artefact Neural", url: "https://artefactneural.com", quoi: "Studio technologique" },
+];
+
 const INCLUS = [
   "Hébergement de votre site",
   "Tableau de bord de suivi des performances",
@@ -167,13 +226,22 @@ Deno.serve(async (req) => {
     const OFFRE_BLOC = `
 ── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
 Le site lui-même : ${baseMin} € à ${baseMax} €, une fois, sans abonnement.
-Comprend : ${PALIERS[0].inclus}
+Compris dès ${baseMin} € :
+${BASE_INCLUS.map((x) => `  - ${x}`).join("\n")}
+Ce qui fait monter vers ${baseMax} € :
+${VARIATION.map((x) => `  - ${x}`).join("\n")}
 
 ── OPTIONS (le prospect les coche EN DIRECT pendant la visio, le total bouge) ──
-${OPTIONS.map((o) => `• [${o.id}] ${o.label} — ${o.h * TAUX_HORAIRE} € (${o.h} h) — ${o.quoi}`).join("\n")}
+${OPTIONS.map((o) => `• [${o.id}] ${o.label} — ${o.prix} € — ${o.quoi}`).join("\n")}
 
 ── MÉTHODE (les 4 étapes, délais EXACTS) ──
 ${METHODE.map((m, i) => `${i + 1}. ${m.etape} : ${m.detail}`).join("\n")}
+
+── NOS RÉALISATIONS (sites réellement livrés — ne les décris pas au-delà de ça) ──
+${REALISATIONS.map((r) => `• ${r.nom} — ${r.quoi} — ${r.url}`).join("\n")}
+
+── CE QU'ON SAIT FAIRE TECHNIQUEMENT (dit simplement — n'invente aucune autre capacité) ──
+${TECHNIQUE.map((x) => `• ${x}`).join("\n")}
 
 ── TOUJOURS INCLUS ──
 ${INCLUS.map((x) => `• ${x}`).join("\n")}
@@ -191,15 +259,24 @@ ${ENGAGEMENTS.map((x) => `• ${x}`).join("\n")}`;
       : `LE PRIX A DÉJÀ ÉTÉ ANNONCÉ au 1er appel : la diapo 7 le CONFIRME, elle ne le redécouvre pas. Reste cohérent avec ce qui a été dit, sans jamais annoncer un autre montant de base.`;
 
     const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
-Tu produis une présentation de vente de 7 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
+Tu produis une présentation de vente de 9 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
 
 OBJECTIF UNIQUE DE CE RENDEZ-VOUS : qu'il accepte de caler un 3e appel pour finaliser (contrat). On ne cherche PAS à faire signer aujourd'hui.
+
+L'IDÉE QUI PORTE TOUTE LA PRÉSENTATION — un site qui LUI RESSEMBLE VRAIMENT :
+C'est l'objectif numéro un, celui qui doit rester en tête au prospect après le rendez-vous. On ne pose pas son métier dans un modèle tout fait : on part de ce qu'il est, de sa façon de travailler, de ce qui le distingue de son voisin, et on dessine à partir de là. Un client doit reconnaître SA maison en arrivant sur la page.
+Cette idée traverse la présentation, mais tu la dis DIFFÉREMMENT à chaque fois : dans la diapo « site » c'est ce qu'on va construire pour lui, dans « réalisations » c'est la preuve que quatre clients ont eu quatre univers sans aucun air de famille, dans « technique » c'est ce que ça permet concrètement, dans le prix c'est ce qui est compris dès le premier euro.
 
 POSITIONNEMENT — on ne vend pas « un site » mais un SYSTÈME DIGITAL qui rapporte :
 - des résultats (clients captés, conversions), pas du code ;
 - l'interconnexion avec ses outils existants (agenda, CRM, facturation) → fin de la double saisie, des heures gagnées chaque mois ;
 - la performance (chargement sous la seconde) et la visibilité, y compris dans les réponses IA de Google ;
 - un tableau de bord pour qu'il MESURE lui-même ce que ça lui rapporte.
+
+RÈGLE ANTI-RÉPÉTITION — la plus importante après l'honnêteté :
+- Un argument n'apparaît QU'UNE FOIS dans toute la présentation. Deux bullets qui disent la même chose avec d'autres mots, c'est une faute : tu en supprimes un.
+- Avant d'écrire un bullet, vérifie qu'aucun autre, sur AUCUNE diapo, ne porte déjà la même idée (visibilité, gain de temps, crédibilité, sur-mesure…). Si l'idée est déjà passée, soit tu apportes un angle réellement neuf, soit tu passes à autre chose.
+- Mieux vaut 3 bullets qui disent 3 choses que 5 qui en disent 2.
 
 RÈGLE ABSOLUE — zéro blabla, zéro chiffre inventé :
 - Tu ne cites QUE des chiffres présents dans la liste FACTS fournie (avec leur source exacte), OU les données réelles du prospect.
@@ -225,17 +302,21 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 - Reformule le bénéfice pour CE métier précis (parle de ses clients à lui).
 - Interdits : bullet vague sans chiffre ni intérêt concret, chiffre sans source, superlatif creux.
 
-LES 7 DIAPOS (dans cet ordre exact, via l'outil) :
+LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
 2. kind="constat" : sa situation RÉELLE (site actuel ou absence, visibilité) et ce que ça lui coûte. 2 chiffres "figure"+"source".
 3. kind="marche" : le marché chiffré de SON secteur en local, formulé comme une opportunité. 2-3 chiffres "figure"+"source".
 4. kind="site" : « Ce qu'on construit pour vous » — 4 bénéfices très concrets liés à SON métier. Parle système : captation de clients, automatisation, temps gagné.
-5. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
+5. kind="realisations" : « Ce qu'on a déjà livré ». Le sous-titre porte l'idée que ces sites n'ont AUCUN air de famille — c'est la preuve du sur-mesure. Les 4 sites s'affichent automatiquement avec leurs vignettes (tu n'as pas à les lister) : écris 2 bullets maximum, sur ce que ce panel démontre, sans décrire les sites un par un et sans inventer de résultat chiffré à leur sujet.
+
+6. kind="technique" : « Ce qu'on est capable de construire ». Choisis 5 capacités dans la liste TECHNIQUE fournie — celles qui parlent VRAIMENT à son métier — et reformule chacune en une phrase, dans un langage que lui comprend, en la reliant à son activité (pas de jargon, pas d'anglicisme). N'invente aucune capacité qui ne serait pas dans la liste. Le message de fond : on n'est bloqué par aucune limite technique, donc le site suit l'idée, ce n'est pas l'idée qui se plie au modèle.
+
+7. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
    INTERDIT : promettre un déplacement, une visite sur place, une journée d'immersion, des photos prises chez lui. Wyngo travaille depuis Toulouse et ne se déplace pas.
-6. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
-7. kind="panier" : « Votre investissement ». C'est un CONFIGURATEUR que le prospect manipule en direct pendant la visio : la base est une TRANCHE, et il coche les options qu'il veut, le total se recalcule sous ses yeux.
+8. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
+9. kind="panier" : « Votre investissement ». C'est un CONFIGURATEUR que le prospect manipule en direct pendant la visio : la base est une TRANCHE, et il coche les options qu'il veut, le total se recalcule sous ses yeux.
    - N'annonce JAMAIS un montant unique pour la base : uniquement la tranche fournie.
-   - Les bullets de cette diapo expliquent la TRANCHE : ce que comprend la base, pourquoi c'est une tranche (le prix dépend du nombre de pages et du contenu à produire), et qu'aucun paiement n'intervient avant validation de la maquette. 3 bullets maximum, sans chiffre.
+   - Sur cette diapo tu n'écris QUE le titre et le sous-titre : le détail de la tranche, les options et les puces sont posés par le code. Renvoie un tableau "bullets" vide.
    - Le champ "options" (à part) : tu reprends les 10 options du catalogue, TOUTES, chacune avec son "id" exact et un "benefice" d'UNE phrase courte écrite pour SON métier à lui (ce que ça lui apporte concrètement, pas une définition générique). Ne change ni les libellés ni les prix, ils sont fixés par le code.
 
 ${BUDGET_CONSIGNE}
@@ -276,7 +357,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
           items: {
             type: "object",
             properties: {
-              kind: { type: "string", enum: ["recap", "constat", "marche", "site", "methode", "inclus", "panier"] },
+              kind: { type: "string", enum: ["recap", "constat", "marche", "site", "realisations", "technique", "methode", "inclus", "panier"] },
               title: { type: "string" },
               subtitle: { type: "string" },
               bullets: {
@@ -352,12 +433,14 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
     const panier = {
       base_min: baseMin,
       base_max: baseMax,
-      options: OPTIONS.map((o) => ({ id: o.id, label: o.label, prix: o.h * TAUX_HORAIRE, quoi: benefs.get(o.id) || o.quoi })),
+      options: OPTIONS.map((o) => ({ id: o.id, label: o.label, prix: o.prix, quoi: benefs.get(o.id) || o.quoi })),
+      base_inclus: BASE_INCLUS,
+      variation: VARIATION,
     };
 
     // Le panier est attaché à sa diapo : le rendu n'a besoin de rien d'autre.
     const slides = (tool.input.slides as Array<Record<string, unknown>>).map((sl) =>
-      sl?.kind === "panier" ? { ...sl, panier } : sl,
+      sl?.kind === "panier" ? { ...sl, panier, bullets: PANIER_BULLETS } : sl,
     );
     // La fiche « questions » est rangée AVEC les diapos (colonne jsonb existante,
     // pas de migration) sous un kind dédié. Le rendu du deck l'ignore : elle ne
