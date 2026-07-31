@@ -159,6 +159,10 @@ Deno.serve(async (req) => {
     const num = (v?: string) => { const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10); return Number.isFinite(n) && n > 0 ? n : null; };
     const baseMin = num(R.prix_min) ?? 1800;
     const baseMax = num(R.prix_max) ?? 2400;
+    // Deux situations très différentes : soit un prix a déjà été annoncé et on le
+    // confirme, soit le sujet n'a jamais été ouvert et c'est CE rendez-vous qui
+    // l'introduit — le ton et l'enchaînement des diapos ne peuvent pas être les mêmes.
+    const budgetNeuf = R.budget_non_aborde === "1" || R.budget_non_aborde === "true";
 
     const OFFRE_BLOC = `
 ── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
@@ -176,6 +180,15 @@ ${INCLUS.map((x) => `• ${x}`).join("\n")}
 
 ── ENGAGEMENTS ──
 ${ENGAGEMENTS.map((x) => `• ${x}`).join("\n")}`;
+
+    const BUDGET_CONSIGNE = budgetNeuf
+      ? `LE PRIX N'A JAMAIS ÉTÉ ÉVOQUÉ — c'est cette présentation qui ouvre le sujet. Adapte en conséquence :
+- Diapo 1 (recap) : aucune allusion à un budget, un prix ou un investissement. Il n'en a jamais été question.
+- Diapos 2 à 6 : on installe la valeur AVANT le chiffre. Chaque diapo doit rendre le prix évident quand il arrivera : ce que ça lui rapporte, le temps gagné, ce qui est compris pour 2 ans.
+- Diapo 7 (panier) : le sous-titre annonce clairement qu'on aborde les chiffres pour la première fois, sans détour et sans s'excuser. Le premier bullet introduit la tranche calmement ; le deuxième explique qu'il compose lui-même et peut commencer par la base seule ; le troisième rappelle qu'aucun paiement n'intervient avant qu'il ait validé la maquette.
+- Ton : on présente, on ne défend pas. Pas de justification anticipée, pas de « je sais que ça peut paraître cher ».
+- Fiche "questions" : commence par les questions d'argent, ce sont celles qui vont tomber — « combien ça coûte au total », « pourquoi une tranche et pas un prix fixe », « est-ce que je peux commencer par la base et ajouter plus tard », « y a-t-il des frais après ».`
+      : `LE PRIX A DÉJÀ ÉTÉ ANNONCÉ au 1er appel : la diapo 7 le CONFIRME, elle ne le redécouvre pas. Reste cohérent avec ce qui a été dit, sans jamais annoncer un autre montant de base.`;
 
     const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
 Tu produis une présentation de vente de 7 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
@@ -225,6 +238,8 @@ LES 7 DIAPOS (dans cet ordre exact, via l'outil) :
    - Les bullets de cette diapo expliquent la TRANCHE : ce que comprend la base, pourquoi c'est une tranche (le prix dépend du nombre de pages et du contenu à produire), et qu'aucun paiement n'intervient avant validation de la maquette. 3 bullets maximum, sans chiffre.
    - Le champ "options" (à part) : tu reprends les 10 options du catalogue, TOUTES, chacune avec son "id" exact et un "benefice" d'UNE phrase courte écrite pour SON métier à lui (ce que ça lui apporte concrètement, pas une définition générique). Ne change ni les libellés ni les prix, ils sont fixés par le code.
 
+${BUDGET_CONSIGNE}
+
 LA DIAPO « PROCHAINE ÉTAPE » N'EXISTE PLUS : on ne pousse pas à conclure, on laisse le prospect libre. Ne la génère pas.
 8. kind="etape" : « La prochaine étape » — proposer de caler un 3e échange pour finaliser, et rappeler qu'aucun paiement n'intervient avant qu'il ait validé la maquette. Ton engageant, simple, sans pression.
 
@@ -236,7 +251,10 @@ ${JSON.stringify(ctx, null, 2)}
 RÉCAP DU 1ER RENDEZ-VOUS — saisi à la main par le commercial, c'est LA source à suivre :
 ${RECAP_BLOC}
 
-TRANCHE DE PRIX DE BASE ANNONCÉE PAR LE COMMERCIAL : ${baseMin} € à ${baseMax} €. C'est ce qu'il a dit au prospect, tu n'annonces AUCUN autre montant de base.
+${budgetNeuf
+  ? `ARGENT : le sujet n'a JAMAIS été abordé avec ce prospect. Aucun prix ne lui a été annoncé, et il n'a donné aucun budget. C'est CE rendez-vous qui ouvre le sujet.
+TRANCHE À LUI PRÉSENTER POUR LA PREMIÈRE FOIS : ${baseMin} € à ${baseMax} €. Tu n'annonces AUCUN autre montant de base.`
+  : `TRANCHE DE PRIX DE BASE DÉJÀ ANNONCÉE AU PROSPECT : ${baseMin} € à ${baseMax} €. C'est ce qu'il a dit au prospect, tu n'annonces AUCUN autre montant de base.`}
 
 NOTES D'APPEL ENREGISTRÉES DANS LE CRM (complément, secondaire par rapport au récap) :
 ${callNotes || "(aucune)"}

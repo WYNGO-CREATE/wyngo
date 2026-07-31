@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail, HelpCircle, ChevronDown, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -27,9 +28,9 @@ type Prospect = { id: string; company: string | null; first_name: string | null;
 type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null; recap: Recap | null };
 
 type QA = { q: string; r: string };
-type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string };
+type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string; budget_non_aborde?: string };
 
-const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400" };
+const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400", budget_non_aborde: "" };
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
@@ -96,6 +97,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
   });
 
   const champ = (k: keyof Recap, v: string) => setRecap((r) => ({ ...r, [k]: v }));
+  const neuf = recap.budget_non_aborde === "1";
 
   const formulaire = (
     <div className="space-y-3 rounded-md border bg-muted/20 p-3">
@@ -118,7 +120,8 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Budget évoqué</Label>
-          <Input placeholder="Ex : ~2 000 €" value={recap.budget} onChange={(e) => champ("budget", e.target.value)} className="text-sm" />
+          <Input placeholder={neuf ? "—" : "Ex : ~2 000 €"} disabled={neuf} value={neuf ? "" : recap.budget}
+            onChange={(e) => champ("budget", e.target.value)} className="text-sm" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Échéance</Label>
@@ -136,8 +139,16 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
           value={recap.contexte} onChange={(e) => champ("contexte", e.target.value)} className="text-sm" />
       </div>
 
+      <label className="flex cursor-pointer items-start gap-2 rounded-md border bg-background p-2.5">
+        <Checkbox checked={neuf} onCheckedChange={(v) => champ("budget_non_aborde", v ? "1" : "")} className="mt-0.5" />
+        <span className="text-xs leading-relaxed">
+          <b>On n'a pas parlé d'argent au 1er appel</b> — j'ouvre le sujet pendant ce rendez-vous.
+          <span className="block text-muted-foreground">La présentation installe la valeur avant le chiffre, et la fiche réponses commence par les questions d'argent.</span>
+        </span>
+      </label>
+
       <div className="space-y-1.5">
-        <Label className="text-xs">Tranche de prix que tu lui as annoncée — pour le site seul</Label>
+        <Label className="text-xs">{neuf ? "Tranche que tu vas lui annoncer — pour le site seul" : "Tranche de prix que tu lui as annoncée — pour le site seul"}</Label>
         <div className="flex items-center gap-2">
           <Input inputMode="numeric" placeholder="1800" value={recap.prix_min} onChange={(e) => champ("prix_min", e.target.value)} className="text-sm" />
           <span className="text-xs text-muted-foreground">à</span>
