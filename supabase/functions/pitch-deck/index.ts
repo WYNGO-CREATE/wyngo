@@ -51,6 +51,17 @@ const FACTS = [
   { stat: "Plus de 8 Français sur 10 recherchent un artisan sur Internet avant de le contacter", source: "Opinionway pour Solocal", theme: "artisanat / BTP" },
   { stat: "Plus de la moitié des prises de rendez-vous en coiffure/beauté se font désormais en ligne", source: "Planity / secteur beauté", theme: "beauté / coiffure" },
   { stat: "80 % des consommateurs se renseignent en ligne avant d'acheter en magasin (effet ROPO)", source: "Google", theme: "commerce / retail" },
+  // ── Recherche & visibilité ──
+  { stat: "97 % des consommateurs recherchent en ligne les entreprises locales", source: "BrightLocal", theme: "local" },
+  { stat: "46 % des recherches effectuées sur Google concernent une information locale", source: "Google", theme: "local" },
+  { stat: "68 % des expériences en ligne commencent par un moteur de recherche", source: "BrightEdge", theme: "local" },
+  { stat: "Les 3 premiers résultats naturels de Google captent plus de la moitié des clics", source: "Sistrix", theme: "local" },
+  { stat: "Une recherche locale sur mobile sur deux aboutit à une visite dans la journée", source: "Google", theme: "local" },
+  // ── Site : vitesse et confiance ──
+  { stat: "Le taux de conversion baisse d'environ 4,4 % par seconde de chargement supplémentaire", source: "Portent", theme: "site" },
+  { stat: "Une fiche Google Business avec photos génère jusqu'à 42 % de demandes d'itinéraire en plus", source: "Google", theme: "avis" },
+  { stat: "Un consommateur lit en moyenne une dizaine d'avis avant d'accorder sa confiance à une entreprise locale", source: "BrightLocal", theme: "avis" },
+  { stat: "73 % des consommateurs ne tiennent compte que des avis publiés dans le mois", source: "BrightLocal", theme: "avis" },
 ];
 
 // ── L'offre Wyngo : constantes FIXES injectées dans la présentation.
@@ -321,22 +332,18 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 
 LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
-2. kind="constat" : sa situation aujourd'hui, vue de l'intérieur de SON quotidien. 5 bullets, dont 2 à 3 portant un "figure"+"source". Ni reproche, ni dramatisation : on décrit, il reconnaît.
-   Construis-la dans cet ordre :
-   a) LA SCÈNE — un moment précis, daté dans sa semaine, où quelqu'un a besoin de lui sans pouvoir le joindre ni se renseigner. « Mardi 21 h, quelqu'un cherche des réponses sur votre métier ; votre cabinet est fermé, et il n'y a rien à lire sur vous. » Aucune mention de qui que ce soit d'autre.
-   b) LE CHIFFRE QUI ÉCLAIRE — un fait sourcé de FACTS qui montre que cette scène est la norme aujourd'hui.
-   c) CE QUE ÇA REPRÉSENTE — si le bloc ARITHMÉTIQUE est fourni, utilise SES chiffres, formulés en GAIN POSSIBLE : « un client de plus par mois, c'est X sur l'année ». Jamais en perte, jamais en promesse. C'est le point le plus fort de la diapo.
-   d) LE TEMPS — les heures qui partent en explications répétées, en rendez-vous qui n'aboutissent pas, en demandes reçues hors horaires. Prends ce que le récap dit de son quotidien.
-   e) LA PREMIÈRE IMPRESSION — un fait sourcé sur la crédibilité ou la vitesse, relié à ce que SES clients à lui regardent avant de le contacter.
-   Interdits : les évidences (« sans site on ne vous trouve pas »), les généralités sur « le digital », le reproche, et toute allusion à d'autres professionnels.
-3. kind="marche" : l'opportunité locale, chiffrée. 5 bullets, dont 2 à 3 portant un "figure"+"source".
-   Construis-la dans cet ordre :
-   a) LA DEMANDE QUI EXISTE — ouvre sur le fait que, chaque semaine à sa ville, des gens ont précisément le besoin qu'il sait traiter. Décris QUI ils sont et dans quelle situation ils se trouvent, concrètement, avec les mots de son métier. Aucune allusion à d'autres professionnels.
-   b) LES MOTS EXACTS — les requêtes que ses clients tapent vraiment, avec sa ville, entre guillemets. Trois ou quatre, très concrètes.
-   c) LE MOMENT — quand ses clients cherchent, dans leur vraie vie : l'urgence du matin, la comparaison du dimanche soir, la recherche pendant la pause. Un fait sourcé si tu en as un qui colle.
-   d) L'INTENTION — un chiffre sourcé montrant que ces recherches aboutissent à un contact ou à un achat : ce ne sont pas des curieux.
-   e) CE QUI DEVIENT POSSIBLE — ce qu'il pourrait capter demain, en une phrase concrète pour son métier, tournée vers l'avenir et jamais vers ce qui lui échappe.
-   Interdit absolu : la platitude du type « des gens cherchent votre métier en ligne, vous pourriez être celui qu'ils trouvent » — c'est vide, il le sait déjà. Interdit également : toute mention de la concurrence.
+2. kind="constat" : « Votre situation aujourd'hui ». UNIQUEMENT DES DONNÉES.
+   - 5 bullets, et TOUS portent un "figure" ET un "source". Aucun bullet sans chiffre : pas de scène racontée, pas de mise en situation, pas de commentaire. Le commercial commente lui-même à l'oral.
+   - "figure" = le chiffre seul (ex "87 %", "1 sur 3", "0,05 s"). "text" = ce que ce chiffre dit, en UNE ligne courte, sans répéter le chiffre. "source" = obligatoire, l'organisme exact.
+   - Choisis dans FACTS les chiffres qui concernent SA situation : absence ou faiblesse de sa présence en ligne, crédibilité, vitesse, comportement des clients avant de choisir. Adapte la formulation à son métier (parle de ses clients à lui), mais reste factuel.
+   - Si le bloc ARITHMÉTIQUE est fourni, un des 5 bullets porte SON chiffre à lui : figure = le montant annuel, text = « un client de plus par mois sur l'année », source = « Votre chiffre, donné au 1er rendez-vous ». En gain, jamais en perte.
+
+3. kind="marche" : « L'opportunité à [sa ville] ». UNIQUEMENT DES DONNÉES, mêmes règles.
+   - 5 bullets, TOUS avec "figure" + "source". Aucune phrase d'accroche, aucune projection, aucun « vous pourriez ».
+   - Choisis les chiffres qui montrent le VOLUME et l'INTENTION de la recherche locale : part des recherches locales, passage à l'acte, délai de contact, poids du mobile, poids des avis.
+   - Un seul bullet peut, à la place d'un chiffre de FACTS, porter en "figure" une requête entre guillemets telle que ses clients la tapent (ex "« plombier Toulouse »") avec en "text" ce que cette recherche représente, et en "source" « Recherches typiques de votre métier ». Pas plus d'un.
+   - Aucun chiffre hors de FACTS. Aucun volume de recherche inventé.
+
 4. kind="site" : titre « Ce qu'on peut construire pour vous » (« peut », c'est une proposition, pas une décision). Le sous-titre dit que c'est ce qu'on a imaginé AVANT le rendez-vous, à partir de ce qu'il a raconté, et que tout reste discutable avec lui.
    4 propositions très concrètes liées à SON métier. Formule-les au conditionnel ou comme des pistes (« on partirait sur… », « on imaginerait… »), jamais comme un fait acquis.
    - Le RÉFÉRENCEMENT doit tenir une place forte : dis précisément sur QUELLES recherches il apparaîtrait (reprends les mots que ses clients tapent vraiment, avec sa ville), et ce que ça change pour lui.

@@ -45,10 +45,12 @@ function sansDoublon(b: PitchBullet): string {
 }
 
 function statBlocks(bullets: PitchBullet[]): string {
-  // Un seul chiffre → bloc large et lisible ; plusieurs → une rangée de cartes.
-  const wide = bullets.length === 1;
-  return `<div class="stats ${wide ? "one" : ""}">${bullets.map((b) => `<div class="stat">
-    <div class="fig">${esc(b.figure)}</div>
+  // Un seul chiffre → bloc large et lisible ; plusieurs → une grille équilibrée
+  // (5 cartes en 3+2 plutôt qu'en 4+1).
+  const n = bullets.length;
+  const cls = n === 1 ? "one" : `n${Math.min(n, 6)}`;
+  return `<div class="stats ${cls}">${bullets.map((b) => `<div class="stat">
+    <div class="fig${String(b.figure ?? "").length > 9 ? " long" : ""}">${esc(b.figure)}</div>
     <div class="txt">${esc(sansDoublon(b))}${b.source ? `<div class="src">Source — ${esc(b.source)}</div>` : ""}</div>
   </div>`).join("")}</div>`;
 }
@@ -218,14 +220,19 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     font-size:clamp(10px,1.15vmin,12px);color:#b3ada0;font-variant-numeric:tabular-nums}
 
   /* ── Chiffres ── */
-  .stats{display:flex;gap:clamp(10px,1.5vmin,18px);flex-wrap:wrap}
-  .stat{flex:1;min-width:190px;display:flex;gap:clamp(12px,1.8vmin,22px);align-items:flex-start;
+  .stats{display:grid;gap:clamp(10px,1.5vmin,18px);grid-template-columns:repeat(3,1fr)}
+  .stats.one{grid-template-columns:1fr}
+  .stats.n2{grid-template-columns:repeat(2,1fr)}
+  .stats.n4{grid-template-columns:repeat(2,1fr)}
+  .stat{min-width:0;display:flex;gap:clamp(12px,1.8vmin,22px);align-items:flex-start;
     background:linear-gradient(135deg,#eef2fe,#fff);border:1px solid #d5deff;border-radius:16px;
     padding:clamp(15px,2.2vmin,26px) clamp(16px,2.4vmin,30px)}
   .stats.one .stat{align-items:center}
   .stats:not(.one) .stat{flex-direction:column;gap:clamp(8px,1.1vmin,13px)}
   .fig{font-size:clamp(30px,4.6vmin,58px);font-weight:800;color:var(--co);letter-spacing:-2px;line-height:1;
-    white-space:nowrap;flex:none}
+    white-space:nowrap;flex:none;min-width:0}
+  .fig.long{font-size:clamp(14px,1.9vmin,23px);letter-spacing:-.3px;line-height:1.25;white-space:normal;
+    overflow-wrap:anywhere}
   .stat .txt{font-size:clamp(13px,1.65vmin,16.5px);line-height:1.5;color:#2a2721}
   .src,.src-inline{font-size:clamp(10px,1.15vmin,12px);color:#9a948a}
   .src{margin-top:7px}
@@ -346,7 +353,7 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     h2{font-size:22px;letter-spacing:-.4px;line-height:1.26}
     .sub{font-size:15px;margin-top:10px;max-width:none}
     .body{margin-top:18px}
-    .stats{display:block}
+    .stats,.stats.n2,.stats.n4{display:block}
     .stat{display:flex;margin-bottom:12px;min-width:0;padding:15px 16px}
     .stat:last-child{margin-bottom:0}
     .fig{font-size:32px}
