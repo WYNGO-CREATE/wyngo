@@ -1,8 +1,11 @@
 /**
  * ─── Carte « Présentation de vente » (fiche prospect) ─────────────────
- * Génère un deck de 8 diapos pour le 2e RDV en visio (chiffres réels
- * sourcés + mockup du futur site) et une fiche réponses PRIVÉE aux
- * questions probables du prospect. Présentation plein écran + export PDF.
+ * Hugo saisit son récap du 1er RDV (champs guidés), l'IA en tire une
+ * présentation de 8 diapos pour le 2e RDV en visio + une fiche réponses
+ * PRIVÉE aux questions probables. Présentation plein écran + export PDF.
+ *
+ * Le récap est la source des objections : sans lui, l'IA n'a pas le droit
+ * d'en inventer une seule.
  */
 
 import { useState } from "react";
@@ -10,25 +13,36 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail, HelpCircle, ChevronDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail, HelpCircle, ChevronDown, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { renderPitchHtml, type PitchDeck } from "@/lib/pitch-html";
 
 type Prospect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email?: string | null; brief_activity?: string | null; industry?: string | null; location?: string | null };
-type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null };
+type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null; recap: Recap | null };
 
 type QA = { q: string; r: string };
+type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; palier?: string };
+
+const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", palier: "auto" };
+
+const PALIERS = ["Site Performance", "Système Connecté", "Écosystème sur-mesure"];
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
   const [qaOpen, setQaOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [recap, setRecap] = useState<Recap>(VIDE);
   const clientName = prospect.company || `${prospect.first_name || ""} ${prospect.last_name || ""}`.trim() || "Client";
 
   const { data: deck } = useQuery({
     queryKey: ["pitch-deck", prospect.id],
-    queryFn: async () => (await supabase.from("pitch_decks").select("id, headline, slides, preview_slug, created_at, sent_at").eq("prospect_id", prospect.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as DeckRow | null,
+    queryFn: async () => (await supabase.from("pitch_decks").select("id, headline, slides, preview_slug, created_at, sent_at, recap").eq("prospect_id", prospect.id).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as DeckRow | null,
   });
 
   // L'antisèche est stockée avec les diapos sous { kind: "faq" } : on l'en ressort
@@ -45,15 +59,18 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
     queryFn: async () => (await supabase.from("prospect_previews").select("slug").eq("prospect_id", prospect.id).order("generated_at", { ascending: false }).limit(1).maybeSingle()).data,
   });
 
+  // On repart du dernier récap saisi : régénérer ne doit pas obliger à tout retaper.
+  const ouvrirFormulaire = () => { setRecap({ ...VIDE, ...(deck?.recap || {}) }); setFormOpen(true); };
+
   const gen = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("pitch-deck", { body: { prospect_id: prospect.id } });
+      const { data, error } = await supabase.functions.invoke("pitch-deck", { body: { prospect_id: prospect.id, recap } });
       if (error) throw new Error(error.message);
       const res = data as { ok?: boolean; error?: string; message?: string };
       if (res?.error) throw new Error(res.message || "Génération impossible.");
       return res;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["pitch-deck", prospect.id] }); toast.success("Présentation générée"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["pitch-deck", prospect.id] }); setFormOpen(false); toast.success("Présentation générée"); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -88,36 +105,99 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const champ = (k: keyof Recap, v: string) => setRecap((r) => ({ ...r, [k]: v }));
+
+  const formulaire = (
+    <div className="space-y-3 rounded-md border bg-muted/20 p-3">
+      <p className="text-xs text-muted-foreground">
+        Ce que tu écris ici pilote toute la présentation. <b>Les objections viennent d'ici et de nulle part ailleurs</b> — l'IA n'a pas le droit d'en inventer une que le prospect n'a pas dite.
+      </p>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Ce qu'il veut vraiment</Label>
+        <Textarea rows={2} placeholder="Ex : être trouvé sur Google, arrêter de perdre du temps au téléphone à donner ses tarifs…"
+          value={recap.objectif} onChange={(e) => champ("objectif", e.target.value)} className="text-sm" />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Ce qui le freine — ses mots</Label>
+        <Textarea rows={2} placeholder="Ex : « j'ai déjà eu une mauvaise expérience avec une agence », « c'est cher », « je n'ai pas le temps »…"
+          value={recap.objections} onChange={(e) => champ("objections", e.target.value)} className="text-sm" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Budget évoqué</Label>
+          <Input placeholder="Ex : ~2 000 €" value={recap.budget} onChange={(e) => champ("budget", e.target.value)} className="text-sm" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Échéance</Label>
+          <Input placeholder="Ex : avant la rentrée" value={recap.delai} onChange={(e) => champ("delai", e.target.value)} className="text-sm" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Qui décide</Label>
+          <Input placeholder="Ex : lui + son associé" value={recap.decideur} onChange={(e) => champ("decideur", e.target.value)} className="text-sm" />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Ce qu'il t'a raconté (libre)</Label>
+        <Textarea rows={3} placeholder="Son métier, ses clients, ce qui l'a fait réagir, une anecdote qu'il a racontée…"
+          value={recap.contexte} onChange={(e) => champ("contexte", e.target.value)} className="text-sm" />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Palier à présenter</Label>
+        <Select value={recap.palier || "auto"} onValueChange={(v) => champ("palier", v)}>
+          <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">L'IA choisit selon le besoin</SelectItem>
+            {PALIERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
+          {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {gen.isPending ? "Génération… (environ 1 min)" : "Générer la présentation"}
+        </Button>
+        {deck && <Button variant="ghost" size="sm" disabled={gen.isPending} onClick={() => setFormOpen(false)}>Annuler</Button>}
+      </div>
+    </div>
+  );
+
   return (
-    <Card className="border-violet-200 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/50 to-transparent dark:from-violet-950/20">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2"><Presentation className="h-4 w-4 text-violet-600" /> Présentation de vente <span className="text-[10px] font-normal text-muted-foreground">(2e RDV)</span></CardTitle>
+        <CardTitle className="text-base flex items-center gap-2"><Presentation className="h-4 w-4 text-primary" /> Présentation de vente <span className="text-[10px] font-normal text-muted-foreground">(2e RDV)</span></CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!deck ? (
+        {!deck && !formOpen && (
           <>
-            <p className="text-sm text-muted-foreground">Génère une présentation de 8 diapos taillée pour ce client : sa situation, des <b>chiffres réels sourcés</b>, son <b>futur site</b>, la méthode, le prix et la prochaine étape — plus une <b>fiche réponses privée</b> aux questions qu'il va poser. À présenter en visio pendant le 2e appel.</p>
-            <Button size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
-              {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Générer la présentation
-            </Button>
+            <p className="text-sm text-muted-foreground">Tu fais le récap de ton 1er rendez-vous, l'IA en tire une présentation de 8 diapos taillée pour ce client — à montrer en visio ou à exporter en PDF — plus une <b>fiche réponses privée</b> aux questions qu'il va poser.</p>
+            <Button size="sm" className="gap-1.5" onClick={ouvrirFormulaire}><PenLine className="h-3.5 w-3.5" /> Faire le récap du 1er RDV</Button>
           </>
-        ) : (
+        )}
+
+        {formOpen && formulaire}
+
+        {deck && !formOpen && (
           <>
             <p className="text-sm font-medium truncate">« {deck.headline || clientName} »</p>
             <p className="text-xs text-muted-foreground">Générée le {format(new Date(deck.created_at), "PP 'à' HH'h'mm", { locale: fr })}{!(preview?.slug || deck.preview_slug) ? " · (génère l'Aperçu du site pour l'inclure)" : ""}</p>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" className="gap-1.5" onClick={present}><Play className="h-3.5 w-3.5" /> Présenter / PDF</Button>
-              <Button variant="outline" size="sm" className="gap-1.5" disabled={send.isPending} onClick={() => send.mutate()}>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={ouvrirFormulaire}><RefreshCw className="h-3.5 w-3.5" /> Modifier le récap et régénérer</Button>
+              <Button variant="ghost" size="sm" className="gap-1.5" disabled={send.isPending} onClick={() => send.mutate()}>
                 {send.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Envoyer au prospect
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1.5" disabled={gen.isPending} onClick={() => gen.mutate()}>
-                {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Régénérer
-              </Button>
             </div>
+
             {qa.length > 0 && (
               <div className="rounded-md border bg-muted/30">
                 <button type="button" onClick={() => setQaOpen((o) => !o)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium">
-                  <HelpCircle className="h-3.5 w-3.5 text-violet-600" />
+                  <HelpCircle className="h-3.5 w-3.5 text-primary" />
                   Fiche réponses — {qa.length} questions probables
                   <span className="ml-auto flex items-center gap-1 font-normal text-muted-foreground">
                     pour toi uniquement <ChevronDown className={`h-3.5 w-3.5 transition-transform ${qaOpen ? "rotate-180" : ""}`} />
@@ -136,6 +216,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
                 )}
               </div>
             )}
+
             {deck.sent_at && <p className="text-[11px] text-emerald-600">✓ Envoyée au prospect le {format(new Date(deck.sent_at), "PP 'à' HH'h'mm", { locale: fr })}</p>}
             <p className="text-[11px] text-muted-foreground border-t pt-2">Chiffres issus de sources reconnues (Google, BrightLocal, France Num…). Vérifie ceux que tu cites si besoin.</p>
           </>

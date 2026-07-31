@@ -1,7 +1,10 @@
 /**
  * ─── Rendu d'une présentation de vente (deck HTML) ────────────────────
  * Plein écran navigable (flèches/clic) + imprimable PDF (1 diapo = 1 page).
- * Design premium, fluide (clamp/vmin) → remplit l'écran sans déborder.
+ *
+ * Direction visuelle « clair structuré » : fond blanc, bandeau latéral crème
+ * qui garde le nom du prospect sous ses yeux du début à la fin, blocs nets.
+ * Palette Wyngo : crème #F7F4EC, encre #141410, cobalt #1B4BE3.
  */
 
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
@@ -15,40 +18,64 @@ const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&
 const TAGS: Record<string, string> = {
   recap: "Ce qu'on s'est dit", constat: "Le constat", marche: "Le marché",
   site: "Ce qu'on construit", methode: "La méthode", inclus: "Ce qui est compris",
-  prix: "Votre investissement", etape: "La suite", offre: "Notre proposition",
+  prix: "Votre investissement", etape: "La prochaine étape", offre: "Notre proposition",
 };
 
-function kpiCards(bullets: PitchBullet[]): string {
-  return `<div class="kpis">${bullets.map((b) => `<div class="kpi">
-    <div class="kpi-fig">${esc(b.figure)}</div>
-    <div class="kpi-txt">${esc(b.text)}</div>
-    ${b.source ? `<div class="src">${esc(b.source)}</div>` : ""}
+function statBlocks(bullets: PitchBullet[]): string {
+  // Un seul chiffre → bloc large et lisible ; plusieurs → une rangée de cartes.
+  const wide = bullets.length === 1;
+  return `<div class="stats ${wide ? "one" : ""}">${bullets.map((b) => `<div class="stat">
+    <div class="fig">${esc(b.figure)}</div>
+    <div class="txt">${esc(b.text)}${b.source ? `<div class="src">Source — ${esc(b.source)}</div>` : ""}</div>
   </div>`).join("")}</div>`;
 }
 
 function pointList(bullets: PitchBullet[]): string {
-  return `<ul class="pts">${bullets.map((b) => `<li><span class="dot"></span><span>${esc(b.text)}${b.source ? `<span class="src-inline"> — ${esc(b.source)}</span>` : ""}</span></li>`).join("")}</ul>`;
+  return `<ul class="pts">${bullets.map((b) => `<li><span class="dot"></span><span class="li-txt">${esc(b.text)}${b.source ? `<span class="src-inline"> — ${esc(b.source)}</span>` : ""}</span></li>`).join("")}</ul>`;
 }
 
 function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): string {
-  const kpis = (s.bullets || []).filter((b) => b.figure);
-  const plain = (s.bullets || []).filter((b) => !b.figure);
+  const all = s.bullets || [];
   const tag = TAGS[s.kind] || "";
-  const head = `<div class="s-head">${tag ? `<span class="tag">${tag}</span>` : "<span></span>"}<span class="s-no">${idx} / ${total}</span></div>
-    <h2>${esc(s.title)}</h2>${s.subtitle ? `<p class="sub">${esc(s.subtitle)}</p>` : ""}`;
 
+  // La diapo prix ouvre sur un bandeau encre : le montant doit être assumé,
+  // pas noyé dans une liste.
+  let priceBox = "";
+  let rest = all;
+  if (s.kind === "prix") {
+    const i = all.findIndex((b) => b.figure);
+    if (i >= 0) {
+      priceBox = `<div class="pricebox"><div class="amt">${esc(all[i].figure)}</div><div class="lbl">${esc(all[i].text)}</div></div>`;
+      rest = all.filter((_, j) => j !== i);
+    }
+  }
+  const stats = rest.filter((b) => b.figure);
+  const plain = rest.filter((b) => !b.figure);
+
+  let body: string;
   if (s.kind === "site") {
     const frame = meta.previewUrl
       ? `<div class="mockup"><div class="bar"><span></span><span></span><span></span></div><iframe src="${esc(meta.previewUrl)}" loading="lazy"></iframe></div>`
       : `<div class="mockup empty">Aperçu du site à générer sur la fiche prospect.</div>`;
-    return `<section class="slide">${head}
-      <div class="site-grid"><div>${plain.length ? pointList(plain) : ""}</div>${frame}</div>
-      <div class="foot"><span>${esc(meta.clientName)}</span><span class="wm">Wyngo</span></div></section>`;
+    body = `<div class="site-grid"><div>${plain.length ? pointList(plain) : ""}</div>${frame}</div>`;
+  } else {
+    body = `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
   }
 
-  const body = `${kpis.length ? kpiCards(kpis) : ""}${plain.length ? pointList(plain) : ""}`;
-  return `<section class="slide ${s.kind === "offre" || s.kind === "prix" || s.kind === "etape" ? "offer" : ""}">${head}<div class="body">${body}</div>
-    <div class="foot"><span>${esc(meta.clientName)}</span><span class="wm">Wyngo</span></div></section>`;
+  return `<section class="slide">
+    <aside class="side">
+      <div class="brand">Wyngo</div>
+      ${tag ? `<div class="tag">${tag}</div>` : ""}
+      <div class="who"><b>${esc(meta.clientName)}</b>${meta.city ? `${esc(meta.city)}<br>` : ""}${meta.sector ? esc(meta.sector) : ""}</div>
+    </aside>
+    <div class="main">
+      <div class="fit">
+        <h2>${esc(s.title)}</h2>${s.subtitle ? `<p class="sub">${esc(s.subtitle)}</p>` : ""}
+        <div class="body">${body}</div>
+      </div>
+      <div class="pg">${idx} / ${total}</div>
+    </div>
+  </section>`;
 }
 
 export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
@@ -56,11 +83,21 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   // on l'exclut du rendu, sinon elle s'afficherait au prospect en partage d'écran.
   const slides = (Array.isArray(deck.slides) ? deck.slides : []).filter((s) => s.kind !== "faq");
   const total = slides.length + 1;
+  const rx = meta.clientName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const headline = String(deck.headline || meta.clientName).replace(new RegExp(`^\\s*${rx}\\s*[—–-]\\s*`, "i"), "").trim() || meta.clientName;
   const cover = `<section class="slide cover">
-    <div class="c-brand">Wyngo</div>
-    <h1>${esc(deck.headline || meta.clientName)}</h1>
-    <p class="c-for">Présentation préparée pour <b>${esc(meta.clientName)}</b></p>
-    ${(meta.sector || meta.city) ? `<div class="c-chips">${meta.sector ? `<span>${esc(meta.sector)}</span>` : ""}${meta.city ? `<span>${esc(meta.city)}</span>` : ""}</div>` : ""}
+    <aside class="side">
+      <div class="brand">Wyngo</div>
+      <div class="who"><b>${esc(meta.clientName)}</b>${meta.city ? `${esc(meta.city)}<br>` : ""}${meta.sector ? esc(meta.sector) : ""}</div>
+    </aside>
+    <div class="main">
+      <div class="fit">
+        <div class="c-kicker">Présentation préparée pour</div>
+        <div class="c-client">${esc(meta.clientName)}</div>
+        <h1>${esc(headline)}</h1>
+      </div>
+      <div class="pg">1 / ${total}</div>
+    </div>
   </section>`;
   const content = slides.map((s, i) => slideHtml(s, meta, i + 2, total)).join("");
 
@@ -68,99 +105,141 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 <title>Présentation — ${esc(meta.clientName)}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{--v1:#1B4BE3;--v2:#4C7DF0;--ink:#141410;--muted:#6b6a63}
+  :root{--co:#1B4BE3;--co2:#4C7DF0;--cream:#F7F4EC;--ink:#141410;--muted:#57534a;--line:#e7e0ce}
   html,body{height:100%}
-  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#12120f;color:var(--ink)}
-  .bar2{position:fixed;top:0;left:0;right:0;height:46px;background:#141410;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;font-size:12.5px}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#22221e;color:var(--ink);-webkit-font-smoothing:antialiased}
+  .bar2{position:fixed;top:0;left:0;right:0;height:46px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50;font-size:12.5px}
   .bar2 b{font-weight:700}
-  .bar2 .grp button{background:#fff;color:#141410;border:0;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;margin-left:8px;font-size:12.5px}
-  .stage{position:fixed;inset:46px 0 52px 0;display:flex;align-items:center;justify-content:center;padding:2.4vmin}
-  .slide{display:none;width:100%;height:100%;max-width:1180px;background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.5);
-    padding:clamp(26px,4.6vmin,60px) clamp(30px,5.4vmin,76px);position:relative;overflow:auto;flex-direction:column;justify-content:center}
+  .bar2 .grp button{background:#fff;color:var(--ink);border:0;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;margin-left:8px;font-size:12.5px}
+  .stage{position:fixed;inset:46px 0 52px 0;display:flex;align-items:center;justify-content:center;padding:2.2vmin}
+  .slide{display:none;width:100%;height:100%;max-width:1240px;background:#fff;border-radius:18px;overflow:hidden;
+    box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;flex-direction:row}
   .slide.active{display:flex}
-  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(var(--v1),var(--v2))}
-  .s-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(10px,1.6vmin,18px)}
-  .tag{font-size:clamp(10px,1.35vmin,13px);font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--v1);background:#eaf0fe;padding:5px 13px;border-radius:999px}
-  .s-no{font-size:clamp(10px,1.25vmin,12px);color:#94a3b8;font-variant-numeric:tabular-nums}
-  h1{font-size:clamp(30px,5.6vmin,60px);line-height:1.06;letter-spacing:-1.5px}
-  h2{font-size:clamp(24px,3.9vmin,44px);line-height:1.12;letter-spacing:-.6px;color:#141410}
-  .sub{font-size:clamp(14px,1.9vmin,20px);color:var(--muted);margin-top:clamp(6px,1vmin,12px);max-width:52ch}
-  .body{margin-top:clamp(14px,2.4vmin,30px)}
-  .kpis{display:flex;gap:clamp(12px,1.8vmin,22px);flex-wrap:wrap}
-  .kpi{flex:1;min-width:150px;background:linear-gradient(180deg,#F7F4EC,#fff);border:1px solid #e4ddca;border-radius:16px;padding:clamp(14px,2.2vmin,24px)}
-  .kpi-fig{font-size:clamp(30px,5.2vmin,52px);font-weight:800;color:var(--v1);line-height:1;letter-spacing:-1.5px;background:linear-gradient(120deg,var(--v1),var(--v2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .kpi-txt{font-size:clamp(13px,1.6vmin,16px);color:#334155;margin-top:clamp(8px,1.2vmin,12px);line-height:1.4}
-  .src,.src-inline{font-size:clamp(10px,1.15vmin,12px);color:#94a3b8}
-  .src{margin-top:8px}
-  ul.pts{list-style:none;display:flex;flex-direction:column;gap:clamp(10px,1.7vmin,18px)}
-  ul.pts li{display:flex;gap:14px;font-size:clamp(15px,2.05vmin,21px);line-height:1.4;color:#1e293b}
-  ul.pts .dot{flex:none;width:14px;height:14px;margin-top:.4em;border-radius:5px;background:linear-gradient(var(--v1),var(--v2))}
-  .cover{background:radial-gradient(1200px 600px at 15% -10%,#1B4BE3,transparent),linear-gradient(135deg,#141410,#1a2340);color:#fff;justify-content:center}
-  .cover::before{background:linear-gradient(#4C7DF0,#F7F4EC)}
-  .c-brand{font-weight:800;font-size:clamp(16px,2vmin,22px);letter-spacing:.5px;opacity:.85;margin-bottom:clamp(18px,3vmin,30px)}
-  .cover h1{color:#fff;max-width:18ch}
-  .c-for{color:#cfd9f7;font-size:clamp(14px,1.9vmin,19px);margin-top:clamp(12px,2vmin,20px)}
-  .c-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:clamp(14px,2vmin,20px)}
-  .c-chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 14px;border-radius:999px;font-size:clamp(12px,1.5vmin,14px)}
-  .site-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(18px,3vmin,34px);align-items:center;margin-top:clamp(12px,2vmin,22px);flex:1;min-height:0}
-  .mockup{border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 16px 40px rgba(0,0,0,.16);background:#fff;align-self:stretch;display:flex;flex-direction:column}
-  .mockup .bar{height:28px;background:#f1f5f9;display:flex;align-items:center;gap:6px;padding:0 12px;flex:none}
-  .mockup .bar span{width:9px;height:9px;border-radius:50%;background:#cbd5e1}
-  .mockup iframe{width:100%;flex:1;min-height:240px;border:0;display:block;background:#fff}
-  .mockup.empty{display:flex;align-items:center;justify-content:center;min-height:280px;color:#94a3b8;font-size:14px;text-align:center;padding:24px}
-  .offer .body{background:linear-gradient(180deg,#F7F4EC,#fff);border:1px solid #e4ddca;border-radius:18px;padding:clamp(18px,2.6vmin,30px)}
-  .foot{position:absolute;left:clamp(30px,5.4vmin,76px);right:clamp(30px,5.4vmin,76px);bottom:clamp(16px,2.2vmin,26px);display:flex;justify-content:space-between;font-size:clamp(10px,1.2vmin,12px);color:#94a3b8}
-  .foot .wm{font-weight:700;color:#4C7DF0}
-  .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#141410;color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
+
+  /* ── Bandeau latéral : le prospect reste sous ses yeux en permanence ── */
+  .side{width:clamp(160px,19vmin,250px);flex:none;background:var(--cream);border-right:1px solid var(--line);
+    padding:clamp(24px,4.4vmin,56px) clamp(16px,2.5vmin,32px);display:flex;flex-direction:column}
+  .brand{font-size:clamp(12px,1.5vmin,14px);font-weight:800;color:var(--co);letter-spacing:.03em}
+  .tag{font-size:clamp(10px,1.25vmin,12.5px);letter-spacing:.16em;text-transform:uppercase;color:#8a8577;
+    font-weight:700;margin-top:clamp(9px,1.4vmin,15px);line-height:1.5}
+  .who{margin-top:auto;font-size:clamp(11px,1.3vmin,12.5px);color:var(--muted);line-height:1.6}
+  .who b{display:block;color:var(--ink);font-size:clamp(13px,1.6vmin,15px);margin-bottom:2px}
+
+  /* ── Zone principale ── */
+  .main{flex:1;min-width:0;padding:clamp(26px,4.8vmin,60px) clamp(26px,5.2vmin,66px) clamp(34px,5vmin,58px);
+    display:flex;flex-direction:column;justify-content:safe center;overflow:auto}
+  .main>*{flex:none}
+  .fit{min-width:0}
+  h1{font-size:clamp(28px,5vmin,54px);line-height:1.08;letter-spacing:-1.4px;font-weight:800;max-width:19ch}
+  h2{font-size:clamp(23px,3.8vmin,46px);line-height:1.12;letter-spacing:-1.1px;font-weight:800;max-width:20ch}
+  .sub{font-size:clamp(14px,1.85vmin,18.5px);line-height:1.55;color:var(--muted);margin-top:clamp(9px,1.4vmin,18px);max-width:54ch}
+  .body{margin-top:clamp(14px,2.6vmin,32px)}
+  .pg{position:absolute;right:clamp(18px,2.6vmin,30px);bottom:clamp(14px,2vmin,24px);
+    font-size:clamp(10px,1.15vmin,12px);color:#b3ada0;font-variant-numeric:tabular-nums}
+
+  /* ── Chiffres ── */
+  .stats{display:flex;gap:clamp(10px,1.5vmin,18px);flex-wrap:wrap}
+  .stat{flex:1;min-width:190px;display:flex;gap:clamp(12px,1.8vmin,22px);align-items:flex-start;
+    background:linear-gradient(135deg,#eef2fe,#fff);border:1px solid #d5deff;border-radius:16px;
+    padding:clamp(15px,2.2vmin,26px) clamp(16px,2.4vmin,30px)}
+  .stats.one .stat{align-items:center}
+  .stats:not(.one) .stat{flex-direction:column;gap:clamp(8px,1.1vmin,13px)}
+  .fig{font-size:clamp(30px,4.6vmin,58px);font-weight:800;color:var(--co);letter-spacing:-2px;line-height:1;
+    white-space:nowrap;flex:none}
+  .stat .txt{font-size:clamp(13px,1.65vmin,16.5px);line-height:1.5;color:#2a2721}
+  .src,.src-inline{font-size:clamp(10px,1.15vmin,12px);color:#9a948a}
+  .src{margin-top:7px}
+
+  /* ── Listes ── */
+  ul.pts{list-style:none;display:flex;flex-direction:column;gap:clamp(9px,1.5vmin,17px);margin-top:clamp(0px,1.6vmin,22px)}
+  ul.pts li{display:flex;gap:clamp(10px,1.3vmin,15px);align-items:flex-start}
+  ul.pts .dot{flex:none;width:8px;height:8px;border-radius:3px;background:var(--co);margin-top:.55em}
+  ul.pts .li-txt{font-size:clamp(14px,1.85vmin,18.5px);line-height:1.5;color:#2a2721;min-width:0}
+  ul.pts .li-txt b{font-weight:700;color:var(--ink)}
+
+  /* ── Prix ── */
+  .pricebox{display:flex;align-items:center;gap:clamp(16px,2.6vmin,30px);background:var(--ink);color:#fff;
+    border-radius:16px;padding:clamp(18px,2.6vmin,30px) clamp(22px,3.2vmin,38px);flex-wrap:wrap}
+  .pricebox .amt{font-size:clamp(32px,4.6vmin,56px);font-weight:800;letter-spacing:-2px;line-height:1;white-space:nowrap}
+  .pricebox .lbl{font-size:clamp(13px,1.7vmin,16.5px);line-height:1.45;color:#bdb8ac;min-width:0}
+
+  /* ── Diapo « futur site » ── */
+  .site-grid{display:grid;grid-template-columns:1.12fr 1fr;gap:clamp(14px,2.4vmin,28px);align-items:center}
+  .site-grid ul.pts{margin-top:0;gap:clamp(8px,1.25vmin,14px)}
+  .site-grid ul.pts .li-txt{font-size:clamp(12.5px,1.6vmin,16px);line-height:1.45}
+  .site-grid ul.pts .dot{width:7px;height:7px}
+  .mockup{border-radius:13px;overflow:hidden;border:1px solid #e2ded1;box-shadow:0 14px 36px rgba(20,20,16,.14);
+    background:#fff;display:flex;flex-direction:column;min-height:clamp(190px,30vmin,320px)}
+  .mockup .bar{height:26px;background:var(--cream);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 12px;flex:none}
+  .mockup .bar span{width:8px;height:8px;border-radius:50%;background:#cec7b4}
+  .mockup iframe{width:100%;flex:1;border:0;display:block;background:#fff}
+  .mockup.empty{align-items:center;justify-content:center;color:#a19b8c;font-size:14px;text-align:center;padding:24px}
+
+  /* ── Couverture ── */
+  .cover .main{justify-content:center;background:var(--cream)}
+  .c-kicker{font-size:clamp(11px,1.35vmin,13px);letter-spacing:.18em;text-transform:uppercase;color:#8a8577;font-weight:700}
+  .c-client{font-size:clamp(17px,2.3vmin,24px);font-weight:800;margin:clamp(5px,.8vmin,9px) 0 clamp(16px,2.6vmin,30px)}
+  .cover .side{background:var(--ink);border-right:0}
+  .cover .brand{color:#fff}
+  .cover .who{color:#9d988c}
+  .cover .who b{color:#fff}
+  .cover h1::after{content:"";display:block;width:clamp(40px,6vmin,72px);height:3px;background:var(--co);margin-top:clamp(18px,2.6vmin,30px)}
+
+  .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
   .nav button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
   .nav .count{font-size:13px;font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
-  .fsExit{display:none;position:fixed;top:12px;right:14px;z-index:60;background:rgba(15,23,42,.88);color:#fff;border:0;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+  .fsExit{display:none;position:fixed;top:12px;right:14px;z-index:60;background:rgba(20,20,16,.9);color:#fff;border:0;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
   body.fs .bar2{display:none}
   body.fs .stage{inset:0}
   body.fs .fsExit{display:block}
-  @media (max-width:760px){
-    .bar2{height:44px;font-size:12px;padding:0 10px;gap:8px;flex-wrap:nowrap}
+
+  @media screen and (max-width:760px){
+    .bar2{height:44px;font-size:12px;padding:0 10px}
     .bar2>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .bar2 .grp{flex:none;white-space:nowrap;display:flex}
     .bar2 .grp button{padding:6px 9px;font-size:11px;margin-left:6px}
-    /* Flux document simple (block) + marges explicites → zéro chevauchement */
     .stage{position:fixed;inset:44px 0 58px 0;padding:10px;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .slide{display:none;width:100%;height:auto;min-height:0;max-width:none;border-radius:16px;padding:24px 20px 28px;overflow:visible}
-    .slide.active{display:block}
-    .slide::before{width:6px}
-    .s-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px}
-    h1{font-size:28px;line-height:1.2;letter-spacing:-.5px;margin:0 0 14px}
-    h2{font-size:23px;line-height:1.28;margin:0 0 12px}
-    .sub{font-size:15px;line-height:1.55;max-width:none;margin:0 0 20px}
-    .body{margin:0}
-    .kpis{display:block}
-    .kpi{display:block;margin:0 0 16px;padding:16px 18px}
-    .kpi:last-child{margin-bottom:0}
-    .kpi-fig{font-size:32px}
-    .kpi-txt{font-size:14.5px;line-height:1.45;margin-top:8px}
-    ul.pts{display:block}
-    ul.pts li{display:flex;gap:12px;font-size:16px;line-height:1.5;margin:0 0 18px}
-    ul.pts li:last-child{margin-bottom:0}
-    .site-grid{display:block;margin:0}
-    .site-grid>div:first-child{margin-bottom:20px}
-    .mockup{display:block}
-    .mockup iframe{height:230px;min-height:0}
-    .offer .body{padding:18px}
-    .foot{position:static;margin-top:24px;left:auto;right:auto}
-    .cover{min-height:calc(100vh - 150px)}
-    .c-brand{margin-bottom:20px}
-    .cover h1{margin-bottom:12px}
-    .c-for{margin-top:6px}
-    .c-chips{margin-top:18px}
-    .nav{bottom:10px;padding:7px 14px}
+    .slide{display:none;width:100%;height:auto;max-width:none;border-radius:14px;flex-direction:column}
+    .slide.active{display:flex}
+    /* Le bandeau latéral devient un en-tête horizontal */
+    .side{width:auto;flex-direction:row;align-items:baseline;gap:12px;padding:14px 18px;
+      border-right:0;border-bottom:1px solid var(--line)}
+    .tag{margin-top:0}
+    .who{margin-top:0;margin-left:auto;text-align:right;font-size:11px}
+    .who b{display:inline;font-size:12.5px}
+    .who br{display:none}
+    .main{padding:22px 20px 40px;overflow:visible}
+    h1{font-size:27px;letter-spacing:-.6px;line-height:1.2}
+    h2{font-size:22px;letter-spacing:-.4px;line-height:1.26}
+    .sub{font-size:15px;margin-top:10px;max-width:none}
+    .body{margin-top:18px}
+    .stats{display:block}
+    .stat{display:flex;margin-bottom:12px;min-width:0;padding:15px 16px}
+    .stat:last-child{margin-bottom:0}
+    .fig{font-size:32px}
+    .stat .txt{font-size:14.5px}
+    ul.pts{gap:14px;margin-top:16px}
+    ul.pts .li-txt{font-size:15.5px}
+    .pricebox{padding:18px 20px;gap:14px}
+    .pricebox .amt{font-size:34px}
+    .site-grid{display:block}
+    .site-grid>div:first-child{margin-bottom:18px}
+    .mockup{min-height:0}
+    .mockup iframe{height:230px}
+    .cover .main{justify-content:flex-start;min-height:52vh}
+    .pg{position:static;margin-top:22px;text-align:right}
   }
+
   @media print{
     @page{size:A4 landscape;margin:0}
     body{background:#fff}
-    .bar2,.nav{display:none}
+    .bar2,.nav,.fsExit{display:none}
     .stage{position:static;inset:auto;padding:0;display:block}
-    .slide{display:flex!important;width:100%;height:100vh;max-width:none;border-radius:0;box-shadow:none;page-break-after:always;overflow:hidden}
-    .mockup iframe{min-height:240px}
+    .slide{display:flex!important;flex-direction:row;width:100%;height:100vh;max-width:none;border-radius:0;
+      box-shadow:none;page-break-after:always;break-after:page;overflow:hidden}
+    .slide:last-child{page-break-after:auto;break-after:auto}
+    .main{overflow:hidden}
+    .side,.cover .side,.cover .main,.stat,.pricebox{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style></head>
 <body>
@@ -172,13 +251,30 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   <div class="stage" id="stage">${cover}${content}</div>
   <div class="nav"><button onclick="go(-1)" aria-label="Précédent">‹</button><span class="count" id="count"></span><button onclick="go(1)" aria-label="Suivant">›</button></div>
 <script>
+  // Le contenu vient de l'IA : sa longueur varie d'un prospect à l'autre.
+  // On réduit l'échelle de la diapo jusqu'à ce qu'elle tienne, plutôt que de
+  // la laisser se couper à l'écran ou à l'impression.
+  function fitAll(){
+    [].forEach.call(document.querySelectorAll('.slide'),function(sl){
+      var m=sl.querySelector('.main'),f=sl.querySelector('.fit');
+      if(!m||!f) return;
+      f.style.zoom='';
+      if(m.clientHeight<40) return;               // diapo masquée : rien à mesurer
+      var k=1;
+      while(m.scrollHeight>m.clientHeight+1 && k>0.6){ k-=0.04; f.style.zoom=k; }
+    });
+  }
   var slides=[].slice.call(document.querySelectorAll('.slide')),cur=0;
-  function show(i){cur=Math.max(0,Math.min(slides.length-1,i));slides.forEach(function(s,j){s.classList.toggle('active',j===cur)});document.getElementById('count').textContent=(cur+1)+' / '+slides.length;}
+  function show(i){cur=Math.max(0,Math.min(slides.length-1,i));slides.forEach(function(s,j){s.classList.toggle('active',j===cur)});document.getElementById('count').textContent=(cur+1)+' / '+slides.length;fitAll();}
   function go(d){show(cur+d);}
   function fs(){if(document.fullscreenElement){document.exitFullscreen();}else{(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);}}
   document.addEventListener('fullscreenchange',function(){var on=!!document.fullscreenElement;document.body.classList.toggle('fs',on);var b=document.getElementById('fsBtn');if(b)b.textContent=on?'Quitter':'Plein écran';});
   document.addEventListener('keydown',function(e){if(['ArrowRight',' ','PageDown'].includes(e.key)){go(1);e.preventDefault();}else if(['ArrowLeft','PageUp'].includes(e.key)){go(-1);e.preventDefault();}});
   show(0);
+  window.addEventListener('resize',fitAll);
+  window.addEventListener('beforeprint',function(){document.body.classList.add('printing');fitAll();});
+  window.addEventListener('afterprint',function(){document.body.classList.remove('printing');fitAll();});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitAll);
 </script>
 </body></html>`;
 }

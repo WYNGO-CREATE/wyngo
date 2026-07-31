@@ -1,9 +1,11 @@
 // ─── Pitch Deck — présentation de vente du 2e RDV ─────────────────────
 //
-//  POST (JWT utilisateur) { prospect_id }
-//  Génère une présentation de 4 diapos ULTRA adaptée au prospect, basée sur
-//  ses VRAIES données + une banque de statistiques réelles SOURCÉES (l'IA
-//  n'invente aucun chiffre). Inclut le slug du mockup de son futur site.
+//  POST (JWT utilisateur) { prospect_id, recap? }
+//  Génère une présentation de 8 diapos ULTRA adaptée au prospect à partir du
+//  RÉCAP du 1er RDV saisi par le commercial + les vraies données du prospect
+//  + une banque de statistiques réelles SOURCÉES (l'IA n'invente aucun
+//  chiffre, et surtout aucune objection que le prospect n'a pas exprimée).
+//  Inclut le slug du mockup de son futur site.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -84,8 +86,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     if (!ANTHROPIC_API_KEY) return json({ error: "no_ai", message: "Clé IA non configurée." });
-    const { prospect_id } = await req.json();
+    const { prospect_id, recap } = await req.json();
     if (!prospect_id) return json({ error: "missing", message: "prospect_id requis" });
+    const R = (recap || {}) as Record<string, string>;
+    const champ = (v?: string) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
@@ -121,6 +125,21 @@ Deno.serve(async (req) => {
       notes_crm: p.notes || null,
     };
 
+    // Le récap saisi par le commercial prime sur tout le reste : c'est le seul
+    // endroit d'où peuvent venir les objections et le budget RÉELS du prospect.
+    const recapLignes = [
+      ["Ce qu'il veut vraiment (son objectif)", champ(R.objectif)],
+      ["Ce qui le freine — SES objections, dites au 1er appel", champ(R.objections)],
+      ["Budget évoqué", champ(R.budget)],
+      ["Échéance / urgence", champ(R.delai)],
+      ["Qui décide", champ(R.decideur)],
+      ["Ce qu'il a raconté (notes libres)", champ(R.contexte)],
+    ].filter(([, v]) => v) as [string, string][];
+    const RECAP_BLOC = recapLignes.length
+      ? recapLignes.map(([k, v]) => `• ${k} : ${v}`).join("\n")
+      : "(aucun récap saisi)";
+    const palierImpose = champ(R.palier) && R.palier !== "auto" ? R.palier.trim() : null;
+
     const OFFRE_BLOC = `
 ── PALIERS (prix EXACTS, n'en invente aucun autre) ──
 ${PALIERS.map((t) => `• ${t.nom} — ${t.prix} (${t.heures} de développement) — pour ${t.pour}. Comprend : ${t.inclus}`).join("\n")}
@@ -152,9 +171,16 @@ RÈGLE ABSOLUE — zéro blabla, zéro chiffre inventé :
 
 PERSONNALISATION MAXIMALE (le client doit sentir que c'est fait POUR LUI, pas un template) :
 - Nomme l'entreprise et sa ville explicitement dans les titres/sous-titres.
-- Appuie-toi sur CE QUI S'EST DIT AU 1ER APPEL (résumé fourni) : reprends ses mots, ses objectifs, ses freins, ce qui l'a intéressé. Le 2e RDV doit répondre précisément à ce qu'il a exprimé.
+- LE RÉCAP DU 1ER RDV EST TA SOURCE PRINCIPALE. Il a été saisi à la main par le commercial : c'est du vécu, pas une supposition. Reprends ses mots.
 - Adapte les exemples au métier exact (un boulanger ≠ un plombier ≠ un coiffeur) : parle de SON quotidien, de SES clients.
 - Si une info manque, reste général mais crédible — ne l'invente pas.
+
+LES OBJECTIONS — règle stricte :
+- Les freins du prospect sont ceux du RÉCAP, et EUX SEULS. Tu n'inventes JAMAIS une objection qu'il n'a pas exprimée : lui en prêter une qu'il n'a pas, c'est la lui suggérer.
+- Chaque objection du récap doit trouver sa réponse dans la présentation, à l'endroit naturel (le prix dans la diapo prix, le délai dans la méthode, etc.).
+- INTERDIT ABSOLU sur les diapos : mentionner, citer ou faire allusion à son mauvais vécu, à son échec passé ou à son frein. Les diapos sont partagées à l'écran, parfois devant son conjoint ou son associé : lui rappeler qu'il s'est fait avoir, c'est l'humilier. Écris la réponse au POSITIF et au GÉNÉRAL (« le code source vous appartient, vous restez maître de votre site »), JAMAIS en comparaison avec ce qu'il a vécu (« pas comme le prestataire qui a disparu » → interdit).
+- Le rappel explicite de son vécu n'existe QUE dans la fiche "questions", qui reste privée.
+- Si le récap ne mentionne aucun frein, la présentation n'en évoque aucun.
 
 LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du blabla) :
 - Diapos "constat" et "marche" : CHAQUE diapo doit comporter au moins 2 chiffres MARQUANTS, mis en avant via le champ "figure" (ex figure:"87 %", text:"des clients vérifient en ligne avant de venir") + "source" obligatoire.
@@ -163,22 +189,30 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 - Interdits : bullet vague sans chiffre ni intérêt concret, chiffre sans source, superlatif creux.
 
 LES 8 DIAPOS (dans cet ordre exact, via l'outil) :
-1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du 1ER APPEL avec SES mots (résumé fourni) : son besoin, ce qui l'a intéressé, ses réserves. Aucun chiffre ici. Si le résumé d'appel est vide, reste sur son métier et sa situation, sans inventer de propos.
+1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
 2. kind="constat" : sa situation RÉELLE (site actuel ou absence, visibilité) et ce que ça lui coûte. 2 chiffres "figure"+"source".
 3. kind="marche" : le marché chiffré de SON secteur en local, formulé comme une opportunité. 2-3 chiffres "figure"+"source".
 4. kind="site" : « Ce qu'on construit pour vous » — 3-4 bénéfices très concrets liés à SON métier (le mockup s'affiche à côté). Parle système : captation de clients, automatisation, temps gagné.
 5. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
 6. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
-7. kind="prix" : « Votre investissement ». Choisis UN SEUL palier parmi PALIERS, celui qui correspond vraiment à son besoin, et annonce son prix EXACT tel que fourni. Explique en une phrase pourquoi celui-là. Puis un bullet de mise en perspective : à quoi ça correspond en clients gagnés ou en heures d'administratif économisées — SANS jamais promettre un chiffre de résultat.
+7. kind="prix" : « Votre investissement ». Un SEUL palier.
+   - Le sous-titre nomme le palier SANS répéter le montant (le montant est affiché en grand juste en dessous).
+   - Le PREMIER bullet porte OBLIGATOIREMENT figure = le prix EXACT du palier (ex figure:"2 144 €") et text = la nature du prix (ex "une fois — pas d'abonnement, pas de frais cachés"). Pas de source sur celui-là.
+   - Les bullets suivants : pourquoi CE palier pour lui, ce que ça comprend, et son risque (aucun paiement avant validation de la maquette).
+   - Mise en perspective autorisée (clients gagnés, heures d'administratif économisées) mais JAMAIS de promesse de résultat chiffré.
 8. kind="etape" : « La prochaine étape » — proposer de caler un 3e échange pour finaliser, et rappeler qu'aucun paiement n'intervient avant qu'il ait validé la maquette. Ton engageant, simple, sans pression.
 
-EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect va probablement poser (adaptées à son métier et à ce qui s'est dit au 1er appel), chacune avec une réponse courte, honnête et factuelle. Cette fiche NE SERA PAS affichée au client : c'est l'antisèche du commercial. N'y invente aucun chiffre ni engagement au-delà de ce qui est fourni.`;
+EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect va probablement poser. Commence par les freins RÉELS du récap (ce sont les questions qui vont tomber), puis complète avec celles qu'appelle son métier. Chacune avec une réponse courte, honnête et factuelle. Cette fiche NE SERA PAS affichée au client : c'est l'antisèche du commercial. N'y invente aucun chiffre ni engagement au-delà de ce qui est fourni.`;
 
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
 
-CE QUI S'EST DIT AUX APPELS PRÉCÉDENTS (résumés — base-toi dessus pour adapter le pitch) :
-${callNotes || "(aucun résumé d'appel disponible — adapte au secteur et à la ville)"}
+RÉCAP DU 1ER RENDEZ-VOUS — saisi à la main par le commercial, c'est LA source à suivre :
+${RECAP_BLOC}
+${palierImpose ? `\nPALIER À PRÉSENTER (imposé par le commercial, n'en choisis pas un autre) : ${palierImpose}` : ""}
+
+NOTES D'APPEL ENREGISTRÉES DANS LE CRM (complément, secondaire par rapport au récap) :
+${callNotes || "(aucune)"}
 
 FACTS (les SEULS chiffres de marché autorisés — [thème] aide à choisir selon le métier, avec sources) :
 ${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.stat} — Source : ${f.source}`).join("\n")}
@@ -191,7 +225,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
     const SCHEMA = {
       type: "object",
       properties: {
-        headline: { type: "string", description: "Accroche de couverture, courte et percutante, adaptée au client" },
+        headline: { type: "string", description: "Accroche de couverture, courte et percutante. NE COMMENCE PAS par le nom de l'entreprise (il est déjà affiché juste au-dessus)." },
         slides: {
           type: "array",
           items: {
@@ -260,6 +294,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
 
     const { data: deck } = await admin.from("pitch_decks").insert({
       owner_id: userId, prospect_id, headline, slides: stored, preview_slug: prev?.slug || null, model: ANTHROPIC_MODEL,
+      recap: recapLignes.length || palierImpose ? { ...R } : null,
     }).select("id").single();
 
     return json({ ok: true, id: deck?.id, headline, slides, questions, preview_slug: prev?.slug || null });
