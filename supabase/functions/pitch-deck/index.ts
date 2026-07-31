@@ -57,17 +57,33 @@ const FACTS = [
 //    L'IA ne doit RIEN inventer ici : ni prix, ni délai, ni garantie.
 const PALIERS = [
   { nom: "Site Performance", prix: "2 144 €", heures: "102 h", pour: "une vitrine premium qui convertit vraiment",
-    inclus: "Site sur-mesure, chargement sous la seconde, mobile parfait, SEO technique, textes et photos, tableau de bord de suivi." },
+    inclus: "Site sur-mesure, chargement sous la seconde, mobile parfait, SEO technique, rédaction de vos textes, tableau de bord de suivi." },
   { nom: "Système Connecté", prix: "4 500 €", heures: "214 h", pour: "supprimer la saisie manuelle et automatiser la relation client",
     inclus: "Tout le Site Performance + automatisation des emails et formulaires, connexion à un outil déjà utilisé (agenda, CRM), tableau de bord temps réel." },
   { nom: "Écosystème sur-mesure", prix: "8 230 € et +", heures: "392 h", pour: "un système digital complet, taillé sur l'organisation",
     inclus: "Tout le Système Connecté + outil métier sur-mesure, interconnexion ERP et facturation, portail client sécurisé." },
 ];
 const METHODE = [
-  { etape: "La journée d'immersion", detail: "On vient chez vous. On observe votre métier, on écoute vos clients, on rédige vos textes et on produit vos photos sur place." },
+  { etape: "Le brief", detail: "On prend le temps de comprendre votre métier, vos clients et vos prestations. On rédige vos textes à partir de ce que vous nous racontez." },
   { etape: "La première maquette — sous 48 h", detail: "Vous voyez le résultat avant de payer le moindre euro. Vous validez, ou on retravaille." },
   { etape: "La mise en ligne — sous 21 jours", detail: "Développement, référencement technique, tests, mise en ligne et formation." },
   { etape: "Le suivi", detail: "On reste à vos côtés 2 ans, sans surcoût. Un interlocuteur unique, réponse sous 24 h." },
+];
+
+// ── Le panier : base modulable + options chiffrées à l'heure (× 21 €/h).
+//    Le prospect coche en direct pendant la visio, le total bouge sous ses yeux.
+const TAUX_HORAIRE = 21;
+const OPTIONS = [
+  { id: "resa",       label: "Réservation / prise de rendez-vous en ligne", h: 40, quoi: "Un agenda synchronisé : vos clients réservent leur créneau seuls, même la nuit." },
+  { id: "paiement",   label: "Paiement en ligne sécurisé",                  h: 25, quoi: "Encaisser un acompte ou une commande directement depuis le site." },
+  { id: "boutique",   label: "Boutique en ligne / catalogue produits",      h: 55, quoi: "Vendre vos produits en ligne, avec fiches, stocks et commandes." },
+  { id: "avis",       label: "Avis clients + collecte automatisée",         h: 18, quoi: "Vos avis Google affichés sur le site, et une relance automatique après chaque prestation." },
+  { id: "blog",       label: "Blog / actualités éditable",                  h: 20, quoi: "Publier vous-même vos nouveautés — et gagner des positions sur Google." },
+  { id: "newsletter", label: "Newsletter & emails automatiques",            h: 22, quoi: "Garder le lien avec vos clients sans y penser (relances, offres, rappels)." },
+  { id: "membre",     label: "Espace client privé",                         h: 35, quoi: "Chaque client retrouve ses documents, ses devis et son historique." },
+  { id: "compta",     label: "Export comptable / lien facturation",         h: 28, quoi: "Fini la double saisie : les données partent vers votre outil de facturation." },
+  { id: "chatbot",    label: "Assistant IA sur-mesure",                     h: 45, quoi: "Il répond aux questions courantes de vos visiteurs 24 h/24 et qualifie les demandes." },
+  { id: "multilingue",label: "Site multilingue",                            h: 30, quoi: "Toucher une clientèle étrangère ou frontalière dans sa langue." },
 ];
 const INCLUS = [
   "Hébergement de votre site",
@@ -138,11 +154,19 @@ Deno.serve(async (req) => {
     const RECAP_BLOC = recapLignes.length
       ? recapLignes.map(([k, v]) => `• ${k} : ${v}`).join("\n")
       : "(aucun récap saisi)";
-    const palierImpose = champ(R.palier) && R.palier !== "auto" ? R.palier.trim() : null;
+    // Le prix annoncé est celui qu'HUGO a donné au 1er appel, pas celui du barème :
+    // c'est tout l'intérêt, la présentation doit coller à ce qui a été dit.
+    const num = (v?: string) => { const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10); return Number.isFinite(n) && n > 0 ? n : null; };
+    const baseMin = num(R.prix_min) ?? 1800;
+    const baseMax = num(R.prix_max) ?? 2400;
 
     const OFFRE_BLOC = `
-── PALIERS (prix EXACTS, n'en invente aucun autre) ──
-${PALIERS.map((t) => `• ${t.nom} — ${t.prix} (${t.heures} de développement) — pour ${t.pour}. Comprend : ${t.inclus}`).join("\n")}
+── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
+Le site lui-même : ${baseMin} € à ${baseMax} €, une fois, sans abonnement.
+Comprend : ${PALIERS[0].inclus}
+
+── OPTIONS (le prospect les coche EN DIRECT pendant la visio, le total bouge) ──
+${OPTIONS.map((o) => `• [${o.id}] ${o.label} — ${o.h * TAUX_HORAIRE} € (${o.h} h) — ${o.quoi}`).join("\n")}
 
 ── MÉTHODE (les 4 étapes, délais EXACTS) ──
 ${METHODE.map((m, i) => `${i + 1}. ${m.etape} : ${m.detail}`).join("\n")}
@@ -154,7 +178,7 @@ ${INCLUS.map((x) => `• ${x}`).join("\n")}
 ${ENGAGEMENTS.map((x) => `• ${x}`).join("\n")}`;
 
     const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
-Tu produis une présentation de vente de 8 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
+Tu produis une présentation de vente de 7 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
 
 OBJECTIF UNIQUE DE CE RENDEZ-VOUS : qu'il accepte de caler un 3e appel pour finaliser (contrat). On ne cherche PAS à faire signer aujourd'hui.
 
@@ -188,18 +212,20 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 - Reformule le bénéfice pour CE métier précis (parle de ses clients à lui).
 - Interdits : bullet vague sans chiffre ni intérêt concret, chiffre sans source, superlatif creux.
 
-LES 8 DIAPOS (dans cet ordre exact, via l'outil) :
+LES 7 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
 2. kind="constat" : sa situation RÉELLE (site actuel ou absence, visibilité) et ce que ça lui coûte. 2 chiffres "figure"+"source".
 3. kind="marche" : le marché chiffré de SON secteur en local, formulé comme une opportunité. 2-3 chiffres "figure"+"source".
-4. kind="site" : « Ce qu'on construit pour vous » — 3-4 bénéfices très concrets liés à SON métier (le mockup s'affiche à côté). Parle système : captation de clients, automatisation, temps gagné.
+4. kind="site" : « Ce qu'on construit pour vous » — 4 bénéfices très concrets liés à SON métier. Parle système : captation de clients, automatisation, temps gagné.
 5. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
+   INTERDIT : promettre un déplacement, une visite sur place, une journée d'immersion, des photos prises chez lui. Wyngo travaille depuis Toulouse et ne se déplace pas.
 6. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
-7. kind="prix" : « Votre investissement ». Un SEUL palier.
-   - Le sous-titre nomme le palier SANS répéter le montant (le montant est affiché en grand juste en dessous).
-   - Le PREMIER bullet porte OBLIGATOIREMENT figure = le prix EXACT du palier (ex figure:"2 144 €") et text = la nature du prix (ex "une fois — pas d'abonnement, pas de frais cachés"). Pas de source sur celui-là.
-   - Les bullets suivants : pourquoi CE palier pour lui, ce que ça comprend, et son risque (aucun paiement avant validation de la maquette).
-   - Mise en perspective autorisée (clients gagnés, heures d'administratif économisées) mais JAMAIS de promesse de résultat chiffré.
+7. kind="panier" : « Votre investissement ». C'est un CONFIGURATEUR que le prospect manipule en direct pendant la visio : la base est une TRANCHE, et il coche les options qu'il veut, le total se recalcule sous ses yeux.
+   - N'annonce JAMAIS un montant unique pour la base : uniquement la tranche fournie.
+   - Les bullets de cette diapo expliquent la TRANCHE : ce que comprend la base, pourquoi c'est une tranche (le prix dépend du nombre de pages et du contenu à produire), et qu'aucun paiement n'intervient avant validation de la maquette. 3 bullets maximum, sans chiffre.
+   - Le champ "options" (à part) : tu reprends les 10 options du catalogue, TOUTES, chacune avec son "id" exact et un "benefice" d'UNE phrase courte écrite pour SON métier à lui (ce que ça lui apporte concrètement, pas une définition générique). Ne change ni les libellés ni les prix, ils sont fixés par le code.
+
+LA DIAPO « PROCHAINE ÉTAPE » N'EXISTE PLUS : on ne pousse pas à conclure, on laisse le prospect libre. Ne la génère pas.
 8. kind="etape" : « La prochaine étape » — proposer de caler un 3e échange pour finaliser, et rappeler qu'aucun paiement n'intervient avant qu'il ait validé la maquette. Ton engageant, simple, sans pression.
 
 EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect va probablement poser. Commence par les freins RÉELS du récap (ce sont les questions qui vont tomber), puis complète avec celles qu'appelle son métier. Chacune avec une réponse courte, honnête et factuelle. Cette fiche NE SERA PAS affichée au client : c'est l'antisèche du commercial. N'y invente aucun chiffre ni engagement au-delà de ce qui est fourni.`;
@@ -209,7 +235,8 @@ ${JSON.stringify(ctx, null, 2)}
 
 RÉCAP DU 1ER RENDEZ-VOUS — saisi à la main par le commercial, c'est LA source à suivre :
 ${RECAP_BLOC}
-${palierImpose ? `\nPALIER À PRÉSENTER (imposé par le commercial, n'en choisis pas un autre) : ${palierImpose}` : ""}
+
+TRANCHE DE PRIX DE BASE ANNONCÉE PAR LE COMMERCIAL : ${baseMin} € à ${baseMax} €. C'est ce qu'il a dit au prospect, tu n'annonces AUCUN autre montant de base.
 
 NOTES D'APPEL ENREGISTRÉES DANS LE CRM (complément, secondaire par rapport au récap) :
 ${callNotes || "(aucune)"}
@@ -231,7 +258,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
           items: {
             type: "object",
             properties: {
-              kind: { type: "string", enum: ["recap", "constat", "marche", "site", "methode", "inclus", "prix", "etape"] },
+              kind: { type: "string", enum: ["recap", "constat", "marche", "site", "methode", "inclus", "panier"] },
               title: { type: "string" },
               subtitle: { type: "string" },
               bullets: {
@@ -250,6 +277,18 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
             required: ["kind", "title", "bullets"],
           },
         },
+        options: {
+          type: "array",
+          description: "Les 10 options du catalogue, chacune avec son id exact et un bénéfice d'une phrase écrit pour le métier du prospect.",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "id exact du catalogue (resa, paiement, boutique, avis, blog, newsletter, membre, compta, chatbot, multilingue)" },
+              benefice: { type: "string", description: "Une phrase courte : ce que cette option apporte à CE métier précis." },
+            },
+            required: ["id", "benefice"],
+          },
+        },
         questions: {
           type: "array",
           description: "6 à 8 questions probables du prospect + réponse courte et factuelle (fiche privée du commercial, non affichée au client)",
@@ -263,7 +302,7 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
           },
         },
       },
-      required: ["headline", "slides", "questions"],
+      required: ["headline", "slides", "options", "questions"],
     };
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -285,7 +324,23 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
     if (!tool?.input?.slides) return json({ error: "ai_empty", message: "Réponse IA vide, réessaie." });
 
     const headline = String(tool.input.headline || ctx.entreprise);
-    const slides = tool.input.slides;
+
+    // Les libellés et les PRIX viennent du code, jamais de l'IA : elle ne fournit
+    // que le bénéfice reformulé pour le métier. Un prix inventé est impossible.
+    const benefs = new Map<string, string>();
+    for (const o of (Array.isArray(tool.input.options) ? tool.input.options : []) as Array<{ id?: string; benefice?: string }>) {
+      if (o?.id && typeof o.benefice === "string") benefs.set(o.id, o.benefice.trim());
+    }
+    const panier = {
+      base_min: baseMin,
+      base_max: baseMax,
+      options: OPTIONS.map((o) => ({ id: o.id, label: o.label, prix: o.h * TAUX_HORAIRE, quoi: benefs.get(o.id) || o.quoi })),
+    };
+
+    // Le panier est attaché à sa diapo : le rendu n'a besoin de rien d'autre.
+    const slides = (tool.input.slides as Array<Record<string, unknown>>).map((sl) =>
+      sl?.kind === "panier" ? { ...sl, panier } : sl,
+    );
     // La fiche « questions » est rangée AVEC les diapos (colonne jsonb existante,
     // pas de migration) sous un kind dédié. Le rendu du deck l'ignore : elle ne
     // doit jamais s'afficher à l'écran partagé, c'est l'antisèche du commercial.

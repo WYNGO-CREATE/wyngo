@@ -1,8 +1,9 @@
 /**
  * ─── Carte « Présentation de vente » (fiche prospect) ─────────────────
- * Hugo saisit son récap du 1er RDV (champs guidés), l'IA en tire une
- * présentation de 8 diapos pour le 2e RDV en visio + une fiche réponses
- * PRIVÉE aux questions probables. Présentation plein écran + export PDF.
+ * Hugo saisit son récap du 1er RDV (champs guidés + la tranche de prix
+ * qu'il a annoncée), l'IA en tire une présentation de 7 diapos pour le 2e
+ * RDV en visio, dont un configurateur d'options que le prospect manipule
+ * en direct, + une fiche réponses PRIVÉE. Plein écran + export PDF.
  *
  * Le récap est la source des objections : sans lui, l'IA n'a pas le droit
  * d'en inventer une seule.
@@ -16,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Presentation, Loader2, Sparkles, Play, RefreshCw, Mail, HelpCircle, ChevronDown, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -27,11 +27,9 @@ type Prospect = { id: string; company: string | null; first_name: string | null;
 type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null; recap: Recap | null };
 
 type QA = { q: string; r: string };
-type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; palier?: string };
+type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string };
 
-const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", palier: "auto" };
-
-const PALIERS = ["Site Performance", "Système Connecté", "Écosystème sur-mesure"];
+const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400" };
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
@@ -53,12 +51,6 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
     return Array.isArray(f?.questions) ? f!.questions! : [];
   })();
 
-  // Dernier aperçu de site (mockup le plus à jour)
-  const { data: preview } = useQuery({
-    queryKey: ["latest-preview-slug", prospect.id],
-    queryFn: async () => (await supabase.from("prospect_previews").select("slug").eq("prospect_id", prospect.id).order("generated_at", { ascending: false }).limit(1).maybeSingle()).data,
-  });
-
   // On repart du dernier récap saisi : régénérer ne doit pas obliger à tout retaper.
   const ouvrirFormulaire = () => { setRecap({ ...VIDE, ...(deck?.recap || {}) }); setFormOpen(true); };
 
@@ -76,10 +68,8 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
 
   const buildHtml = (): string | null => {
     if (!deck) return null;
-    const slug = preview?.slug || deck.preview_slug;
-    const previewUrl = slug ? `${window.location.origin}/p/${slug}` : null;
     const d: PitchDeck = { headline: deck.headline || clientName, slides: (Array.isArray(deck.slides) ? deck.slides : []) as PitchDeck["slides"] };
-    return renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location, previewUrl });
+    return renderPitchHtml(d, { clientName, sector: prospect.brief_activity || prospect.industry, city: prospect.location });
   };
 
   const present = () => {
@@ -147,14 +137,14 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">Palier à présenter</Label>
-        <Select value={recap.palier || "auto"} onValueChange={(v) => champ("palier", v)}>
-          <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="auto">L'IA choisit selon le besoin</SelectItem>
-            {PALIERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Label className="text-xs">Tranche de prix que tu lui as annoncée — pour le site seul</Label>
+        <div className="flex items-center gap-2">
+          <Input inputMode="numeric" placeholder="1800" value={recap.prix_min} onChange={(e) => champ("prix_min", e.target.value)} className="text-sm" />
+          <span className="text-xs text-muted-foreground">à</span>
+          <Input inputMode="numeric" placeholder="2400" value={recap.prix_max} onChange={(e) => champ("prix_max", e.target.value)} className="text-sm" />
+          <span className="text-xs text-muted-foreground">€</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground">C'est cette tranche qui s'affiche. Les options s'ajoutent par-dessus, et le prospect les coche lui-même pendant la visio.</p>
       </div>
 
       <div className="flex flex-wrap gap-2 pt-1">
@@ -175,7 +165,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
       <CardContent className="space-y-3">
         {!deck && !formOpen && (
           <>
-            <p className="text-sm text-muted-foreground">Tu fais le récap de ton 1er rendez-vous, l'IA en tire une présentation de 8 diapos taillée pour ce client — à montrer en visio ou à exporter en PDF — plus une <b>fiche réponses privée</b> aux questions qu'il va poser.</p>
+            <p className="text-sm text-muted-foreground">Tu fais le récap de ton 1er rendez-vous, l'IA en tire une présentation de 7 diapos taillée pour ce client — à montrer en visio ou à exporter en PDF. La dernière diapo est un <b>configurateur</b> : le prospect coche les options qu'il veut et voit le total bouger en direct. Plus une <b>fiche réponses privée</b> aux questions qu'il va poser.</p>
             <Button size="sm" className="gap-1.5" onClick={ouvrirFormulaire}><PenLine className="h-3.5 w-3.5" /> Faire le récap du 1er RDV</Button>
           </>
         )}
@@ -185,7 +175,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
         {deck && !formOpen && (
           <>
             <p className="text-sm font-medium truncate">« {deck.headline || clientName} »</p>
-            <p className="text-xs text-muted-foreground">Générée le {format(new Date(deck.created_at), "PP 'à' HH'h'mm", { locale: fr })}{!(preview?.slug || deck.preview_slug) ? " · (génère l'Aperçu du site pour l'inclure)" : ""}</p>
+            <p className="text-xs text-muted-foreground">Générée le {format(new Date(deck.created_at), "PP 'à' HH'h'mm", { locale: fr })}</p>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" className="gap-1.5" onClick={present}><Play className="h-3.5 w-3.5" /> Présenter / PDF</Button>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={ouvrirFormulaire}><RefreshCw className="h-3.5 w-3.5" /> Modifier le récap et régénérer</Button>

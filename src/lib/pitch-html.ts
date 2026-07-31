@@ -9,16 +9,18 @@
 
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
 export type PitchQA = { q: string; r: string };
-export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[]; questions?: PitchQA[] };
+export type PitchOption = { id: string; label: string; prix: number; quoi: string };
+export type PitchPanier = { base_min: number; base_max: number; options: PitchOption[] };
+export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[]; questions?: PitchQA[]; panier?: PitchPanier };
 export type PitchDeck = { headline: string; slides: PitchSlide[]; preview_slug?: string | null };
-export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null; previewUrl?: string | null };
+export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null };
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 const TAGS: Record<string, string> = {
   recap: "Ce qu'on s'est dit", constat: "Le constat", marche: "Le marché",
   site: "Ce qu'on construit", methode: "La méthode", inclus: "Ce qui est compris",
-  prix: "Votre investissement", etape: "La prochaine étape", offre: "Notre proposition",
+  panier: "Votre investissement", prix: "Votre investissement", offre: "Notre proposition",
 };
 
 function statBlocks(bullets: PitchBullet[]): string {
@@ -32,6 +34,25 @@ function statBlocks(bullets: PitchBullet[]): string {
 
 function pointList(bullets: PitchBullet[]): string {
   return `<ul class="pts">${bullets.map((b) => `<li><span class="dot"></span><span class="li-txt">${esc(b.text)}${b.source ? `<span class="src-inline"> — ${esc(b.source)}</span>` : ""}</span></li>`).join("")}</ul>`;
+}
+
+const eur = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0")}\u00A0€`;
+
+function panierHtml(p: PitchPanier): string {
+  return `<div class="panier">
+    <div class="base">
+      <div class="base-l">Le site</div>
+      <div class="base-p">${eur(p.base_min)} <span>à</span> ${eur(p.base_max)}</div>
+    </div>
+    <div class="opts">${p.options.map((o) => `<label class="opt">
+      <input type="checkbox" class="ck" data-prix="${o.prix}">
+      <span class="box"></span>
+      <span class="o-txt"><span class="o-l">${esc(o.label)}</span><span class="o-q">${esc(o.quoi)}</span></span>
+      <span class="o-p">+ ${eur(o.prix)}</span>
+    </label>`).join("")}</div>
+    <div class="tot"><span class="tot-l">Total</span>
+      <span class="tot-p"><span id="tmin" data-base="${p.base_min}">${eur(p.base_min)}</span> <span class="sep">à</span> <span id="tmax" data-base="${p.base_max}">${eur(p.base_max)}</span></span></div>
+  </div>`;
 }
 
 function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): string {
@@ -52,17 +73,11 @@ function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): 
   const stats = rest.filter((b) => b.figure);
   const plain = rest.filter((b) => !b.figure);
 
-  let body: string;
-  if (s.kind === "site") {
-    const frame = meta.previewUrl
-      ? `<div class="mockup"><div class="bar"><span></span><span></span><span></span></div><iframe src="${esc(meta.previewUrl)}" loading="lazy"></iframe></div>`
-      : `<div class="mockup empty">Aperçu du site à générer sur la fiche prospect.</div>`;
-    body = `<div class="site-grid"><div>${plain.length ? pointList(plain) : ""}</div>${frame}</div>`;
-  } else {
-    body = `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
-  }
+  const body = s.kind === "panier" && s.panier
+    ? `${plain.length ? pointList(plain) : ""}${panierHtml(s.panier)}`
+    : `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
 
-  return `<section class="slide">
+  return `<section class="slide ${s.kind === "panier" ? "wide" : ""}">
     <aside class="side">
       <div class="brand">Wyngo</div>
       ${tag ? `<div class="tag">${tag}</div>` : ""}
@@ -163,17 +178,40 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   .pricebox .amt{font-size:clamp(32px,4.6vmin,56px);font-weight:800;letter-spacing:-2px;line-height:1;white-space:nowrap}
   .pricebox .lbl{font-size:clamp(13px,1.7vmin,16.5px);line-height:1.45;color:#bdb8ac;min-width:0}
 
-  /* ── Diapo « futur site » ── */
-  .site-grid{display:grid;grid-template-columns:1.12fr 1fr;gap:clamp(14px,2.4vmin,28px);align-items:center}
-  .site-grid ul.pts{margin-top:0;gap:clamp(8px,1.25vmin,14px)}
-  .site-grid ul.pts .li-txt{font-size:clamp(12.5px,1.6vmin,16px);line-height:1.45}
-  .site-grid ul.pts .dot{width:7px;height:7px}
-  .mockup{border-radius:13px;overflow:hidden;border:1px solid #e2ded1;box-shadow:0 14px 36px rgba(20,20,16,.14);
     background:#fff;display:flex;flex-direction:column;min-height:clamp(190px,30vmin,320px)}
-  .mockup .bar{height:26px;background:var(--cream);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 12px;flex:none}
-  .mockup .bar span{width:8px;height:8px;border-radius:50%;background:#cec7b4}
-  .mockup iframe{width:100%;flex:1;border:0;display:block;background:#fff}
-  .mockup.empty{align-items:center;justify-content:center;color:#a19b8c;font-size:14px;text-align:center;padding:24px}
+
+  /* ── Panier : le prospect coche en direct, le total se recalcule ── */
+  .slide.wide .main{padding-top:clamp(20px,3.4vmin,40px);padding-bottom:clamp(28px,3.6vmin,44px)}
+  .panier{margin-top:clamp(12px,1.8vmin,22px);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .base{display:flex;align-items:baseline;justify-content:space-between;gap:16px;background:var(--cream);
+    padding:clamp(12px,1.7vmin,20px) clamp(14px,2.2vmin,26px);border-bottom:1px solid var(--line)}
+  .base-l{font-size:clamp(13px,1.65vmin,17px);font-weight:700}
+  .base-p{font-size:clamp(19px,2.5vmin,29px);font-weight:800;letter-spacing:-1px;white-space:nowrap}
+  .base-p span{font-size:.6em;font-weight:600;color:var(--muted);margin:0 2px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .opt{display:flex;align-items:flex-start;gap:clamp(8px,1.1vmin,12px);cursor:pointer;
+    padding:clamp(8px,1.15vmin,13px) clamp(12px,1.7vmin,20px);border-bottom:1px solid #f0ece0;
+    transition:background .12s}
+  .opt:nth-child(odd){border-right:1px solid #f0ece0}
+  .opt:hover{background:#fafbff}
+  .opt .ck{position:absolute;opacity:0;width:0;height:0}
+  .opt .box{flex:none;width:clamp(15px,1.7vmin,18px);height:clamp(15px,1.7vmin,18px);margin-top:.15em;
+    border:1.5px solid #c9c2ae;border-radius:5px;background:#fff;position:relative}
+  .opt .box::after{content:"";position:absolute;left:32%;top:12%;width:26%;height:52%;
+    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg);opacity:0}
+  .opt .ck:checked~.box{background:var(--co);border-color:var(--co)}
+  .opt .ck:checked~.box::after{opacity:1}
+  .opt .ck:focus-visible~.box{box-shadow:0 0 0 3px rgba(27,75,227,.3)}
+  .o-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .o-l{font-size:clamp(12px,1.5vmin,15px);font-weight:600;line-height:1.3}
+  .o-q{font-size:clamp(10.5px,1.25vmin,12.5px);line-height:1.4;color:var(--muted);margin-top:2px}
+  .o-p{flex:none;font-size:clamp(11.5px,1.4vmin,14px);font-weight:700;color:var(--co);white-space:nowrap;margin-top:.1em}
+  .opt .ck:checked~.o-p{color:var(--co)}
+  .tot{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--ink);color:#fff;
+    padding:clamp(12px,1.7vmin,20px) clamp(14px,2.2vmin,26px)}
+  .tot-l{font-size:clamp(12px,1.5vmin,15px);font-weight:600;color:#bdb8ac;letter-spacing:.04em;text-transform:uppercase}
+  .tot-p{font-size:clamp(21px,2.8vmin,33px);font-weight:800;letter-spacing:-1.2px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tot-p .sep{font-size:.55em;font-weight:600;color:#bdb8ac;margin:0 3px}
 
   /* ── Couverture ── */
   .cover .main{justify-content:center;background:var(--cream)}
@@ -222,10 +260,8 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     ul.pts .li-txt{font-size:15.5px}
     .pricebox{padding:18px 20px;gap:14px}
     .pricebox .amt{font-size:34px}
-    .site-grid{display:block}
-    .site-grid>div:first-child{margin-bottom:18px}
-    .mockup{min-height:0}
-    .mockup iframe{height:230px}
+    .opts{grid-template-columns:1fr}
+    .opt:nth-child(odd){border-right:0}
     .cover .main{justify-content:flex-start;min-height:52vh}
     .pg{position:static;margin-top:22px;text-align:right}
   }
@@ -264,6 +300,20 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
       while(m.scrollHeight>m.clientHeight+1 && k>0.6){ k-=0.04; f.style.zoom=k; }
     });
   }
+  // Panier : le total se recalcule à chaque case cochée, sous les yeux du prospect.
+  (function(){
+    var min=document.getElementById('tmin'), max=document.getElementById('tmax');
+    if(!min||!max) return;
+    var b0=parseInt(min.getAttribute('data-base'),10), b1=parseInt(max.getAttribute('data-base'),10);
+    var f=function(n){return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g,'\u00A0')+'\u00A0\u20AC';};
+    document.addEventListener('change',function(e){
+      if(!e.target.classList||!e.target.classList.contains('ck')) return;
+      var sum=0;
+      [].forEach.call(document.querySelectorAll('.ck'),function(c){ if(c.checked) sum+=parseInt(c.getAttribute('data-prix'),10)||0; });
+      min.textContent=f(b0+sum); max.textContent=f(b1+sum);
+      fitAll();
+    });
+  })();
   var slides=[].slice.call(document.querySelectorAll('.slide')),cur=0;
   function show(i){cur=Math.max(0,Math.min(slides.length-1,i));slides.forEach(function(s,j){s.classList.toggle('active',j===cur)});document.getElementById('count').textContent=(cur+1)+' / '+slides.length;fitAll();}
   function go(d){show(cur+d);}
