@@ -28,9 +28,15 @@ type Prospect = { id: string; company: string | null; first_name: string | null;
 type DeckRow = { id: string; headline: string | null; slides: unknown; preview_slug: string | null; created_at: string; sent_at: string | null; recap: Recap | null };
 
 type QA = { q: string; r: string };
-type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string; budget_non_aborde?: string };
+type Recap = { objectif?: string; objections?: string; budget?: string; delai?: string; decideur?: string; contexte?: string; prix_min?: string; prix_max?: string; budget_non_aborde?: string; prix_mode?: string };
 
-const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400", budget_non_aborde: "" };
+const MODES = [
+  { v: "tranche", l: "Une fourchette" },
+  { v: "apartir", l: "À partir de" },
+  { v: "fixe", l: "Prix fixe" },
+];
+
+const VIDE: Recap = { objectif: "", objections: "", budget: "", delai: "", decideur: "", contexte: "", prix_min: "1800", prix_max: "2400", budget_non_aborde: "", prix_mode: "tranche" };
 
 export function PitchCard({ prospect }: { prospect: Prospect }) {
   const qc = useQueryClient();
@@ -103,6 +109,7 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
 
   const champ = (k: keyof Recap, v: string) => setRecap((r) => ({ ...r, [k]: v }));
   const neuf = recap.budget_non_aborde === "1";
+  const mode = recap.prix_mode || "tranche";
 
   const formulaire = (
     <div className="space-y-3 rounded-md border bg-muted/20 p-3">
@@ -153,14 +160,30 @@ export function PitchCard({ prospect }: { prospect: Prospect }) {
       </label>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">{neuf ? "Tranche que tu vas lui annoncer — pour le site seul" : "Tranche de prix que tu lui as annoncée — pour le site seul"}</Label>
-        <div className="flex items-center gap-2">
+        <Label className="text-xs">Comment tu annonces le prix du site</Label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {MODES.map((m) => (
+            <button key={m.v} type="button" onClick={() => champ("prix_mode", m.v)}
+              className={`rounded-md border px-2 py-1.5 text-xs transition ${mode === m.v ? "border-primary bg-primary/10 font-medium text-primary" : "hover:bg-muted"}`}>
+              {m.l}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          {mode === "apartir" && <span className="whitespace-nowrap text-xs text-muted-foreground">à partir de</span>}
           <Input inputMode="numeric" placeholder="1800" value={recap.prix_min} onChange={(e) => champ("prix_min", e.target.value)} className="text-sm" />
-          <span className="text-xs text-muted-foreground">à</span>
-          <Input inputMode="numeric" placeholder="2400" value={recap.prix_max} onChange={(e) => champ("prix_max", e.target.value)} className="text-sm" />
+          {mode === "tranche" && <>
+            <span className="text-xs text-muted-foreground">à</span>
+            <Input inputMode="numeric" placeholder="2400" value={recap.prix_max} onChange={(e) => champ("prix_max", e.target.value)} className="text-sm" />
+          </>}
           <span className="text-xs text-muted-foreground">€</span>
         </div>
-        <p className="text-[11px] text-muted-foreground">C'est cette tranche qui s'affiche. Les options s'ajoutent par-dessus, et le prospect les coche lui-même pendant la visio.</p>
+        <p className="text-[11px] text-muted-foreground">
+          {mode === "tranche"
+            ? "La présentation affiche la fourchette, avec le détail de ce qui fait monter vers le haut."
+            : "La présentation affiche ce seul montant — la colonne « ce qui fait monter le prix » disparaît."}
+          {" "}Les options s'ajoutent par-dessus, et le prospect les coche lui-même pendant la visio.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2 pt-1">

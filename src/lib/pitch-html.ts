@@ -10,7 +10,7 @@
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
 export type PitchQA = { q: string; r: string };
 export type PitchOption = { id: string; label: string; prix: number; quoi: string };
-export type PitchPanier = { base_min: number; base_max: number; options: PitchOption[]; base_inclus?: string[]; variation?: string[] };
+export type PitchPanier = { base_min: number; base_max: number; options: PitchOption[]; base_inclus?: string[]; variation?: string[]; mode?: "tranche" | "apartir" | "fixe" };
 export type PitchSlide = { kind: string; title: string; subtitle?: string | null; bullets: PitchBullet[]; questions?: PitchQA[]; panier?: PitchPanier };
 export type PitchDeck = { headline: string; slides: PitchSlide[]; preview_slug?: string | null };
 export type PitchMeta = { clientName: string; sector?: string | null; city?: string | null; origin?: string | null };
@@ -48,15 +48,24 @@ function pointList(bullets: PitchBullet[]): string {
 const eur = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0")}\u00A0€`;
 
 function panierHtml(p: PitchPanier): string {
+  const mode = p.mode || "tranche";
+  const tranche = mode === "tranche";
+  const prefixe = mode === "apartir" ? `<span class="pre">à partir de</span> ` : "";
+  const basePrix = tranche
+    ? `${eur(p.base_min)} <span>à</span> ${eur(p.base_max)}`
+    : `${prefixe}${eur(p.base_min)}`;
+  const totalPrix = tranche
+    ? `<span id="tmin" data-base="${p.base_min}">${eur(p.base_min)}</span> <span class="sep">à</span> <span id="tmax" data-base="${p.base_max}">${eur(p.base_max)}</span>`
+    : `${prefixe}<span id="tmin" data-base="${p.base_min}">${eur(p.base_min)}</span>`;
   return `<div class="panier">
     <div class="base">
       <div class="base-l">Le site</div>
-      <div class="base-p">${eur(p.base_min)} <span>à</span> ${eur(p.base_max)}</div>
+      <div class="base-p">${basePrix}</div>
     </div>
-    ${(p.base_inclus?.length || p.variation?.length) ? `<div class="cols">
-      ${p.base_inclus?.length ? `<div class="col"><div class="col-h">Compris dès ${eur(p.base_min)}</div>
-        <ul>${p.base_inclus.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-      ${p.variation?.length ? `<div class="col alt"><div class="col-h">Ce qui fait monter vers ${eur(p.base_max)}</div>
+    ${p.base_inclus?.length ? `<div class="cols ${tranche && p.variation?.length ? "" : "solo"}">
+      <div class="col"><div class="col-h">${tranche ? `Compris dès ${eur(p.base_min)}` : "Compris dans le site"}</div>
+        <ul>${p.base_inclus.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+      ${tranche && p.variation?.length ? `<div class="col alt"><div class="col-h">Ce qui fait monter vers ${eur(p.base_max)}</div>
         <ul>${p.variation.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
     </div>` : ""}
     <div class="opt-h">Les options — vous composez</div>
@@ -66,15 +75,14 @@ function panierHtml(p: PitchPanier): string {
       <span class="o-txt"><span class="o-l">${esc(o.label)}</span><span class="o-q">${esc(o.quoi)}</span></span>
       <span class="o-p">+ ${eur(o.prix)}</span>
     </label>`).join("")}</div>
-    <div class="tot"><span class="tot-l">Total</span>
-      <span class="tot-p"><span id="tmin" data-base="${p.base_min}">${eur(p.base_min)}</span> <span class="sep">à</span> <span id="tmax" data-base="${p.base_max}">${eur(p.base_max)}</span></span></div>
+    <div class="tot"><span class="tot-l">Total</span><span class="tot-p">${totalPrix}</span></div>
   </div>`;
 }
 
 function realisationsHtml(origin: string): string {
-  return `<div class="reals">${REALISATIONS.map((r) => `<a class="real" href="${esc(r.url)}" target="_blank" rel="noopener">
-    <span class="r-shot"><img src="${esc(origin)}/realisations/${r.img}.jpg" alt="${esc(r.nom)}"></span>
-    <span class="r-meta"><span class="r-n">${esc(r.nom)}</span><span class="r-q">${esc(r.quoi)}</span></span>
+  // Aucun commentaire écrit : Hugo commente lui-même à l'oral. On montre, c'est tout.
+  return `<div class="reals">${REALISATIONS.map((r) => `<a class="real" href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.nom)} — ouvrir le site">
+    <img src="${esc(origin)}/realisations/${r.img}.jpg" alt="${esc(r.nom)}">
   </a>`).join("")}</div>`;
 }
 
@@ -132,9 +140,10 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     </aside>
     <div class="main">
       <div class="fit">
+        ${meta.origin ? `<img class="c-logo" src="${esc(meta.origin)}/wyngo-logo.png" alt="Wyngo">` : ""}
         <div class="c-kicker">Présentation préparée pour</div>
         <div class="c-client">${esc(meta.clientName)}</div>
-        <h1>${esc(headline)}</h1>
+        ${(meta.sector || meta.city) ? `<div class="c-sub">${[meta.sector, meta.city].filter(Boolean).map((x) => esc(x)).join(" · ")}</div>` : ""}
       </div>
       <div class="pg">1 / ${total}</div>
     </div>
@@ -239,19 +248,19 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   .tot-p .sep{font-size:.55em;font-weight:600;color:#bdb8ac;margin:0 3px}
 
   /* ── Réalisations : cliquables, on peut ouvrir le site en direct ── */
-  .reals{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.5vmin,18px);margin-top:clamp(12px,2vmin,24px)}
-  .real{display:flex;flex-direction:column;text-decoration:none;color:inherit;border:1px solid var(--line);
-    border-radius:13px;overflow:hidden;background:#fff;transition:box-shadow .15s,transform .15s}
-  .real:hover{box-shadow:0 10px 26px rgba(20,20,16,.16);transform:translateY(-2px)}
-  .r-shot{display:block;aspect-ratio:16/9;background:var(--cream);overflow:hidden}
-  .r-shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
-  .r-meta{padding:clamp(8px,1.15vmin,13px) clamp(9px,1.3vmin,15px);display:flex;flex-direction:column;gap:2px;
-    border-top:1px solid var(--line)}
-  .r-n{font-size:clamp(12px,1.5vmin,15px);font-weight:700}
-  .r-q{font-size:clamp(10.5px,1.25vmin,12.5px);color:var(--muted);line-height:1.35}
+  .reals{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.6vmin,20px);margin-top:clamp(10px,1.8vmin,22px)}
+  .real{display:block;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--cream);
+    transition:box-shadow .15s,transform .15s;line-height:0}
+  .real:hover{box-shadow:0 12px 30px rgba(20,20,16,.18);transform:translateY(-2px)}
+  .real img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top center;display:block}
 
   /* ── Panier : détail de la tranche ── */
   .cols{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+  .cols.solo{grid-template-columns:1fr}
+  .cols.solo ul{columns:2;column-gap:clamp(16px,2.4vmin,30px)}
+  .cols.solo li{break-inside:avoid}
+  .base-p .pre{font-size:.5em;font-weight:600;color:var(--muted);letter-spacing:0}
+  .tot-p .pre{font-size:.42em;font-weight:600;color:#bdb8ac;letter-spacing:0}
   .col{padding:clamp(10px,1.5vmin,18px) clamp(13px,1.9vmin,22px)}
   .col.alt{border-left:1px solid var(--line);background:#fcfbf7}
   .col-h{font-size:clamp(10px,1.2vmin,12px);letter-spacing:.13em;text-transform:uppercase;font-weight:700;
@@ -265,13 +274,17 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 
   /* ── Couverture ── */
   .cover .main{justify-content:center;background:var(--cream)}
+  .c-logo{width:clamp(52px,7.5vmin,86px);height:auto;border-radius:clamp(10px,1.5vmin,18px);display:block;
+    margin-bottom:clamp(20px,3.4vmin,40px)}
   .c-kicker{font-size:clamp(11px,1.35vmin,13px);letter-spacing:.18em;text-transform:uppercase;color:#8a8577;font-weight:700}
-  .c-client{font-size:clamp(17px,2.3vmin,24px);font-weight:800;margin:clamp(5px,.8vmin,9px) 0 clamp(16px,2.6vmin,30px)}
+  .c-client{font-size:clamp(30px,5vmin,56px);font-weight:800;letter-spacing:-1.6px;line-height:1.06;
+    margin:clamp(8px,1.2vmin,14px) 0 0}
+  .c-sub{font-size:clamp(14px,1.85vmin,19px);color:var(--muted);margin-top:clamp(10px,1.6vmin,18px)}
+  .c-sub::after{content:"";display:block;width:clamp(40px,6vmin,72px);height:3px;background:var(--co);margin-top:clamp(18px,2.6vmin,30px)}
   .cover .side{background:var(--ink);border-right:0}
   .cover .brand{color:#fff}
   .cover .who{color:#9d988c}
   .cover .who b{color:#fff}
-  .cover h1::after{content:"";display:block;width:clamp(40px,6vmin,72px);height:3px;background:var(--co);margin-top:clamp(18px,2.6vmin,30px)}
 
   .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;z-index:50}
   .nav button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
@@ -310,7 +323,7 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
     ul.pts .li-txt{font-size:15.5px}
     .pricebox{padding:18px 20px;gap:14px}
     .pricebox .amt{font-size:34px}
-    .reals{grid-template-columns:1fr 1fr;gap:10px}
+    .reals{grid-template-columns:1fr;gap:10px}
     .cols{grid-template-columns:1fr}
     .col.alt{border-left:0;border-top:1px solid var(--line)}
     .opts{grid-template-columns:1fr}
@@ -359,14 +372,15 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   // Panier : le total se recalcule à chaque case cochée, sous les yeux du prospect.
   (function(){
     var min=document.getElementById('tmin'), max=document.getElementById('tmax');
-    if(!min||!max) return;
-    var b0=parseInt(min.getAttribute('data-base'),10), b1=parseInt(max.getAttribute('data-base'),10);
+    if(!min) return;
+    var b0=parseInt(min.getAttribute('data-base'),10);
+    var b1=max?parseInt(max.getAttribute('data-base'),10):0;
     var f=function(n){return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g,'\u00A0')+'\u00A0\u20AC';};
     document.addEventListener('change',function(e){
       if(!e.target.classList||!e.target.classList.contains('ck')) return;
       var sum=0;
       [].forEach.call(document.querySelectorAll('.ck'),function(c){ if(c.checked) sum+=parseInt(c.getAttribute('data-prix'),10)||0; });
-      min.textContent=f(b0+sum); max.textContent=f(b1+sum);
+      min.textContent=f(b0+sum); if(max) max.textContent=f(b1+sum);
       fitAll();
     });
   })();

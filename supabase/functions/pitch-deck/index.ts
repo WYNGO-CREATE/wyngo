@@ -103,7 +103,7 @@ const OPTIONS = [
   { id: "membre",     label: "Espace client privé",                         prix: 370, quoi: "Chaque client retrouve ses documents, ses devis et son historique." },
   { id: "paiement",   label: "Paiement en ligne sécurisé",                  prix: 260, quoi: "Encaisser un acompte ou une commande directement depuis le site." },
   { id: "boutique",   label: "Boutique en ligne / catalogue produits",      prix: 580, quoi: "Vendre vos produits en ligne, avec fiches, stocks et commandes." },
-  { id: "galerie",    label: "Galerie de réalisations avant / après",       prix: 190, quoi: "Vos chantiers mis en valeur, avec le glissement avant-après qui fait la démonstration." },
+  { id: "galerie",    label: "Galerie de réalisations avant / après",       prix: 190, quoi: "Vos réalisations mises en valeur, avec le glissement avant-après qui fait la démonstration." },
   { id: "blog",       label: "Blog / actualités éditable",                  prix: 210, quoi: "Publier vous-même vos nouveautés — et gagner des positions sur Google." },
   { id: "newsletter", label: "Newsletter & emails automatiques",            prix: 230, quoi: "Garder le lien avec vos clients sans y penser (relances, offres, rappels)." },
   { id: "compta",     label: "Export comptable / lien facturation",         prix: 290, quoi: "Fini la double saisie : les données partent vers votre outil de facturation." },
@@ -113,19 +113,18 @@ const OPTIONS = [
 
 // Ce qu'on sait faire techniquement, dit simplement. L'IA pioche dedans et
 // relie au métier — elle n'invente aucune capacité.
-const TECHNIQUE = [
-  "Des animations qui réagissent au visiteur : un élément qui apparaît au bon moment, une image qui se transforme quand on descend dans la page",
-  "De la 3D directement dans le navigateur, sans rien installer : faire tourner un produit, une pièce, un aménagement",
-  "Des outils sur-mesure : un simulateur, un configurateur, un calculateur qui donne une estimation en direct",
-  "Un site qui se met à jour tout seul depuis vos données : tarifs, stocks, disponibilités, plannings",
-  "Des pages qui s'adaptent à qui regarde : quelqu'un qui arrive de Toulouse ne voit pas la même chose que quelqu'un de Bordeaux",
-  "Une connexion à vos outils existants — agenda, facturation, messagerie — pour supprimer la double saisie",
-  "Une recherche instantanée dans un catalogue, même avec des milliers de références",
-  "Des formulaires intelligents, qui changent leurs questions selon les réponses précédentes",
-  "Un espace privé sécurisé, avec des droits différents selon la personne",
-  "Un site installable sur le téléphone comme une application, qui fonctionne même avec une connexion faible",
-  "Des cartes interactives : zones d'intervention, points de vente, itinéraires",
-  "Une accessibilité réelle : lisible au clavier, compatible avec les lecteurs d'écran",
+// Diapo « ce qu'on est capable de construire » : volontairement GÉNÉRIQUE.
+// Le but n'est pas de décrire son futur site — c'est de lui faire comprendre
+// qu'il peut tout demander. Contenu figé, l'IA n'y touche pas.
+const TECHNIQUE_TITRE = "Ce qu'on est capable de construire";
+const TECHNIQUE_SOUS_TITRE = "Aucune limite technique de notre côté : le site suit l'idée, jamais l'inverse";
+const TECHNIQUE_BULLETS = [
+  { text: "Des pages qui se mettent à jour toutes seules depuis vos données — tarifs, stocks, disponibilités, plannings : vous changez une fois, le site suit partout" },
+  { text: "Un site qui charge en moins d'une seconde, même chargé en images et en animations" },
+  { text: "Des animations et de la 3D directement dans le navigateur, sans rien à installer : faire tourner un objet, dérouler une histoire au fil du défilement" },
+  { text: "Des outils sur-mesure qu'aucun modèle tout fait ne propose : un simulateur, un configurateur, un calculateur d'estimation" },
+  { text: "Une connexion à n'importe quel outil que vous utilisez déjà — agenda, facturation, messagerie — pour supprimer les doubles saisies" },
+  { text: "Et si vous avez une idée qui n'est pas dans cette liste : dites-la. Techniquement, on n'est bloqués par rien." },
 ];
 
 // Les puces de la diapo panier sont FIXES : l'IA y résumait systématiquement
@@ -222,26 +221,24 @@ Deno.serve(async (req) => {
     // confirme, soit le sujet n'a jamais été ouvert et c'est CE rendez-vous qui
     // l'introduit — le ton et l'enchaînement des diapos ne peuvent pas être les mêmes.
     const budgetNeuf = R.budget_non_aborde === "1" || R.budget_non_aborde === "true";
+    // Trois façons d'annoncer : une fourchette, un plancher, ou un prix ferme.
+    const mode = (["tranche", "apartir", "fixe"].includes(R.prix_mode || "") ? R.prix_mode : "tranche") as "tranche" | "apartir" | "fixe";
+    const prixDit = mode === "tranche" ? `${baseMin} € à ${baseMax} €`
+      : mode === "apartir" ? `à partir de ${baseMin} €` : `${baseMin} €`;
 
     const OFFRE_BLOC = `
 ── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
-Le site lui-même : ${baseMin} € à ${baseMax} €, une fois, sans abonnement.
-Compris dès ${baseMin} € :
-${BASE_INCLUS.map((x) => `  - ${x}`).join("\n")}
+Le site lui-même : ${prixDit}, une fois, sans abonnement.
+Compris :
+${BASE_INCLUS.map((x) => `  - ${x}`).join("\n")}${mode === "tranche" ? `
 Ce qui fait monter vers ${baseMax} € :
-${VARIATION.map((x) => `  - ${x}`).join("\n")}
+${VARIATION.map((x) => `  - ${x}`).join("\n")}` : ""}
 
 ── OPTIONS (le prospect les coche EN DIRECT pendant la visio, le total bouge) ──
 ${OPTIONS.map((o) => `• [${o.id}] ${o.label} — ${o.prix} € — ${o.quoi}`).join("\n")}
 
 ── MÉTHODE (les 4 étapes, délais EXACTS) ──
 ${METHODE.map((m, i) => `${i + 1}. ${m.etape} : ${m.detail}`).join("\n")}
-
-── NOS RÉALISATIONS (sites réellement livrés — ne les décris pas au-delà de ça) ──
-${REALISATIONS.map((r) => `• ${r.nom} — ${r.quoi} — ${r.url}`).join("\n")}
-
-── CE QU'ON SAIT FAIRE TECHNIQUEMENT (dit simplement — n'invente aucune autre capacité) ──
-${TECHNIQUE.map((x) => `• ${x}`).join("\n")}
 
 ── TOUJOURS INCLUS ──
 ${INCLUS.map((x) => `• ${x}`).join("\n")}
@@ -304,12 +301,18 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 
 LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
-2. kind="constat" : sa situation RÉELLE (site actuel ou absence, visibilité) et ce que ça lui coûte. 2 chiffres "figure"+"source".
-3. kind="marche" : le marché chiffré de SON secteur en local, formulé comme une opportunité. 2-3 chiffres "figure"+"source".
-4. kind="site" : « Ce qu'on construit pour vous » — 4 bénéfices très concrets liés à SON métier. Parle système : captation de clients, automatisation, temps gagné.
-5. kind="realisations" : « Ce qu'on a déjà livré ». Le sous-titre porte l'idée que ces sites n'ont AUCUN air de famille — c'est la preuve du sur-mesure. Les 4 sites s'affichent automatiquement avec leurs vignettes (tu n'as pas à les lister) : écris 2 bullets maximum, sur ce que ce panel démontre, sans décrire les sites un par un et sans inventer de résultat chiffré à leur sujet.
+2. kind="constat" : sa situation RÉELLE et surtout ce qu'elle lui COÛTE, concrètement. 2 chiffres "figure"+"source".
+   Interdits : les évidences (« vous n'avez pas de site donc on ne vous trouve pas »), les généralités sur « le digital », tout ce qu'il sait déjà. Chaque point doit lui apprendre quelque chose ou nommer une perte précise qu'il n'avait pas chiffrée : le client qui a appelé le concurrent parce qu'il est sorti en premier, la question posée dix fois par jour au téléphone, la demande arrivée à 22 h et jamais rappelée.
+3. kind="marche" : l'opportunité locale de SON métier, chiffrée. 2-3 chiffres "figure"+"source".
+   Interdit absolu : la platitude du type « des gens cherchent votre métier en ligne, vous pourriez être celui qu'ils trouvent ». C'est vide, il le sait déjà, et ça décrédibilise tout le reste.
+   Ce qu'on attend : du concret sur SON marché local — sur quelles recherches précises la demande existe, à quel moment ses clients cherchent (l'urgence à 7 h du matin, la comparaison le dimanche soir), ce que fait la concurrence qui est déjà en ligne, et ce qu'il capterait qui lui échappe aujourd'hui. Relie chaque chiffre à une situation réelle de son métier.
+4. kind="site" : titre « Ce qu'on peut construire pour vous » (« peut », c'est une proposition, pas une décision). Le sous-titre dit que c'est ce qu'on a imaginé AVANT le rendez-vous, à partir de ce qu'il a raconté, et que tout reste discutable avec lui.
+   4 propositions très concrètes liées à SON métier. Formule-les au conditionnel ou comme des pistes (« on partirait sur… », « on imaginerait… »), jamais comme un fait acquis.
+   - Le RÉFÉRENCEMENT doit tenir une place forte : dis précisément sur QUELLES recherches il apparaîtrait (reprends les mots que ses clients tapent vraiment, avec sa ville), et ce que ça change pour lui.
+   - Quand tu parles du tableau de bord, appelle-le « outil de tracking » : c'est le mot qui parle. Explique en une phrase ce qu'il permet de mesurer.
+5. kind="realisations" : titre « Ce qu'on a déjà livré », AUCUN sous-titre, AUCUN bullet (tableau vide). Les 4 sites s'affichent seuls, en grand : le commercial commente lui-même à l'oral.
 
-6. kind="technique" : « Ce qu'on est capable de construire ». Choisis 5 capacités dans la liste TECHNIQUE fournie — celles qui parlent VRAIMENT à son métier — et reformule chacune en une phrase, dans un langage que lui comprend, en la reliant à son activité (pas de jargon, pas d'anglicisme). N'invente aucune capacité qui ne serait pas dans la liste. Le message de fond : on n'est bloqué par aucune limite technique, donc le site suit l'idée, ce n'est pas l'idée qui se plie au modèle.
+6. kind="technique" : titre et contenu posés par le code. Renvoie le kind avec un titre vide et un tableau de bullets vide.
 
 7. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
    INTERDIT : promettre un déplacement, une visite sur place, une journée d'immersion, des photos prises chez lui. Wyngo travaille depuis Toulouse et ne se déplace pas.
@@ -334,8 +337,8 @@ ${RECAP_BLOC}
 
 ${budgetNeuf
   ? `ARGENT : le sujet n'a JAMAIS été abordé avec ce prospect. Aucun prix ne lui a été annoncé, et il n'a donné aucun budget. C'est CE rendez-vous qui ouvre le sujet.
-TRANCHE À LUI PRÉSENTER POUR LA PREMIÈRE FOIS : ${baseMin} € à ${baseMax} €. Tu n'annonces AUCUN autre montant de base.`
-  : `TRANCHE DE PRIX DE BASE DÉJÀ ANNONCÉE AU PROSPECT : ${baseMin} € à ${baseMax} €. C'est ce qu'il a dit au prospect, tu n'annonces AUCUN autre montant de base.`}
+PRIX DE BASE À LUI PRÉSENTER POUR LA PREMIÈRE FOIS : ${prixDit}. Tu n'annonces AUCUN autre montant de base.`
+  : `PRIX DE BASE DÉJÀ ANNONCÉ AU PROSPECT : ${prixDit}. Tu n'annonces AUCUN autre montant de base.`}
 
 NOTES D'APPEL ENREGISTRÉES DANS LE CRM (complément, secondaire par rapport au récap) :
 ${callNotes || "(aucune)"}
@@ -431,16 +434,20 @@ Génère la présentation via l'outil "build_deck". Tout doit être taillé pour
       if (o?.id && typeof o.benefice === "string") benefs.set(o.id, o.benefice.trim());
     }
     const panier = {
+      mode,
       base_min: baseMin,
       base_max: baseMax,
       options: OPTIONS.map((o) => ({ id: o.id, label: o.label, prix: o.prix, quoi: benefs.get(o.id) || o.quoi })),
       base_inclus: BASE_INCLUS,
-      variation: VARIATION,
+      variation: mode === "tranche" ? VARIATION : undefined,
     };
 
     // Le panier est attaché à sa diapo : le rendu n'a besoin de rien d'autre.
     const slides = (tool.input.slides as Array<Record<string, unknown>>).map((sl) =>
-      sl?.kind === "panier" ? { ...sl, panier, bullets: PANIER_BULLETS } : sl,
+      sl?.kind === "panier" ? { ...sl, panier, bullets: PANIER_BULLETS }
+      : sl?.kind === "technique" ? { kind: "technique", title: TECHNIQUE_TITRE, subtitle: TECHNIQUE_SOUS_TITRE, bullets: TECHNIQUE_BULLETS }
+      : sl?.kind === "realisations" ? { kind: "realisations", title: "Ce qu'on a déjà livré", subtitle: null, bullets: [] }
+      : sl,
     );
     // La fiche « questions » est rangée AVEC les diapos (colonne jsonb existante,
     // pas de migration) sous un kind dédié. Le rendu du deck l'ignore : elle ne
