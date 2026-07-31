@@ -156,6 +156,52 @@ const ENGAGEMENTS = [
   "Le code source vous appartient — vous n'êtes prisonnier de personne.",
 ];
 
+// ── Concurrents RÉELS du prospect (Google Places), portés depuis market-script.
+//    Un nom de voisin qui sort avant lui vaut tous les pourcentages du monde —
+//    à condition qu'il soit vrai : on vérifie que le site répond avant de citer.
+type Concurrent = { nom: string; site: string; note: number | null; avis: number };
+
+const strip = (x: string) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+const host = (u?: string | null) => { try { return u ? new URL(u).hostname.replace(/^www\./, "") : null; } catch { return null; } };
+
+async function enLigne(url: string): Promise<boolean> {
+  try {
+    const c = AbortSignal.timeout(4000);
+    const r = await fetch(url, { method: "HEAD", redirect: "follow", signal: c });
+    return r.ok || r.status === 405;
+  } catch { return false; }
+}
+
+async function concurrents(metier: string, ville: string, prospect: { company?: string; website?: string }): Promise<Concurrent[]> {
+  const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!key || !metier || !ville) return [];
+  try {
+    const r = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.websiteUri,places.userRatingCount,places.rating" },
+      body: JSON.stringify({ textQuery: `${metier} ${ville}`, languageCode: "fr", maxResultCount: 20 }),
+    });
+    if (!r.ok) return [];
+    const places = ((await r.json()).places || []) as Array<{
+      displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; userRatingCount?: number; rating?: number }>;
+    const mots = strip(ville).replace(/[^a-zà-ÿ\s]/gi, " ").split(/\s+/).filter((w) => w.length > 2);
+    const monHost = host(prospect.website), monNom = strip(prospect.company || "");
+    const vus = new Set<string>();
+    const cand = places
+      .filter((p) => !!p.websiteUri)
+      .filter((p) => !mots.length || mots.some((w) => strip(p.formattedAddress || "").includes(w)))
+      .filter((p) => { const h = host(p.websiteUri); return h && h !== monHost && strip(p.displayName?.text || "") !== monNom; })
+      .sort((a, b) => (b.userRatingCount || 0) - (a.userRatingCount || 0))
+      .filter((p) => { const h = host(p.websiteUri)!; if (vus.has(h)) return false; vus.add(h); return true; })
+      .slice(0, 6);
+    const vivants = await Promise.all(cand.map((p) => enLigne(p.websiteUri!)));
+    return cand.filter((_, i) => vivants[i]).slice(0, 3).map((p) => ({
+      nom: p.displayName?.text || "", site: host(p.websiteUri) || "", note: p.rating ?? null, avis: p.userRatingCount ?? 0,
+    }));
+  } catch { return []; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
@@ -226,6 +272,23 @@ Deno.serve(async (req) => {
     const prixDit = mode === "tranche" ? `${baseMin} € à ${baseMax} €`
       : mode === "apartir" ? `à partir de ${baseMin} €` : `${baseMin} €`;
 
+    // Ce qu'un client lui rapporte : c'est LUI qui donne le chiffre, on fait
+    // juste la multiplication. Rien d'inventé, et c'est son propre argent.
+    const valeurClient = num(R.valeur_client);
+    const eur = (n: number) => `${n.toLocaleString("fr-FR").replace(/\u202f/g, " ")} €`;
+    const ARITHMETIQUE = valeurClient ? `
+── L'ARITHMÉTIQUE DE SON PROPRE ARGENT (chiffre donné par LUI au 1er appel : un client lui rapporte environ ${eur(valeurClient)}) ──
+• 1 client de plus par mois = ${eur(valeurClient * 12)} sur un an
+• 1 client de plus par semaine = ${eur(valeurClient * 52)} sur un an
+• Le site (${prixDit}) est remboursé dès ${Math.max(1, Math.ceil(baseMin / valeurClient))} client${Math.ceil(baseMin / valeurClient) > 1 ? "s" : ""} gagné${Math.ceil(baseMin / valeurClient) > 1 ? "s" : ""}
+Ces trois lignes sont les SEULS calculs autorisés. Tu les présentes comme une hypothèse (« si »), jamais comme une promesse de résultat.` : "";
+
+    const rivaux = await concurrents(ctx.secteur, ctx.ville, { company: p.company, website: p.website });
+    const CONCURRENTS = rivaux.length >= 2 ? `
+── SES CONCURRENTS RÉELS À ${String(ctx.ville).toUpperCase()} (vérifiés : site en ligne au moment de la génération) ──
+${rivaux.map((c) => `• ${c.nom} — ${c.site}${c.note ? ` — ${c.note}/5 sur ${c.avis} avis Google` : ""}`).join("\n")}
+Ce sont de VRAIS établissements. Tu peux les nommer. Tu n'inventes AUCUN autre concurrent, aucun chiffre d'affaires, aucun résultat les concernant.` : "";
+
     const OFFRE_BLOC = `
 ── LA BASE (tranche EXACTE, n'annonce aucun autre montant) ──
 Le site lui-même : ${prixDit}, une fois, sans abonnement.
@@ -273,7 +336,7 @@ POSITIONNEMENT — on ne vend pas « un site » mais un SYSTÈME DIGITAL qui rap
 RÈGLE ANTI-RÉPÉTITION — la plus importante après l'honnêteté :
 - Un argument n'apparaît QU'UNE FOIS dans toute la présentation. Deux bullets qui disent la même chose avec d'autres mots, c'est une faute : tu en supprimes un.
 - Avant d'écrire un bullet, vérifie qu'aucun autre, sur AUCUNE diapo, ne porte déjà la même idée (visibilité, gain de temps, crédibilité, sur-mesure…). Si l'idée est déjà passée, soit tu apportes un angle réellement neuf, soit tu passes à autre chose.
-- Mieux vaut 3 bullets qui disent 3 choses que 5 qui en disent 2.
+- Mieux vaut 3 bullets qui disent 3 choses que 5 qui en disent 2. Les diapos "constat" et "marche" en portent 5, mais 5 DIFFÉRENTS : c'est là que la règle est la plus dure à tenir.
 
 RÈGLE ABSOLUE — zéro blabla, zéro chiffre inventé :
 - Tu ne cites QUE des chiffres présents dans la liste FACTS fournie (avec leur source exacte), OU les données réelles du prospect.
@@ -301,11 +364,22 @@ LES CHIFFRES — le cœur de la présentation (le client veut du concret, pas du
 
 LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 1. kind="recap" : « Ce qu'on s'est dit ». Reprends 3-4 points du RÉCAP avec SES mots : son besoin, sa situation, ce qu'il attend. Aucun chiffre ici. Ne liste PAS ses objections sur cette diapo — on ne lui remet pas ses freins sous le nez en ouverture. Si le récap est vide, reste sur son métier et sa situation, sans inventer de propos.
-2. kind="constat" : sa situation RÉELLE et surtout ce qu'elle lui COÛTE, concrètement. 2 chiffres "figure"+"source".
-   Interdits : les évidences (« vous n'avez pas de site donc on ne vous trouve pas »), les généralités sur « le digital », tout ce qu'il sait déjà. Chaque point doit lui apprendre quelque chose ou nommer une perte précise qu'il n'avait pas chiffrée : le client qui a appelé le concurrent parce qu'il est sorti en premier, la question posée dix fois par jour au téléphone, la demande arrivée à 22 h et jamais rappelée.
-3. kind="marche" : l'opportunité locale de SON métier, chiffrée. 2-3 chiffres "figure"+"source".
+2. kind="constat" : ce que sa situation lui COÛTE. C'est la diapo qui doit faire mal, sans jamais l'humilier. 5 bullets, dont 2 à 3 portant un "figure"+"source".
+   Construis-la dans cet ordre :
+   a) LA FUITE — décris une scène précise, datée dans sa journée, où un client lui échappe maintenant. Pas « vous perdez des clients » : « jeudi 19 h, quelqu'un cherche votre métier, tombe sur trois confrères, appelle le premier — vous n'avez jamais su qu'il existait ». Il doit se reconnaître.
+   b) LE CHIFFRE QUI VALIDE — un fait sourcé de FACTS qui montre que cette scène est la norme, pas l'exception.
+   c) L'ARGENT — si le bloc ARITHMÉTIQUE est fourni, utilise SES chiffres à lui : ce que représente un seul client manqué par mois sur un an. Formulé en hypothèse (« si »), jamais en promesse. C'est le point le plus fort de la diapo, ne le rate pas.
+   d) LE COÛT CACHÉ — le temps qu'il passe à répéter au téléphone ce qu'une page dirait à sa place, les rendez-vous non facturés qui n'aboutissent pas, les demandes hors horaires jamais rappelées. Prends ce que le récap dit de son quotidien.
+   e) LA COMPARAISON — un fait sourcé sur la crédibilité ou la vitesse, relié à ce que ses clients à lui jugent.
+   Interdits : les évidences (« sans site on ne vous trouve pas »), les généralités sur « le digital », le reproche.
+3. kind="marche" : l'opportunité locale, chiffrée. 5 bullets, dont 2 à 3 portant un "figure"+"source".
+   Construis-la dans cet ordre :
+   a) LES CONCURRENTS NOMMÉS — si le bloc CONCURRENTS est fourni, ouvre avec eux : nomme-les, dis qu'ils sont déjà en ligne, cite leur note et leur nombre d'avis. C'est le point le plus convaincant de toute la présentation parce qu'il est vérifiable en direct. Ne les dénigre jamais : le message est « ils occupent le terrain », pas « ils sont mauvais ». Si aucun concurrent n'est fourni, n'en invente aucun et remplace ce point par les recherches locales.
+   b) LES MOTS EXACTS — les requêtes que ses clients tapent vraiment, avec sa ville, entre guillemets. Trois ou quatre, très concrètes.
+   c) LE MOMENT — quand ses clients cherchent, dans leur vraie vie : l'urgence du matin, la comparaison du dimanche soir, la recherche pendant la pause. Un fait sourcé si tu en as un qui colle.
+   d) L'INTENTION — un chiffre sourcé montrant que ces recherches aboutissent à un contact ou à un achat : ce ne sont pas des curieux.
+   e) CE QUI EST À PRENDRE — ce qu'il capterait qui aujourd'hui va ailleurs, en une phrase concrète pour son métier.
    Interdit absolu : la platitude du type « des gens cherchent votre métier en ligne, vous pourriez être celui qu'ils trouvent ». C'est vide, il le sait déjà, et ça décrédibilise tout le reste.
-   Ce qu'on attend : du concret sur SON marché local — sur quelles recherches précises la demande existe, à quel moment ses clients cherchent (l'urgence à 7 h du matin, la comparaison le dimanche soir), ce que fait la concurrence qui est déjà en ligne, et ce qu'il capterait qui lui échappe aujourd'hui. Relie chaque chiffre à une situation réelle de son métier.
 4. kind="site" : titre « Ce qu'on peut construire pour vous » (« peut », c'est une proposition, pas une décision). Le sous-titre dit que c'est ce qu'on a imaginé AVANT le rendez-vous, à partir de ce qu'il a raconté, et que tout reste discutable avec lui.
    4 propositions très concrètes liées à SON métier. Formule-les au conditionnel ou comme des pistes (« on partirait sur… », « on imaginerait… »), jamais comme un fait acquis.
    - Le RÉFÉRENCEMENT doit tenir une place forte : dis précisément sur QUELLES recherches il apparaîtrait (reprends les mots que ses clients tapent vraiment, avec sa ville), et ce que ça change pour lui.
@@ -331,6 +405,9 @@ EN PLUS DES DIAPOS — le champ "questions" : 6 à 8 questions que CE prospect v
 
     const user = `PROSPECT (données réelles) :
 ${JSON.stringify(ctx, null, 2)}
+
+${ARITHMETIQUE}
+${CONCURRENTS}
 
 RÉCAP DU 1ER RENDEZ-VOUS — saisi à la main par le commercial, c'est LA source à suivre :
 ${RECAP_BLOC}

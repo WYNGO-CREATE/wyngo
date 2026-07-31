@@ -104,11 +104,30 @@ function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): 
   const stats = rest.filter((b) => b.figure);
   const plain = rest.filter((b) => !b.figure);
 
+  const enOrdre = (bs: PitchBullet[]): string => {
+    const blocs: string[] = [];
+    let i = 0;
+    while (i < bs.length) {
+      if (bs[i].figure) {
+        const grp: PitchBullet[] = [];
+        while (i < bs.length && bs[i].figure) { grp.push(bs[i]); i++; }
+        blocs.push(statBlocks(grp));
+      } else {
+        const grp: PitchBullet[] = [];
+        while (i < bs.length && !bs[i].figure) { grp.push(bs[i]); i++; }
+        blocs.push(pointList(grp));
+      }
+    }
+    return blocs.join("");
+  };
+
   const body = s.kind === "panier" && s.panier
     ? `${plain.length ? pointList(plain) : ""}${panierHtml(s.panier)}`
     : s.kind === "realisations"
       ? `${plain.length ? pointList(plain) : ""}${realisationsHtml(meta.origin || "")}`
-      : `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
+      : s.kind === "constat" || s.kind === "marche"
+        ? enOrdre(rest)
+        : `${priceBox}${stats.length ? statBlocks(stats) : ""}${plain.length ? pointList(plain) : ""}`;
 
   return `<section class="slide ${s.kind === "panier" || s.kind === "realisations" ? "wide" : ""}">
     <aside class="side">
@@ -201,6 +220,7 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 
   /* ── Listes ── */
   ul.pts{list-style:none;display:flex;flex-direction:column;gap:clamp(9px,1.5vmin,17px);margin-top:clamp(0px,1.6vmin,22px)}
+  .stats+ul.pts,ul.pts+.stats{margin-top:clamp(10px,1.7vmin,20px)}
   ul.pts li{display:flex;gap:clamp(10px,1.3vmin,15px);align-items:flex-start}
   ul.pts .dot{flex:none;width:8px;height:8px;border-radius:3px;background:var(--co);margin-top:.55em}
   ul.pts .li-txt{font-size:clamp(14px,1.85vmin,18.5px);line-height:1.5;color:#2a2721;min-width:0}
