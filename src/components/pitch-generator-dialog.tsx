@@ -5,7 +5,7 @@
  * (premier contact, après 1er appel, objection prix, envoi du contrat…),
  * ajoute au besoin une note (compte-rendu d'appel, message reçu, date de RDV),
  * et l'IA rédige un email adapté au prospect ET à la situation — dans la voix
- * du cabinet Wyngo (exigence + transparence, aucune invention).
+ * du cabinet Group Arsène (exigence + transparence, aucune invention).
  *
  * Ensuite : édition du sujet/corps, envoi direct via Gmail, ou copie.
  * Les situations viennent du moteur `generate-pitch` (source unique).
@@ -123,7 +123,7 @@ export function PitchGeneratorDialog({
           </DialogTitle>
           <DialogDescription>
             Choisis la situation, ajoute un contexte si besoin, l'IA rédige l'email adapté au prospect
-            dans la voix de Wyngo.
+            dans la voix de Group Arsène.
           </DialogDescription>
         </DialogHeader>
 

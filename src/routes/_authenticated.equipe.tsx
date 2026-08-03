@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/equipe")({
     if (!roles?.some((r) => r.role === "admin")) throw redirect({ to: "/prospects" });
   },
   component: EquipePage,
-  head: () => ({ meta: [{ title: "Équipe — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Équipe — Group Arsène Workspace" }] }),
 });
 
 function InviteDialog({ onInvited }: { onInvited: () => void }) {

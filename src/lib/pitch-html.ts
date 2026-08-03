@@ -4,7 +4,7 @@
  *
  * Direction visuelle « clair structuré » : fond blanc, bandeau latéral crème
  * qui garde le nom du prospect sous ses yeux du début à la fin, blocs nets.
- * Palette Wyngo : crème #F7F4EC, encre #141410, cobalt #1B4BE3.
+ * Palette Group Arsène : crème #F7F4EC, encre #141410, cobalt #1B4BE3.
  */
 
 export type PitchBullet = { text: string; figure?: string | null; source?: string | null };
@@ -145,7 +145,7 @@ function slideHtml(s: PitchSlide, meta: PitchMeta, idx: number, total: number): 
 
   return `<section class="slide ${s.kind === "panier" || s.kind === "realisations" ? "wide" : ""}">
     <aside class="side">
-      <div class="brand">Wyngo</div>
+      <div class="brand">Group Arsène</div>
       ${tag ? `<div class="tag">${tag}</div>` : ""}
       <div class="who"><b>${esc(meta.clientName)}</b>${meta.city ? `${esc(meta.city)}<br>` : ""}${meta.sector ? esc(meta.sector) : ""}</div>
     </aside>
@@ -168,12 +168,12 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
   const headline = String(deck.headline || meta.clientName).replace(new RegExp(`^\\s*${rx}\\s*[—–-]\\s*`, "i"), "").trim() || meta.clientName;
   const cover = `<section class="slide cover">
     <aside class="side">
-      <div class="brand">Wyngo</div>
+      <div class="brand">Group Arsène</div>
       <div class="who"><b>${esc(meta.clientName)}</b>${meta.city ? `${esc(meta.city)}<br>` : ""}${meta.sector ? esc(meta.sector) : ""}</div>
     </aside>
     <div class="main">
       <div class="fit">
-        ${meta.origin ? `<img class="c-logo" src="${esc(meta.origin)}/wyngo-logo.png" alt="Wyngo">` : ""}
+        <div class="c-logo">A</div>
         <div class="c-kicker">Présentation préparée pour</div>
         <div class="c-client">${esc(meta.clientName)}</div>
         ${(meta.sector || meta.city) ? `<div class="c-sub">${[meta.sector, meta.city].filter(Boolean).map((x) => esc(x)).join(" · ")}</div>` : ""}
@@ -313,8 +313,9 @@ export function renderPitchHtml(deck: PitchDeck, meta: PitchMeta): string {
 
   /* ── Couverture ── */
   .cover .main{justify-content:center;background:var(--cream)}
-  .c-logo{width:clamp(52px,7.5vmin,86px);height:auto;border-radius:clamp(10px,1.5vmin,18px);display:block;
-    margin-bottom:clamp(20px,3.4vmin,40px)}
+  .c-logo{width:clamp(52px,7.5vmin,86px);height:clamp(52px,7.5vmin,86px);border-radius:clamp(10px,1.5vmin,18px);
+    background:var(--ink);color:var(--cream);display:flex;align-items:center;justify-content:center;
+    font-size:clamp(26px,3.7vmin,42px);font-weight:800;margin-bottom:clamp(20px,3.4vmin,40px)}
   .c-kicker{font-size:clamp(11px,1.35vmin,13px);letter-spacing:.18em;text-transform:uppercase;color:#8a8577;font-weight:700}
   .c-client{font-size:clamp(30px,5vmin,56px);font-weight:800;letter-spacing:-1.6px;line-height:1.06;
     margin:clamp(8px,1.2vmin,14px) 0 0}

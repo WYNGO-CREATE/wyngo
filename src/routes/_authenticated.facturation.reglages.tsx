@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/facturation/reglages")({
   component: ReglagesPage,
-  head: () => ({ meta: [{ title: "Réglages facturation — Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Réglages facturation — Group Arsène" }] }),
 });
 
 type Settings = {
@@ -83,7 +83,7 @@ function ReglagesPage() {
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">{s.is_ei ? "Ton Prénom + Nom *" : "Raison sociale *"}</Label>
-              <Input value={s.legal_name} onChange={(e) => set("legal_name", e.target.value)} placeholder={s.is_ei ? "Hugo Malet" : "Wyngo SARL"} />
+              <Input value={s.legal_name} onChange={(e) => set("legal_name", e.target.value)} placeholder={s.is_ei ? "Hugo Malet" : "Group Arsène SARL"} />
               <p className="text-[11px] text-muted-foreground">
                 {s.is_ei
                   ? "Micro-entreprise / EI : ton prénom + nom (déclarés à l'URSSAF). La mention « EI » est ajoutée automatiquement."
@@ -94,7 +94,7 @@ function ReglagesPage() {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Nom commercial (optionnel)</Label>
-            <Input value={s.trade_name} onChange={(e) => set("trade_name", e.target.value)} placeholder="Ex : Wyngo" />
+            <Input value={s.trade_name} onChange={(e) => set("trade_name", e.target.value)} placeholder="Ex : Group Arsène" />
             <p className="text-[11px] text-muted-foreground">Ta marque, affichée en avant sur les documents. Ton identité légale reste indiquée pour la conformité.</p>
           </div>
           <Field label="Adresse"><Input value={s.address} onChange={(e) => set("address", e.target.value)} placeholder="12 rue des Lilas" /></Field>

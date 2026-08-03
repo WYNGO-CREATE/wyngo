@@ -79,7 +79,7 @@ export function EmailGeneratorForProspect() {
           Générer un email pour un prospect
         </CardTitle>
         <CardDescription>
-          Sélectionne un prospect, l'IA Wyngo génère un email cold ULTRA-personnalisé
+          Sélectionne un prospect, l'IA Group Arsène génère un email cold ULTRA-personnalisé
           (analyse de son site, brief, secteur). L'envoi via Gmail est tracé
           automatiquement dans le suivi de la fiche prospect.
         </CardDescription>

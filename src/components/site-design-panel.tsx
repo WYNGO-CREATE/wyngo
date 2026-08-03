@@ -35,11 +35,11 @@ export function SiteDesignPanel({ html, onChange, siteName, siteId }: { html: st
   const choosePack = async (id: string) => {
     setBusy("pack:" + id);
     try {
-      // Site sans sections Wyngo → un simple re-skin ne changerait rien de visible.
+      // Site sans sections Group Arsène → un simple re-skin ne changerait rien de visible.
       // On propose donc d'appliquer le modèle complet dans ce style (vrai changement).
       const isWy = listSections(html).length > 0 || /wy-scope|data-wy-sec/.test(html);
       if (!isWy) {
-        const ok = confirm(`Ce site n'utilise pas encore le design Wyngo — changer juste le style ne se verrait pas.\n\nAppliquer un SITE COMPLET dans le style « ${PACKS.find((p) => p.id === id)?.label} » ? Cela remplace le contenu par un modèle à remplir.`);
+        const ok = confirm(`Ce site n'utilise pas encore le design Group Arsène — changer juste le style ne se verrait pas.\n\nAppliquer un SITE COMPLET dans le style « ${PACKS.find((p) => p.id === id)?.label} » ? Cela remplace le contenu par un modèle à remplir.`);
         if (!ok) { setBusy(null); return; }
         const full = (id === "artefact" || id === "carbon")
           ? buildStudioTemplate(siteName, id, await fetchProfile())
@@ -187,7 +187,7 @@ export function SiteDesignPanel({ html, onChange, siteName, siteId }: { html: st
         Composer un gabarit simple (ce style)
       </Button>
       <p className="text-[11px] text-muted-foreground -mt-3">
-        Astuce : le simple changement de style ne retouche que les sections Wyngo. Pour tout transformer d'un coup, utilise un modèle complet ci-dessus.
+        Astuce : le simple changement de style ne retouche que les sections Group Arsène. Pour tout transformer d'un coup, utilise un modèle complet ci-dessus.
       </p>
 
       {/* Sections présentes — ordonnées, réordonnables */}
@@ -197,7 +197,7 @@ export function SiteDesignPanel({ html, onChange, siteName, siteId }: { html: st
           <p className="text-xs text-muted-foreground mt-0.5">{present.length} présente{present.length > 1 ? "s" : ""} · réordonne avec ↑ ↓.</p>
         </div>
         {present.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic py-2">Aucune section Wyngo. Compose un site ou ajoute des blocs ci-dessous.</p>
+          <p className="text-xs text-muted-foreground italic py-2">Aucune section Group Arsène. Compose un site ou ajoute des blocs ci-dessous.</p>
         ) : (
           <div className="grid grid-cols-1 gap-1">
             {present.map((id, i) => (

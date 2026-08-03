@@ -18,7 +18,7 @@ import { EmailGeneratorForProspect } from "@/components/email-generator-for-pros
 
 export const Route = createFileRoute("/_authenticated/templates")({
   component: TemplatesPage,
-  head: () => ({ meta: [{ title: "Génération d'emails — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Génération d'emails — Group Arsène Workspace" }] }),
 });
 
 type Template = {
@@ -580,7 +580,7 @@ function TemplateEditor({
   // Preview avec un prospect fictif
   const previewCtx = useMemo(() => ({
     first_name: "Marie", last_name: "Dupont", company: "ACME SAS",
-    email: "marie@acme.fr", sender_name: "Vous", agency_name: "Wyngo",
+    email: "marie@acme.fr", sender_name: "Vous", agency_name: "Group Arsène",
   }), []);
 
   const save = async () => {

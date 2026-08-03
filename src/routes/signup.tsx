@@ -1,7 +1,7 @@
 /**
  * ─── /signup — Inscription DÉSACTIVÉE ─────────────────────────────────────
  *
- * Wyngo Workspace est un outil interne fermé. Les comptes ne se créent pas
+ * Group Arsène Workspace est un outil interne fermé. Les comptes ne se créent pas
  * publiquement : l'admin (Hugo) invite chaque collaborateur via
  * /admin → "Inviter un collaborateur" (qui appelle l'edge function
  * invite-collaborator, génère un magic link + crée le profil + assigne le
@@ -23,7 +23,7 @@ import { CABINET_EMAIL } from "@/lib/cabinet";
 export const Route = createFileRoute("/signup")({
   component: SignupClosed,
   head: () => ({
-    meta: [{ title: "Inscription fermée — Wyngo Workspace" }],
+    meta: [{ title: "Inscription fermée — Group Arsène Workspace" }],
   }),
 });
 
@@ -40,7 +40,7 @@ function SignupClosed() {
           </div>
           <CardTitle>Accès réservé</CardTitle>
           <CardDescription>
-            Wyngo Workspace est un outil interne fermé.
+            Group Arsène Workspace est un outil interne fermé.
             L'inscription publique est désactivée.
           </CardDescription>
         </CardHeader>

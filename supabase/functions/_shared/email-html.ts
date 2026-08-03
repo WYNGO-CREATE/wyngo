@@ -69,7 +69,7 @@ function buildSignatureHtml(sig: EmailSignatureData): string {
     senderName,
     senderEmail,
     senderPhone,
-    agencyName = "Wyngo",
+    agencyName = "Group Arsène",
     agencyWebsite,
     agencyLogoUrl,
     agencyTagline = "Cabinet privé de création digitale",

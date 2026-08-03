@@ -27,7 +27,7 @@ import { buildContract, type ContractKind, type ContractBody } from "@/lib/contr
 
 export const Route = createFileRoute("/_authenticated/facturation/contrats")({
   component: ContractsPage,
-  head: () => ({ meta: [{ title: "Contrats — Facturation Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Contrats — Facturation Group Arsène" }] }),
 });
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -115,7 +115,7 @@ function ContractsPage() {
       .disc{margin-top:24px;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:8px}
       @media print{body{margin:0}}</style></head><body>
       <div class="head"><h1>${esc(b.title || "Contrat de prestation")}</h1>
-      <div style="font-size:11px;color:#555">${ct.number ? "Réf. " + esc(ct.number) + " · " : ""}${esc(settings?.trade_name || settings?.legal_name || "Wyngo")}${settings?.siret ? " · SIRET " + esc(settings.siret) : ""}</div></div>
+      <div style="font-size:11px;color:#555">${ct.number ? "Réf. " + esc(ct.number) + " · " : ""}${esc(settings?.trade_name || settings?.legal_name || "Group Arsène")}${settings?.siret ? " · SIRET " + esc(settings.siret) : ""}</div></div>
       ${secs}
       <div class="sig"><div><b>Le Prestataire</b><div>Fait à ${esc(settings?.city || "…………")}, le ${new Date().toLocaleDateString("fr-FR")}</div><div class="box"></div></div>
       <div><b>Le Client</b> — « Lu et approuvé »<div>${esc(ct.client_name || "…………")}</div><div class="box"></div></div></div>

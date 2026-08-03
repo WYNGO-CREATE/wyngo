@@ -3,7 +3,7 @@
  *
  * Affiche la fiche générée par `market-script` sous forme scannable (pas un
  * script à lire) : accroche, arguments CHIFFRÉS (vraies stats de marché),
- * ligne concurrents, atouts Wyngo, phrase de close. Les variables {{prospect}}
+ * ligne concurrents, atouts Group Arsène, phrase de close. Les variables {{prospect}}
  * et {{expediteur}} sont remplacées avec le prénom du prospect et celui de
  * l'appelant.
  */
@@ -131,7 +131,7 @@ export function CallFiche({
         </div>
       )}
 
-      {/* Atouts Wyngo */}
+      {/* Atouts Group Arsène */}
       {fiche.atouts?.length > 0 && (
         <div>
           <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 inline-flex items-center gap-1">

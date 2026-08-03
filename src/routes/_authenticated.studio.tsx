@@ -1,7 +1,7 @@
 /**
- * ─── Wyngo Studio — Pipeline de production des sites clients (CRM #2) ──
+ * ─── Group Arsène Studio — Pipeline de production des sites clients (CRM #2) ──
  *
- * Backend PARTAGÉ avec Wyngo. Studio lit les prospects "convertis" (les
+ * Backend PARTAGÉ avec Group Arsène. Studio lit les prospects "convertis" (les
  * clients) et pilote la fabrication de leur site, de la maquette au suivi.
  *
  *   #4  Pipeline : Brief → Maquette → Validation client → En ligne → Suivi
@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioPage,
-  head: () => ({ meta: [{ title: "Wyngo Studio — Suivi client & espace client" }] }),
+  head: () => ({ meta: [{ title: "Group Arsène Studio — Suivi client & espace client" }] }),
 });
 
 const SUPABASE_FN = "https://mwkkgubvdswmdaiswepl.supabase.co/functions/v1";
@@ -270,7 +270,7 @@ function StudioPage() {
             <Rocket className="size-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Wyngo Studio</h1>
+            <h1 className="text-2xl font-bold">Group Arsène Studio</h1>
             <p className="text-sm text-muted-foreground">Suis chaque client et son espace dédié : avancement, échéances, blocages, messages et rapports. La réalisation technique du site est assurée par le développeur.</p>
           </div>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" disabled={createDemo.isPending}

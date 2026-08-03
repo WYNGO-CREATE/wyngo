@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/relances")({
   component: CockpitPage,
-  head: () => ({ meta: [{ title: "À faire aujourd'hui — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "À faire aujourd'hui — Group Arsène Workspace" }] }),
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────────

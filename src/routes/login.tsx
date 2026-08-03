@@ -15,7 +15,7 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
     meta: [
-      { title: "Connexion — Wyngo Workspace" },
+      { title: "Connexion — Group Arsène Workspace" },
       { name: "description", content: "Connectez-vous à votre espace de travail" },
     ],
   }),
@@ -63,7 +63,7 @@ function LoginPage() {
           </div>
           <div className="text-center space-y-1">
             <CardTitle className="text-2xl">Connexion</CardTitle>
-            <CardDescription>Accédez à votre espace Wyngo Workspace</CardDescription>
+            <CardDescription>Accédez à votre espace Group Arsène Workspace</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

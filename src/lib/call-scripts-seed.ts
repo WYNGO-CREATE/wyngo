@@ -1,5 +1,5 @@
 /**
- * Script de référence et banque d'objections — méthode Wyngo.
+ * Script de référence et banque d'objections — méthode Group Arsène.
  * Inséré dans la base à la demande de l'utilisateur via le bouton
  * "Importer le script de référence" sur la page /scripts.
  *
@@ -16,11 +16,11 @@ export type SeedScript = {
 
 export const REFERENCE_CALL_SCRIPT: SeedScript = {
   kind: "script",
-  title: "Appel à froid — Méthode Wyngo (5 phases)",
+  title: "Appel à froid — Méthode Group Arsène (5 phases)",
   category: "prise_contact",
   content: `PHASE 1 — La transparence du Fondateur (La rupture)
 
-« Bonjour {{prenom}}, c'est {{expediteur}}, je suis le fondateur du cabinet Wyngo. »
+« Bonjour {{prenom}}, c'est {{expediteur}}, je suis le fondateur du cabinet Group Arsène. »
 
 → Silence de 2 secondes. Il doit entendre "fondateur" et se dire que ce n'est pas un appel de call-center.
 
@@ -56,7 +56,7 @@ C'est comme avoir une belle boutique, mais dans une impasse où personne ne pass
 
 PHASE 3 — La Vision de l'Entrepreneur
 
-« Ma vision en fondant Wyngo, c'était d'en finir avec les sites "cartes de visite" qui coûtent de l'argent et ne font rien. Mon cabinet construit des commerciaux digitaux qui travaillent 24h/24 pour vous ramener du chiffre d'affaires. Mon obsession, c'est une seule chose : vous faire arriver en tête quand vos clients vous cherchent sur Google.
+« Ma vision en fondant Group Arsène, c'était d'en finir avec les sites "cartes de visite" qui coûtent de l'argent et ne font rien. Mon cabinet construit des commerciaux digitaux qui travaillent 24h/24 pour vous ramener du chiffre d'affaires. Mon obsession, c'est une seule chose : vous faire arriver en tête quand vos clients vous cherchent sur Google.
 
 Et il y a une urgence que peu voient venir : Google passe aux réponses par intelligence artificielle. Demain, l'IA ne recommandera qu'une poignée d'entreprises par recherche. Pour en faire partie, il faut un site conçu pour ça — et c'est exactement ce qu'on fait. »
 
@@ -140,6 +140,6 @@ export const REFERENCE_OBJECTIONS: SeedScript[] = [
     kind: "objection",
     title: "Voicemail (message à laisser)",
     category: "voicemail",
-    content: `« Bonjour {{prenom}}, c'est {{expediteur}}, fondateur du cabinet Wyngo à Toulouse. Je vous appelle au sujet de {{entreprise}}, j'ai une idée précise concernant votre présence en ligne et je préférerais vous en parler de vive voix plutôt que par email. Je rappelle demain entre 10h et 11h, sinon vous pouvez me joindre directement au [votre numéro]. Excellente journée. »`,
+    content: `« Bonjour {{prenom}}, c'est {{expediteur}}, fondateur du cabinet Group Arsène à Toulouse. Je vous appelle au sujet de {{entreprise}}, j'ai une idée précise concernant votre présence en ligne et je préférerais vous en parler de vive voix plutôt que par email. Je rappelle demain entre 10h et 11h, sinon vous pouvez me joindre directement au [votre numéro]. Excellente journée. »`,
   },
 ];

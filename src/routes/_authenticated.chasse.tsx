@@ -1,7 +1,7 @@
 /**
  * ─── Chasse aux prospects — Détecteur de TPE sans site web ───
  *
- * Cœur du modèle business Wyngo : on cherche des TPE françaises via Pappers,
+ * Cœur du modèle business Group Arsène : on cherche des TPE françaises via Pappers,
  * on vérifie leur statut web via website-checker, on les classifie automatiquement
  * (🔥 pas de site / 🟡 site obsolète / ✅ site OK), et on ajoute les CIBLES
  * PRIME au CRM en 1 clic — déjà tagguées pour campagne ciblée.
@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/chasse")({
   component: ChassePage,
-  head: () => ({ meta: [{ title: "Chasse aux prospects — Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Chasse aux prospects — Group Arsène" }] }),
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ type EnrichedResult = PappersResult & {
   enriching: boolean;
 };
 
-// Codes NAF de TPE typiques pour Wyngo
+// Codes NAF de TPE typiques pour Group Arsène
 // NAF_PRESETS est maintenant généré depuis le catalogue centralisé
 // `src/lib/trades-catalog.ts` (60+ métiers organisés par catégorie).
 
@@ -481,7 +481,7 @@ function ChassePage() {
     const sorted = [...results]
       // On ne garde QUE les cibles : pas de site 🔥 ou site obsolète 🟡.
       // Les sites déjà bons ("has_website") sont écartés — ce ne sont pas des
-      // prospects pour Wyngo. En cours d'analyse ("unknown"/enriching) : gardés
+      // prospects pour Group Arsène. En cours d'analyse ("unknown"/enriching) : gardés
       // tant que le verdict n'est pas tombé.
       .filter((r) => r.enriching || r.website_status === "no_website" || r.website_status === "outdated" || r.website_status === "unknown")
       .sort((a, b) => STATUS_META[a.website_status].priority - STATUS_META[b.website_status].priority);

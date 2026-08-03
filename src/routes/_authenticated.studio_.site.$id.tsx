@@ -1,5 +1,5 @@
 /**
- * ─── Wyngo Studio — Éditeur de site piloté par l'IA ───────────────────
+ * ─── Group Arsène Studio — Éditeur de site piloté par l'IA ───────────────────
  *
  * Édite le site d'un client. Aperçu en direct (iframe) + modifications en
  * langage naturel : tu décris la modif, l'IA modifie le vrai HTML.
@@ -32,7 +32,7 @@ const APP_URL = "https://wyngo.bold-unit-739e.workers.dev";
 
 export const Route = createFileRoute("/_authenticated/studio_/site/$id")({
   component: SiteEditor,
-  head: () => ({ meta: [{ title: "Éditeur de site — Wyngo Studio" }] }),
+  head: () => ({ meta: [{ title: "Éditeur de site — Group Arsène Studio" }] }),
 });
 
 type Site = { id: string; prospect_id: string; title: string | null; slug: string | null; status: string; html: string | null };

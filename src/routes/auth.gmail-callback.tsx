@@ -19,7 +19,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth/gmail-callback")({
   component: GmailCallbackPage,
   head: () => ({
-    meta: [{ title: "Connexion Gmail — Wyngo Workspace" }],
+    meta: [{ title: "Connexion Gmail — Group Arsène Workspace" }],
   }),
 });
 

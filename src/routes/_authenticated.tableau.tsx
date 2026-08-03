@@ -35,7 +35,7 @@ import { EVENT_LABELS, STATUS_LABELS } from "@/lib/crm";
 
 export const Route = createFileRoute("/_authenticated/tableau")({
   component: DashboardPage,
-  head: () => ({ meta: [{ title: "Tableau de bord — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Tableau de bord — Group Arsène Workspace" }] }),
 });
 
 // ════════════════════════════════════════════════════════════════════

@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/prospects/$id")({
   component: ProspectDetail,
-  head: () => ({ meta: [{ title: "Fiche prospect — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Fiche prospect — Group Arsène Workspace" }] }),
 });
 
 function ProspectDetail() {

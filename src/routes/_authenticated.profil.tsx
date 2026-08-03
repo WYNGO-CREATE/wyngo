@@ -15,7 +15,7 @@ import { SignaturePreviewCard } from "@/components/signature-preview-card";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   component: ProfilPage,
-  head: () => ({ meta: [{ title: "Mon profil — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Mon profil — Group Arsène Workspace" }] }),
 });
 
 const profileSchema = z.object({

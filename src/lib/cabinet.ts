@@ -15,4 +15,4 @@
 export const CABINET_EMAIL = "contact@wyngo.fr";
 
 /** Nom affiché dans les emails sortants et sur les documents. */
-export const CABINET_NOM = "Cabinet Wyngo";
+export const CABINET_NOM = "Group Arsène";

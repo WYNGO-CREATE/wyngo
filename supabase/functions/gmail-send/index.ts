@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       senderName:    profile?.full_name,
       senderEmail:   profile?.email || account.email,
       senderPhone:   profile?.phone,
-      agencyName:    agency?.name || "Wyngo",
+      agencyName:    agency?.name || "Group Arsène",
       agencyWebsite: agency?.website_url,
       agencyLogoUrl: agency?.logo_url,
     };
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
       ville: prospect?.location || "", localisation: prospect?.location || "",
       expediteur: profile?.full_name || "", sender: profile?.full_name || "",
       telephone_expediteur: profile?.phone || "",
-      agence: agency?.name || "Wyngo", site_agence: agency?.website_url || "",
+      agence: agency?.name || "Group Arsène", site_agence: agency?.website_url || "",
     };
     const render = (tpl: string): string => {
       let out = (tpl || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k: string) =>
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
     // ─── Construction du From avec nom d'affichage ───
     // Format RFC 5322 : "Nom" <email>. Indispensable pour la délivrabilité
     // (les anti-spam pénalisent fortement un From "email brut" sans display name).
-    const fromDisplayName = sigData.agencyName || sigData.senderName || "Wyngo";
+    const fromDisplayName = sigData.agencyName || sigData.senderName || "Group Arsène";
     const encodedFromName = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(fromDisplayName)))}?=`;
     const fromHeader = `${encodedFromName} <${account.email}>`;
 

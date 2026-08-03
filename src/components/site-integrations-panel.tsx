@@ -4,7 +4,7 @@
  * Catalogue d'intégrations "sans code" : le client branche SON propre
  * compte (Stripe, Calendly, Doctolib…) en collant un lien/identifiant, et
  * on injecte l'embed officiel au bon endroit du site. Aucune clé secrète
- * stockée côté Wyngo — que des embeds publics côté client.
+ * stockée côté Group Arsène — que des embeds publics côté client.
  */
 
 import { useState } from "react";

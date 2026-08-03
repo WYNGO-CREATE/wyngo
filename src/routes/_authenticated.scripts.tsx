@@ -18,7 +18,7 @@ import { CallPhilosophyCard } from "@/components/call-philosophy-card";
 
 export const Route = createFileRoute("/_authenticated/scripts")({
   component: ScriptsPage,
-  head: () => ({ meta: [{ title: "Scripts d'appel — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Scripts d'appel — Group Arsène Workspace" }] }),
 });
 
 type CallScript = {
@@ -214,7 +214,7 @@ function ScriptsPage() {
             </p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">
               {isEmpty
-                ? "Démarrez en important le script de référence (méthode Wyngo + 7 objections classiques)."
+                ? "Démarrez en important le script de référence (méthode Group Arsène + 7 objections classiques)."
                 : `Créez votre premier ${tab === "script" ? "script" : "réponse à une objection"}.`}
             </p>
             {isEmpty ? (
@@ -368,7 +368,7 @@ function AIGenerateDialog({
             Générer {kind === "script" ? "un script d'appel" : "une réponse d'objection"} avec l'IA
           </DialogTitle>
           <DialogDescription>
-            L'IA utilise votre contexte agence + la méthode Wyngo (transparence fondateur, ROI, maquette 48h, etc.).
+            L'IA utilise votre contexte agence + la méthode Group Arsène (transparence fondateur, ROI, maquette 48h, etc.).
           </DialogDescription>
         </DialogHeader>
 

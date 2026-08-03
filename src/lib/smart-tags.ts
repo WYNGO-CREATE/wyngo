@@ -78,7 +78,7 @@ const TAG_DEFS: Record<SmartTagKey, Omit<SmartTag, "key">> = {
     // Indigo (bleu profond) — distinct de sky (à appeler), cyan (aperçu envoyé),
     // violet (intéressé), rose (jamais/refus). Évoque l'opportunité business.
     cls: "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800",
-    tooltip: "Pas de site web — cible prime Wyngo",
+    tooltip: "Pas de site web — cible prime Group Arsène",
     priority: 5,
   },
   top_rated: {
@@ -171,7 +171,7 @@ export function computeSmartTags(ctx: SmartTagContext): SmartTag[] {
     }
   }
 
-  // SANS SITE : cible prime Wyngo
+  // SANS SITE : cible prime Group Arsène
   if (ctx.website_status === "no_website") tags.push("no_website");
 
   // TOP NOTE : note Google >= 4.5

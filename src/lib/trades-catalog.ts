@@ -1,7 +1,7 @@
 /**
  * ─── Catalogue des corps de métier TPE françaises ────────────────────────
  *
- * Liste exhaustive (~160 trades) des secteurs d'activité que Wyngo cible.
+ * Liste exhaustive (~160 trades) des secteurs d'activité que Group Arsène cible.
  * Utilisée pour :
  *   • Chasse aux prospects → dropdown des codes NAF (Pappers)
  *   • Détection sector → mapping NAF → thème visuel pour l'Aperçu

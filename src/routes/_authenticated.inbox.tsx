@@ -62,7 +62,7 @@ import { CABINET_EMAIL } from "@/lib/cabinet";
 export const Route = createFileRoute("/_authenticated/inbox")({
   component: InboxPage,
   head: () => ({
-    meta: [{ title: "Inbox — Wyngo Workspace" }],
+    meta: [{ title: "Inbox — Group Arsène Workspace" }],
   }),
 });
 

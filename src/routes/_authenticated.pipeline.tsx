@@ -28,7 +28,7 @@ import { Search, Phone, Mail, ChevronDown, ArrowRightLeft, Plus } from "lucide-r
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   component: PipelinePage,
-  head: () => ({ meta: [{ title: "Statut prospect — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Statut prospect — Group Arsène Workspace" }] }),
 });
 
 type ProspectRow = {

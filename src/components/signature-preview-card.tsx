@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 /**
  * Aperçu live de la signature email qui sera ajoutée à chaque envoi.
- * — Wordmark Wyngo par défaut
+ * — Wordmark Group Arsène par défaut
  * — Option d'uploader un logo personnalisé (override)
  */
 export function SignaturePreviewCard() {
@@ -106,7 +106,7 @@ export function SignaturePreviewCard() {
                     lineHeight: 1,
                   }}
                 >
-                  {agency?.name || "Wyngo"}
+                  {agency?.name || "Group Arsène"}
                   <span style={{ color: "#b8997f" }}>.</span>
                 </span>
                 <div
@@ -175,7 +175,7 @@ export function SignaturePreviewCard() {
               )}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Laissez vide pour utiliser le wordmark typographique <strong>Wyngo<span style={{ color: "#b8997f" }}>.</span></strong> par défaut.
+              Laissez vide pour utiliser le wordmark typographique <strong>Group Arsène<span style={{ color: "#b8997f" }}>.</span></strong> par défaut.
               Pour un logo image, hébergez-le sur Imgur, Supabase Storage, ou Cloudinary, puis collez l'URL ici (PNG/JPG, max 120px de large recommandé).
             </p>
           </div>

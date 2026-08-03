@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/facturation/document/$id")({
   component: DocumentEditor,
-  head: () => ({ meta: [{ title: "Document — Facturation Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Document — Facturation Group Arsène" }] }),
 });
 
 type Line = { description: string; quantity: number; unit_price_ht: number; vat_rate: number };

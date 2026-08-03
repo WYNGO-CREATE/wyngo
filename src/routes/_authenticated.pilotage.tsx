@@ -16,7 +16,7 @@ import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/pilotage")({
   component: PilotagePage,
-  head: () => ({ meta: [{ title: "Pilotage — Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Pilotage — Group Arsène" }] }),
 });
 
 type Doc = { id: string; number: string | null; type: string; status: string; total_ttc: number | null; client_name: string | null; due_date: string | null; sent_at: string | null; paid_at: string | null; issue_date: string | null; created_at: string };

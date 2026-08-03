@@ -39,7 +39,7 @@ type DuplicateMatch = {
 
 export const Route = createFileRoute("/_authenticated/prospects/")({
   component: ProspectsPage,
-  head: () => ({ meta: [{ title: "Prospects — Wyngo Workspace" }] }),
+  head: () => ({ meta: [{ title: "Prospects — Group Arsène Workspace" }] }),
 });
 
 const prospectSchema = z.object({
@@ -453,7 +453,7 @@ function ProspectsPage() {
                   <div className="space-y-2"><Label htmlFor="company">Société</Label><Input id="company" name="company" /></div>
                   <div className="space-y-2"><Label htmlFor="location">Ville</Label><Input id="location" name="location" placeholder="Lyon, Toulouse…" /></div>
                 </div>
-                <p className="text-[11px] text-muted-foreground -mt-1">💡 Renseigne <b>Société + Ville</b> : Wyngo enrichira tout seul (téléphone, site, note Google, aperçu) comme dans la chasse.</p>
+                <p className="text-[11px] text-muted-foreground -mt-1">💡 Renseigne <b>Société + Ville</b> : Group Arsène enrichira tout seul (téléphone, site, note Google, aperçu) comme dans la chasse.</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" value={liveEmail} onChange={(e) => setLiveEmail(e.target.value)} /></div>
                   <div className="space-y-2"><Label htmlFor="phone">Téléphone</Label><Input id="phone" name="phone" value={livePhone} onChange={(e) => setLivePhone(e.target.value)} /></div>

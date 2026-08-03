@@ -26,7 +26,7 @@ import { AppointmentForm, type ApptProspect } from "@/components/appointment-for
 
 export const Route = createFileRoute("/_authenticated/agenda")({
   component: AgendaPage,
-  head: () => ({ meta: [{ title: "Agenda — Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Agenda — Group Arsène" }] }),
 });
 
 type Prospect = { company: string | null; first_name: string | null; last_name: string | null };

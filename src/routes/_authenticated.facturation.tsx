@@ -17,7 +17,7 @@ import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/facturation")({
   component: FacturationLayout,
-  head: () => ({ meta: [{ title: "Facturation — Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Facturation — Group Arsène" }] }),
 });
 
 // Layout : affiche le dashboard sur /facturation, sinon les sous-routes

@@ -1,5 +1,5 @@
 /**
- * ─── Wyngo Design System — moteur de style des sites Studio ────────────
+ * ─── Group Arsène Design System — moteur de style des sites Studio ────────────
  *
  * Principe : un design-system commun (classes `.wy-*`) + des PACKS de style
  * interchangeables (typo + palette + motion + texture). Changer de pack

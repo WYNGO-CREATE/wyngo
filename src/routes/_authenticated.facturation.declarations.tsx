@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/facturation/declarations")({
   component: DeclarationsPage,
-  head: () => ({ meta: [{ title: "Déclarations — Facturation Wyngo" }] }),
+  head: () => ({ meta: [{ title: "Déclarations — Facturation Group Arsène" }] }),
 });
 
 // Plafonds micro-entreprise prestations de services (2025, indicatif)
