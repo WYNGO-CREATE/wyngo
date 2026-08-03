@@ -17,6 +17,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { CalendarClock, Loader2, Video, MapPin, Link2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { CABINET_EMAIL } from "@/lib/cabinet";
 
 export type ApptProspect = { id: string; company: string | null; first_name: string | null; last_name: string | null; email: string | null } | null;
 export type ExistingAppt = { id: string; title: string; scheduled_at: string; duration_min: number; is_video: boolean; location: string | null; notes: string | null; client_email: string | null };
@@ -40,7 +41,7 @@ export function startGoogleOAuth() {
     scope: GOOGLE_SCOPES,
     access_type: "offline",
     prompt: "select_account consent",
-    login_hint: "contact@wyngo.fr",
+    login_hint: CABINET_EMAIL,
     state: "gmail_oauth",
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

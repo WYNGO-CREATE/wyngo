@@ -109,11 +109,14 @@ Deno.serve(async (req) => {
     const userInfo = await userInfoRes.json();
     const gmailEmail = userInfo.email as string;
 
-    // ─── VERROU : un SEUL compte autorisé, contact@wyngo.fr ───
+    // ─── VERROU : un SEUL compte autorisé ───
     // Le cabinet envoie exclusivement depuis cette adresse. Toute autre boîte
     // connectée par erreur est refusée AVANT enregistrement (garde-fou serveur,
     // indépendant de ce que l'utilisateur choisit dans l'écran Google).
-    const ALLOWED_GMAIL = "contact@wyngo.fr";
+    // L'adresse se change par la variable CABINET_EMAIL, sans redéploiement
+    // du code : c'est ce verrou qui, en dur, empêchait de connecter une
+    // nouvelle boîte lors d'un changement d'adresse.
+    const ALLOWED_GMAIL = (Deno.env.get("CABINET_EMAIL") || "contact@wyngo.fr").trim().toLowerCase();
     if ((gmailEmail || "").trim().toLowerCase() !== ALLOWED_GMAIL) {
       return json({
         error: `Seul le compte ${ALLOWED_GMAIL} peut être connecté. Tu as choisi « ${gmailEmail} » — reconnecte-toi en sélectionnant ${ALLOWED_GMAIL}.`,

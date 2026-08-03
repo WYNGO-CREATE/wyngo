@@ -7,6 +7,7 @@ import { Mail, CheckCircle2, AlertCircle, RefreshCw, Unplug, ExternalLink } from
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { CABINET_EMAIL } from "@/lib/cabinet";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -44,7 +45,7 @@ export function GmailConnectCard() {
       scope: SCOPES,
       access_type: "offline",
       prompt: "select_account consent",
-    login_hint: "contact@wyngo.fr",  // choix du compte + consentement (garantit le refresh_token)
+    login_hint: CABINET_EMAIL,  // choix du compte + consentement (garantit le refresh_token)
       state: "gmail_oauth",
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

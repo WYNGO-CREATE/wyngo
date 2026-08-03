@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { toast } from "sonner";
+import { CABINET_EMAIL } from "@/lib/cabinet";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -82,7 +83,7 @@ function LoginPage() {
                 par l'admin (Hugo) qui invite les collaborateurs depuis
                 /admin → "Inviter un collaborateur". */}
             <p className="text-xs text-center text-muted-foreground">
-              Accès réservé aux collaborateurs invités · contact@wyngo.fr
+              Accès réservé aux collaborateurs invités · {CABINET_EMAIL}
             </p>
           </form>
         </CardContent>

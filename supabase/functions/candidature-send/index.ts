@@ -16,7 +16,7 @@ const cors = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
-const DEST = "contact@wyngo.fr";
+const DEST = Deno.env.get("CABINET_EMAIL") || "contact@wyngo.fr";
 const b64 = (s: string) => btoa(unescape(encodeURIComponent(s)));
 
 async function refreshAccessToken(refresh_token: string) {

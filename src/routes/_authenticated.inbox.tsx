@@ -57,6 +57,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { renderTemplate } from "@/lib/render-template";
 import { Sparkles } from "lucide-react";
+import { CABINET_EMAIL } from "@/lib/cabinet";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   component: InboxPage,
@@ -444,7 +445,7 @@ function InboxPage() {
                   ].join(" "),
                   access_type: "offline",
                   prompt: "select_account consent",
-                  login_hint: "contact@wyngo.fr",
+                  login_hint: CABINET_EMAIL,
                   state: "gmail_oauth",
                 });
                 window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;

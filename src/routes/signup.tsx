@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { Mail, Lock } from "lucide-react";
+import { CABINET_EMAIL } from "@/lib/cabinet";
 
 export const Route = createFileRoute("/signup")({
   component: SignupClosed,
@@ -47,11 +48,11 @@ function SignupClosed() {
           <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
             <p className="mb-2">Pour obtenir un accès collaborateur :</p>
             <a
-              href="mailto:contact@wyngo.fr?subject=Demande%20d'acc%C3%A8s%20Wyngo%20Workspace"
+              href={`mailto:${CABINET_EMAIL}?subject=${encodeURIComponent("Demande d'accès au workspace")}`}
               className="inline-flex items-center gap-1.5 text-primary font-medium hover:underline"
             >
               <Mail className="w-4 h-4" />
-              contact@wyngo.fr
+              {CABINET_EMAIL}
             </a>
           </div>
           <Button asChild className="w-full">
