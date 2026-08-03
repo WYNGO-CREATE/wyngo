@@ -12,7 +12,7 @@
  */
 
 /** Adresse depuis laquelle le cabinet écrit, et seule boîte Gmail connectable. */
-export const CABINET_EMAIL = "contact@wyngo.fr";
+export const CABINET_EMAIL = "contact@grouparsene.fr";
 
 /** Nom affiché dans les emails sortants et sur les documents. */
 export const CABINET_NOM = "Group Arsène";
