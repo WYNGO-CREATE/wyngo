@@ -66,8 +66,8 @@ export const TRADES: Trade[] = [
   // ════════════════════════════════════════════════════════════════════
   // ALIMENTATION & BOUCHE
   // ════════════════════════════════════════════════════════════════════
-  { id: "boulangerie", label: "Boulangerie - Pâtisserie", naf: "10.71B", category: "Alimentation & bouche", sector: "boulangerie" },
-  { id: "patisserie", label: "Pâtisserie artisanale", naf: "10.71C", category: "Alimentation & bouche", sector: "boulangerie" },
+  { id: "boulangerie", label: "Boulangerie - Pâtisserie", naf: "10.71C", category: "Alimentation & bouche", sector: "boulangerie" },
+  { id: "patisserie", label: "Pâtisserie artisanale", naf: "10.71D", category: "Alimentation & bouche", sector: "boulangerie" },
   { id: "chocolaterie", label: "Chocolaterie - Confiserie", naf: "10.82Z", category: "Alimentation & bouche", sector: "boulangerie" },
   { id: "glacier", label: "Glacier - Fabricant de glaces", naf: "10.52Z", category: "Alimentation & bouche", sector: "boulangerie" },
   { id: "torrefacteur", label: "Torréfacteur - Café artisanal", naf: "10.83Z", category: "Alimentation & bouche", sector: "commerce" },
@@ -91,7 +91,7 @@ export const TRADES: Trade[] = [
   { id: "restaurant", label: "Restaurant traditionnel", naf: "56.10A", category: "Restauration & boissons", sector: "restaurant" },
   { id: "restaurant_gastro", label: "Restaurant gastronomique", naf: "56.10A", category: "Restauration & boissons", sector: "restaurant" },
   { id: "fastfood", label: "Restauration rapide", naf: "56.10C", category: "Restauration & boissons", sector: "restaurant" },
-  { id: "pizzeria", label: "Pizzeria", naf: "56.10B", category: "Restauration & boissons", sector: "restaurant" },
+  { id: "pizzeria", label: "Pizzeria", naf: "56.10C", category: "Restauration & boissons", sector: "restaurant" },
   { id: "creperie", label: "Crêperie", naf: "56.10C", category: "Restauration & boissons", sector: "restaurant" },
   { id: "food_truck", label: "Food truck - Cuisine mobile", naf: "56.10C", category: "Restauration & boissons", sector: "restaurant" },
   { id: "sandwicherie", label: "Sandwicherie - Snacking", naf: "56.10C", category: "Restauration & boissons", sector: "restaurant" },
@@ -184,9 +184,9 @@ export const TRADES: Trade[] = [
   { id: "constructeur_maisons", label: "Constructeur de maisons", naf: "41.20A", category: "Artisanat & bâtiment", sector: "artisan" },
   { id: "piscines", label: "Constructeur de piscines", naf: "43.99B", category: "Artisanat & bâtiment", sector: "artisan" },
   { id: "amenagement_combles", label: "Aménagement combles - Extension", naf: "43.32A", category: "Artisanat & bâtiment", sector: "artisan" },
-  { id: "terrassement", label: "Terrassement - VRD", naf: "43.12B", category: "Artisanat & bâtiment", sector: "artisan" },
+  { id: "terrassement", label: "Terrassement - VRD", naf: "43.12A", category: "Artisanat & bâtiment", sector: "artisan" },
   { id: "demolition", label: "Démolition", naf: "43.11Z", category: "Artisanat & bâtiment", sector: "artisan" },
-  { id: "desinsectisation", label: "Désinsectisation - Nuisibles", naf: "81.29Z", category: "Artisanat & bâtiment", sector: "artisan" },
+  { id: "desinsectisation", label: "Désinsectisation - Nuisibles", naf: "81.29A", category: "Artisanat & bâtiment", sector: "artisan" },
   { id: "ramoneur", label: "Ramoneur - Fumisterie", naf: "81.22Z", category: "Artisanat & bâtiment", sector: "artisan" },
   { id: "energies_renouvelables", label: "Énergies renouvelables - Solaire", naf: "43.22B", category: "Artisanat & bâtiment", sector: "artisan" },
 
@@ -211,7 +211,7 @@ export const TRADES: Trade[] = [
   // AUTO & MOTO
   // ════════════════════════════════════════════════════════════════════
   { id: "garage", label: "Garage automobile", naf: "45.20A", category: "Auto & moto", sector: "artisan" },
-  { id: "carrosserie", label: "Carrosserie - Peinture auto", naf: "45.20B", category: "Auto & moto", sector: "artisan" },
+  { id: "carrosserie", label: "Carrosserie - Peinture auto", naf: "45.20A", category: "Auto & moto", sector: "artisan" },
   { id: "pneus", label: "Centre pneumatiques", naf: "45.20A", category: "Auto & moto", sector: "artisan" },
   { id: "lavage_auto", label: "Lavage auto - Detailing", naf: "45.20A", category: "Auto & moto", sector: "artisan" },
   { id: "moto_garage", label: "Vente / Réparation moto", naf: "45.40Z", category: "Auto & moto", sector: "artisan" },
@@ -285,7 +285,7 @@ export const TRADES: Trade[] = [
   // ════════════════════════════════════════════════════════════════════
   // SERVICES AUX PARTICULIERS
   // ════════════════════════════════════════════════════════════════════
-  { id: "pressing", label: "Pressing - Blanchisserie", naf: "96.01A", category: "Services aux particuliers", sector: "service" },
+  { id: "pressing", label: "Pressing - Blanchisserie", naf: "96.01B", category: "Services aux particuliers", sector: "service" },
   { id: "cordonnerie", label: "Cordonnerie - Clés - Imprimerie minute", naf: "95.23Z", category: "Services aux particuliers", sector: "service" },
   { id: "couturière", label: "Retouches - Couturière", naf: "95.29Z", category: "Services aux particuliers", sector: "service" },
   { id: "photographe", label: "Photographe (portrait, mariage)", naf: "74.20Z", category: "Services aux particuliers", sector: "service" },
@@ -331,7 +331,7 @@ export const TRADES: Trade[] = [
   { id: "interim", label: "Agence d'intérim", naf: "78.20Z", category: "Services aux entreprises", sector: "service" },
   { id: "formation_pro", label: "Organisme de formation professionnelle", naf: "85.59A", category: "Services aux entreprises", sector: "service" },
   { id: "courtier_assurance", label: "Courtier en assurance", naf: "66.22Z", category: "Finance & patrimoine", sector: "service" },
-  { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19A", category: "Finance & patrimoine", sector: "service" },
+  { id: "courtier_credit", label: "Courtier en crédit / Mortgage", naf: "66.19B", category: "Finance & patrimoine", sector: "service" },
   { id: "conseil_patrimoine", label: "Conseiller en gestion de patrimoine", naf: "66.22Z", category: "Finance & patrimoine", sector: "service", keywords: "gestion de patrimoine|gestion privée|conseil patrimonial|conseiller patrimonial", excludeNaf: "68.20|68.10|41.|64.20|43.|90." },
   { id: "logistique", label: "Logistique - Transport", naf: "52.29B", category: "Services aux entreprises", sector: "service" },
 
