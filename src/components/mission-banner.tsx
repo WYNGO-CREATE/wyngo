@@ -17,6 +17,7 @@ import { Compass } from "lucide-react";
 type Mission = {
   id: string; metier: string; commune: string; total_connu: number | null;
   verifies: number; cibles: number; appelees: number; etat: string;
+  region: string | null; nouvelle: boolean;
 };
 
 export function MissionBanner({

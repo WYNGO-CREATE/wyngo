@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/secteurs")({
 type Mission = {
   id: string; metier: string; commune: string; total_connu: number | null;
   verifies: number; cibles: number; appelees: number; etat: string;
+  region: string | null; nouvelle: boolean;
 };
 type Conquete = {
   commune: string; metier: string; lat: number; lng: number;
@@ -92,6 +93,30 @@ function Missions() {
     },
   });
 
+  // Une mission est une proposition : on doit pouvoir la refuser sans se
+  // justifier. Le territoire redevient libre pour quelqu'un d'autre.
+  const passer = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).rpc("mission_passer");
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Mission passée — on t'en propose une autre.");
+      qc.invalidateQueries({ queryKey: ["mission-courante"] });
+      qc.invalidateQueries({ queryKey: ["carte-conquetes"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const regions = useQuery({
+    queryKey: ["conquete-regions"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("conquete_par_region");
+      if (error) throw new Error(error.message);
+      return (data || []) as { region: string; missions: number; conquises: number; villes_total: number }[];
+    },
+  });
+
   const ouvrirTerritoire = useMutation({
     mutationFn: async () => {
       const t = TRADES.find((x) => x.naf === naf);
@@ -134,8 +159,7 @@ function Missions() {
       {!mission.isLoading && !m && (
         <Card>
           <CardContent className="p-5 text-sm text-muted-foreground">
-            Aucune mission disponible. Ouvre un territoire ci-dessous : chaque commune alentour
-            devient une mission, et la plus petite te sera attribuée automatiquement.
+            Aucune mission disponible pour le moment.
           </CardContent>
         </Card>
       )}
@@ -148,21 +172,38 @@ function Missions() {
                 <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Ta mission</p>
                 <h2 className="text-xl font-bold mt-0.5">{m.metier} à {m.commune}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {(m.total_connu ?? 0).toLocaleString("fr-FR")} entreprises sur le secteur
+                  {m.region}
+                  {m.total_connu != null
+                    ? ` · ${m.total_connu.toLocaleString("fr-FR")} entreprises sur le secteur`
+                    : " · taille du secteur connue après la première chasse"}
                 </p>
               </div>
-              <Badge variant="outline" className="text-[11px]"><Flag className="h-3 w-3 mr-1" /> en cours</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[11px]"><Flag className="h-3 w-3 mr-1" /> en cours</Badge>
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground"
+                  disabled={passer.isPending} onClick={() => passer.mutate()}>
+                  {passer.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Passer mon tour"}
+                </Button>
+              </div>
             </div>
 
-            <div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+            {/* La barre n'a de sens que si l'on connaît la taille du secteur —
+                ce n'est le cas qu'après une première chasse. */}
+            {m.total_connu != null ? (
+              <div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  {Number(m.verifies)} vérifiées sur {m.total_connu.toLocaleString("fr-FR")}
+                  {restantAVerifier > 0 && <> · <b className="text-foreground">{restantAVerifier} à vérifier dans la chasse</b></>}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {Number(m.verifies)} vérifiées sur {(m.total_connu ?? 0).toLocaleString("fr-FR")}
-                {restantAVerifier > 0 && <> · <b className="text-foreground">{restantAVerifier} à vérifier dans la chasse</b></>}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {Number(m.verifies)} entreprise{Number(m.verifies) > 1 ? "s" : ""} vérifiée{Number(m.verifies) > 1 ? "s" : ""} pour l'instant.
               </p>
-            </div>
+            )}
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
               <span className="flex items-center gap-1.5">
@@ -184,9 +225,16 @@ function Missions() {
         </Card>
       )}
 
-      {/* ─── Ouvrir un territoire ─── */}
+      {/* ─── Ouvrir un territoire à la main ───
+          Les missions arrivent toutes seules ; ceci ne sert qu'à forcer une
+          zone précise — un déplacement, une opportunité, une demande. */}
       <Card>
-        <CardContent className="p-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
+        <CardContent className="p-4 space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Les missions se génèrent seules. Ce bloc ne sert qu'à <b>forcer une zone précise</b> :
+            il découpe la ville et ses alentours en missions, avec le nombre réel d'entreprises.
+          </p>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
           <div className="space-y-1.5">
             <Label className="text-xs">Métier</Label>
             <select value={naf} onChange={(e) => setNaf(e.target.value)}
@@ -214,6 +262,7 @@ function Missions() {
             {ouvrirTerritoire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Compass className="h-4 w-4" />}
             Ouvrir le territoire
           </Button>
+        </div>
         </CardContent>
       </Card>
 
@@ -260,6 +309,21 @@ function Missions() {
               </div>
             )}
           </div>
+
+          {/* Avancement région par région : la vue d'ensemble que la carte
+              seule ne donne pas. */}
+          {(regions.data ?? []).some((r) => Number(r.missions) > 0) && (
+            <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2 text-xs border-t pt-3">
+              {(regions.data ?? []).filter((r) => Number(r.missions) > 0).map((r) => (
+                <div key={r.region} className="flex items-baseline justify-between gap-2">
+                  <span className="truncate">{r.region}</span>
+                  <span className="text-muted-foreground whitespace-nowrap">
+                    {Number(r.conquises)}/{Number(r.missions)} · {Number(r.villes_total)} villes
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {conquises.length > 0 && (
             <div className="space-y-1.5">
