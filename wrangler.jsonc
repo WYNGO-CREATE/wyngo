@@ -1,6 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  // Le nom du worker qui sert réellement le CRM. Il s'appelait
+  // "tanstack-start-app" (nom du gabarit de départ), ce qui envoyait tout
+  // `wrangler deploy` sans argument sur un worker inutilisé.
+  "name": "wyngoworkspace",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",

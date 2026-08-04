@@ -17,6 +17,7 @@ import { Crown, Loader2, Search, Plus, ExternalLink, Check, X, Star, MapPin } fr
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TRADES } from "@/lib/trades-catalog";
+import { MissionBanner } from "@/components/mission-banner";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/chasse-premium")({
@@ -153,6 +154,14 @@ function ChassePremium() {
           Trouve les entreprises qui <strong>tournent déjà</strong> (donc ont du budget) mais dont le <strong>site web sous-performe</strong> — le meilleur profil pour une refonte. Analyse réelle : Google Places + audit technique du site + données légales officielles (Sirene/INPI).
         </p>
       </div>
+
+      {/* Proposition de secteur — pré-remplit métier et ville, n'oblige à rien. */}
+      <MissionBanner
+        onPrendre={({ metier, commune }) => {
+          setSectors([metier]);
+          setLocation(commune);
+        }}
+      />
 
       {/* Formulaire */}
       <Card>

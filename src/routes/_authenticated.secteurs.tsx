@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { TRADES } from "@/lib/trades-catalog";
+import { FRANCE_METRO, CORSE } from "@/lib/france-outline";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2, Flag, Target, PhoneCall, Trophy, Compass } from "lucide-react";
@@ -60,8 +61,12 @@ const teinte = (nom: string) => {
 const BORNES = { latMin: 41.3, latMax: 51.1, lngMin: -5.2, lngMax: 9.6 };
 const projeter = (lat: number, lng: number) => ({
   x: ((lng - BORNES.lngMin) / (BORNES.lngMax - BORNES.lngMin)) * 100,
-  y: ((BORNES.latMax - lat) / (BORNES.latMax - BORNES.latMin)) * 100,
+  y: ((BORNES.latMax - lat) / (BORNES.latMax - BORNES.latMin)) * 105,
 });
+
+/** Un contour lat/lng → la liste de points attendue par <polygon>. */
+const trace = (pts: [number, number][]) =>
+  pts.map(([lng, lat]) => { const p = projeter(lat, lng); return `${p.x},${p.y}`; }).join(" ");
 
 function Missions() {
   const qc = useQueryClient();
@@ -223,31 +228,37 @@ function Missions() {
             </p>
           </div>
 
-          <div className="relative w-full rounded-lg border bg-muted/20 overflow-hidden" style={{ aspectRatio: "1 / 1.05" }}>
+          <div className="relative w-full rounded-lg border bg-muted/20 overflow-hidden">
+            <svg viewBox="0 0 100 105" className="w-full h-auto block">
+              {/* Le pays, pour qu'on sache où l'on est. */}
+              <polygon points={trace(FRANCE_METRO)}
+                className="fill-muted/50 stroke-muted-foreground/40" strokeWidth={0.35} />
+              <polygon points={trace(CORSE)}
+                className="fill-muted/50 stroke-muted-foreground/40" strokeWidth={0.35} />
+
+              {(carte.data ?? []).map((c, i) => {
+                const p = projeter(c.lat, c.lng);
+                const fini = c.etat === "conquise";
+                return (
+                  <circle
+                    key={`${c.commune}-${c.metier}-${i}`}
+                    cx={p.x} cy={p.y} r={fini ? 1.5 : 1.1}
+                    fill={fini ? teinte(c.par) : "transparent"}
+                    stroke={teinte(c.par)}
+                    strokeWidth={0.6}
+                    opacity={fini ? 1 : 0.65}
+                  >
+                    <title>{`${c.metier} à ${c.commune} — ${fini ? "conquis" : "en cours"} par ${c.par}`}</title>
+                  </circle>
+                );
+              })}
+            </svg>
+
             {(carte.data ?? []).length === 0 && (
               <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground px-6 text-center">
                 Aucun territoire ouvert. La carte se remplira au fil des missions.
               </div>
             )}
-            {(carte.data ?? []).map((c, i) => {
-              const p = projeter(c.lat, c.lng);
-              const fini = c.etat === "conquise";
-              return (
-                <div
-                  key={`${c.commune}-${c.metier}-${i}`}
-                  title={`${c.metier} à ${c.commune} — ${fini ? "conquis" : "en cours"} par ${c.par}`}
-                  className={cn(
-                    "absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition",
-                    fini ? "w-3.5 h-3.5" : "w-2.5 h-2.5 opacity-60",
-                  )}
-                  style={{
-                    left: `${p.x}%`, top: `${p.y}%`,
-                    background: fini ? teinte(c.par) : "transparent",
-                    borderColor: teinte(c.par),
-                  }}
-                />
-              );
-            })}
           </div>
 
           {conquises.length > 0 && (
