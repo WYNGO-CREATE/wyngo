@@ -613,10 +613,22 @@ function ProspectsPage() {
                   });
                   const lastCallAt = lastCallMap.get(p.id);
                   const bucket = callBucket(p.id);
+                  // Fil vert : ajouté depuis moins de 7 jours, encore au statut
+                  // initial et jamais appelé. Il disparaît dès qu'on travaille
+                  // le prospect — c'est ce qui permet de voir d'un coup d'œil
+                  // où commence le dernier lot ajouté depuis la chasse.
+                  const estNouveau =
+                    p.status === "nouveau" &&
+                    !lastCallAt &&
+                    Date.now() - new Date(p.created_at).getTime() < 7 * 24 * 3600 * 1000;
                   return (
                   <TableRow
                     key={p.id}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    title={estNouveau ? "Nouveau — jamais appelé" : undefined}
+                    className={cn(
+                      "cursor-pointer hover:bg-muted/50 transition-colors",
+                      estNouveau && "shadow-[inset_3px_0_0_0_theme(colors.emerald.500)]",
+                    )}
                     onClick={(e) => {
                       // Si l'utilisateur clique sur un élément interactif interne
                       // (bouton, lien, select, menu), on laisse l'élément agir

@@ -428,7 +428,7 @@ function normalizeCompany(name: string): string {
  * mot dominant) doit apparaître dans le title, h1 ou body. Indispensable
  * quand on a deviné le domaine (sinon on attribue à tort le site d'un autre).
  */
-function verifyCompanyMatch(html: string, companyName: string, city?: string): { match: boolean; reason: string } {
+function verifyCompanyMatch(html: string, companyName: string, city?: string, strict = false): { match: boolean; reason: string } {
   // On ne raisonne QUE sur les mots distinctifs (ni ville, ni métier générique).
   // C'est le cœur du correctif : « toulouse » ne prouve plus rien puisqu'il est
   // exclu — le site de la ville ne sera donc plus attribué à « Mélodie Toulouse ».
@@ -444,14 +444,27 @@ function verifyCompanyMatch(html: string, companyName: string, city?: string): {
   ].join(" ");
   const haystack = normTok(sample.replace(/<[^>]+>/g, " "));
 
-  // Un mot distinctif long (6+) présent, OU deux mots distinctifs présents.
-  const longHit = tokens.filter((t) => t.length >= 6).find((t) => haystack.includes(t));
-  if (longHit) return { match: true, reason: `match_distinctive:${longHit}` };
-
   const hits = tokens.filter((t) => haystack.includes(t));
-  if (hits.length >= 2) return { match: true, reason: `match_2_distinctive:${hits.slice(0, 2).join(",")}` };
+  const longHit = tokens.filter((t) => t.length >= 6).find((t) => haystack.includes(t));
 
-  // Un seul mot distinctif court trouvé → insuffisant, on refuse (→ pas de site).
+  // En mode STRICT (domaine deviné), un seul mot ne suffit JAMAIS : un nom
+  // de cabinet est souvent un patronyme, et beaucoup de patronymes sont
+  // aussi des marques nationales. « Cabinet Vaillant » validait vaillant.fr,
+  // la marque de chaudières — et le prospect disparaissait de la chasse en
+  // étant classé « a déjà un site ». Il faut donc une preuve d'ancrage
+  // local en plus du nom.
+  if (strict) {
+    const villeTok = city ? normTok(city) : "";
+    const villeVue = !!villeTok && villeTok.length >= 4 && haystack.includes(villeTok);
+    if (longHit && villeVue) return { match: true, reason: `match_nom_et_ville:${longHit}` };
+    if (hits.length >= 2)    return { match: true, reason: `match_2_distinctive:${hits.slice(0, 2).join(",")}` };
+    if (longHit)             return { match: false, reason: `strict_sans_ancrage_local:${longHit}` };
+    return { match: false, reason: hits.length === 1 ? `weak_single:${hits[0]}` : "no_distinctive_match" };
+  }
+
+  // Un mot distinctif long (6+) présent, OU deux mots distinctifs présents.
+  if (longHit) return { match: true, reason: `match_distinctive:${longHit}` };
+  if (hits.length >= 2) return { match: true, reason: `match_2_distinctive:${hits.slice(0, 2).join(",")}` };
   return { match: false, reason: hits.length === 1 ? `weak_single:${hits[0]}` : "no_distinctive_match" };
 }
 
@@ -555,7 +568,7 @@ Deno.serve(async (req) => {
       for (const { url, res } of fetched) {
         if (!res || res.status >= 400 || !res.html) continue;
 
-        const match = verifyCompanyMatch(res.html, company_name, city);
+        const match = verifyCompanyMatch(res.html, company_name, city, true);
         if (!match.match) {
           signals.push(`guess_rejected:${new URL(url).hostname}:${match.reason}`);
           continue;

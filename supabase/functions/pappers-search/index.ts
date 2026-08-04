@@ -157,9 +157,9 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
 
   // 3. Toutes les communes de ces départements, filtrées par distance réelle
   const lists = await Promise.all(
-    [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,centre,codesPostaux,population`)),
+    [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,code,centre,codesPostaux,population`)),
   );
-  const communes: Array<{ nom: string; cps: string[]; pop: number }> = [];
+  const communes: Array<{ nom: string; code: string; cps: string[]; pop: number }> = [];
   const names = new Set<string>();
   const cps = new Set<string>();
   for (const list of lists) {
@@ -167,7 +167,7 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
       const co = com?.centre?.coordinates;
       if (!co) continue;
       if (haversineKm(center, { lat: co[1], lng: co[0] }) > rayonKm) continue;
-      communes.push({ nom: com.nom, cps: com.codesPostaux || [], pop: com.population || 0 });
+      communes.push({ nom: com.nom, code: com.code, cps: com.codesPostaux || [], pop: com.population || 0 });
       names.add(normCity(com.nom));
       for (const p of com.codesPostaux || []) cps.add(p);
     }
@@ -176,6 +176,37 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
   communes.sort((a, b) => b.pop - a.pop);
   if (names.size === 0) return null;
   return { center, centerName: c.nom, depts: [...depts], names, cps, communes };
+}
+
+/**
+ * SIRET déjà présents dans le CRM, tous collaborateurs confondus.
+ *
+ * Sans ça, relancer la même chasse redonnait exactement les mêmes premiers
+ * résultats : impossible d'aller plus loin que le tout premier lot, alors que
+ * l'API de l'État connaît par exemple 3 864 avocats rien qu'en Haute-Garonne.
+ * En les écartant, chaque chasse ramène des entreprises réellement nouvelles.
+ */
+async function sirenDejaConnus(): Promise<Set<string>> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return new Set();
+  try {
+    const vus = new Set<string>();
+    // On pagine : au-delà de quelques milliers de prospects, une seule requête
+    // serait tronquée en silence par PostgREST.
+    for (let from = 0; from < 50000; from += 1000) {
+      const r = await fetch(
+        `${url}/rest/v1/prospects?select=siret&siret=not.is.null`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}`,
+                     Range: `${from}-${from + 999}`, Prefer: "count=none" } },
+      );
+      if (!r.ok) break;
+      const lot = await r.json() as Array<{ siret: string | null }>;
+      for (const x of lot) if (x.siret) vus.add(x.siret.slice(0, 9)); // SIREN
+      if (lot.length < 1000) break;
+    }
+    return vus;
+  } catch { return new Set(); }
 }
 
 async function actionSearch(params: {
@@ -187,12 +218,13 @@ async function actionSearch(params: {
   page?: number;
   par_page?: number;
   max_results?: number;  // objectif de prospects utiles
+  exclure_connus?: boolean; // defaut true : on ecarte ce qui est deja au CRM
   rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
   mots_cles?: string;    // métier mal capté par le code NAF → recherche par mots-clés
   naf_exclus?: string;   // préfixes NAF à écarter en mode mots-clés (séparés par |)
   with_site_web?: boolean | null;
 }) {
-  const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 300);
+  const target = Math.min(Math.max(params.max_results ?? params.par_page ?? 20, 1), 600);
   const rayon = Math.min(Math.max(Number(params.rayon_km) || 0, 0), 60);
   const zone = rayon > 0 ? await resolveZone(params.ville, params.code_postal, rayon) : null;
 
@@ -226,7 +258,7 @@ async function actionSearch(params: {
     .split("|").map((v) => v.trim()).filter(Boolean);
   const motsCles = variantes.length > 0;
   const MAX_COMMUNES = 60;
-  const cibles: Array<{ q: string; cp?: string; dept?: string; sansNaf?: boolean }> = motsCles
+  const cibles: Array<{ q: string; commune?: string; cp?: string; dept?: string; sansNaf?: boolean }> = motsCles
     ? (zone
         ? zone.depts.flatMap((d) => variantes.map((v) => ({ q: v, dept: d, sansNaf: true })))
         : variantes.map((v) => ({ q: v, cp: (params.code_postal || "").trim() || undefined, sansNaf: true })))
@@ -240,7 +272,7 @@ async function actionSearch(params: {
           if (ac !== bc) return bc - ac;
           return (b.pop || 0) - (a.pop || 0);
         });
-        return triees.slice(0, MAX_COMMUNES).map((c) => ({ q: c.nom, cp: c.cps[0] }));
+        return triees.slice(0, MAX_COMMUNES).map((c) => ({ q: "", commune: c.code, cp: c.cps[0] }));
       })()
     : [{
         q: (params.ville || params.code_postal || "").trim(),
@@ -248,6 +280,10 @@ async function actionSearch(params: {
       }];
 
   const collected: any[] = [];
+  // Les entreprises déjà dans le CRM (de n'importe quel collaborateur) sont
+  // écartées d'office : la chasse ne doit ramener que du nouveau.
+  const dejaConnus = params.exclure_connus === false ? new Set<string>() : await sirenDejaConnus();
+  let ignoresDejaConnus = 0;
   const seen = new Set<string>();
   let rejected = 0;
   let scanned = 0;
@@ -256,14 +292,20 @@ async function actionSearch(params: {
 
   for (const cible of cibles) {
     if (collected.length >= target) break;
-    if (!cible.q) continue;
+    if (!cible.q && !cible.commune && !cible.dept) continue;
 
     // En mode mots-clés on balaie peu de cibles (1 par département) : on peut
     // donc paginer plus profond pour ramener autant de prospects.
-    const maxPages = cible.sansNaf ? 8 : 3;
+    // On descend plus profond dans chaque commune : 3 pages plafonnaient la
+    // recolte bien avant l'epuisement du gisement reel.
+    const maxPages = cible.sansNaf ? 8 : 6;
     for (let page = 1; page <= maxPages && collected.length < target; page++) {
       const { results } = await searchEntreprises({
-        q: cible.q,
+        // Sans code commune (mode mots-clés) on garde la requête texte ;
+        // sinon on interroge purement par géographie + code NAF, ce qui évite
+        // que les sociétés portant le nom de la ville remontent en tête.
+        q: cible.q || undefined,
+        codeCommune: cible.commune,
         naf: cible.sansNaf ? undefined : params.code_naf,
         codePostal: cible.cp,
         departement: cible.dept,
@@ -284,6 +326,7 @@ async function actionSearch(params: {
         if (!dansZone) { rejected++; continue; }
         if (exclus.length && e.naf && exclus.some((p) => e.naf!.startsWith(p))) { rejected++; continue; }
         if (e.siren && seen.has(e.siren)) continue;
+        if (e.siren && dejaConnus.has(e.siren)) { ignoresDejaConnus++; continue; }
         if (e.siren) seen.add(e.siren);
         if (e.ville) communesTouchees.add(e.ville);
 
@@ -321,6 +364,8 @@ async function actionSearch(params: {
     entreprises: collected.slice(0, target),
     pagination: { page: 1, par_page: 25, total: collected.length },
     rejected_out_of_zone: rejected,
+    ignores_deja_connus: ignoresDejaConnus,
+    univers_connu: dejaConnus.size,
     scanned_pages: scanned,
     source: "api-recherche-entreprises-etat",
     zone: zone

@@ -76,6 +76,9 @@ type PappersResult = {
 
 type WebsiteStatus = "no_website" | "outdated" | "has_website" | "unknown";
 
+/** Ce que la mémoire d'équipe renvoie pour un SIRET déjà présent dans le CRM. */
+type DejaVu = { siret: string; proprietaire: string; est_moi: boolean; statut: string; vu_le: string };
+
 type EnrichedResult = PappersResult & {
   website_status: WebsiteStatus;
   website_score: number;
@@ -204,23 +207,25 @@ function ChassePage() {
   });
 
   // SIRET déjà importés (pour griser le bouton "Ajouter")
-  const importedSirets = useQuery({
-    queryKey: ["imported-sirets", user?.id],
-    enabled: !!user,
+  // ─── Mémoire de prospection, partagée par toute l'équipe ───────────
+  // Avant : on ne voyait que SES propres prospects (cloisonnement RLS), donc
+  // Ilyes pouvait rappeler quelqu'un que Hugo travaillait déjà. La fonction
+  // prospection_memoire traverse ce cloisonnement sans exposer les données :
+  // elle ne dit que « ce SIRET est chez X ».
+  const memoire = useQuery({
+    queryKey: ["memoire-prospection", results.map((r) => r.siret).filter(Boolean).join(",")],
+    enabled: results.length > 0,
     queryFn: async () => {
-      // Cast : siret/website_status sont ajoutés par migration récente,
-      // les types Supabase générés ne les connaissent pas encore.
-      const { data } = await (supabase as any)
-        .from("prospects")
-        .select("siret")
-        .not("siret", "is", null);
-      return new Set(
-        ((data || []) as Array<{ siret: string | null }>)
-          .map((r) => r.siret)
-          .filter(Boolean) as string[],
-      );
+      const sirets = results.map((r) => r.siret).filter(Boolean) as string[];
+      if (sirets.length === 0) return new Map<string, DejaVu>();
+      const { data, error } = await (supabase as any).rpc("prospection_memoire", { sirets });
+      if (error) throw new Error(error.message);
+      const m = new Map<string, DejaVu>();
+      for (const r of (data || []) as DejaVu[]) m.set(r.siret, r);
+      return m;
     },
   });
+  const dejaVu = (siret?: string | null) => (siret ? memoire.data?.get(siret) : undefined);
 
   // ─── Recherche Pappers + checks websites en parallèle ──────────────────
   const search = useMutation({
@@ -491,14 +496,24 @@ function ChassePage() {
     return sorted;
   }, [results, onlyWithContact]);
 
+  // Les compteurs doivent décrire CE QUI EST À L'ÉCRAN. Auparavant ils
+  // portaient sur tous les résultats bruts, alors que la liste masque les
+  // prospects sans coordonnées : on annonçait 18 « sans site » pour 11
+  // lignes visibles. On compte donc sur la liste affichée, et on indique
+  // séparément ce qui est masqué.
   const counts = useMemo(() => {
-    const c = { no_website: 0, outdated: 0, has_website: 0, unknown: 0, with_contact: 0 };
+    const c = { no_website: 0, outdated: 0, has_website: 0, unknown: 0,
+                masques_sans_contact: 0, deja_pris: 0, with_contact: 0 };
     for (const r of results) {
-      c[r.website_status]++;
       if (hasContact(r)) c.with_contact++;
+      if (r.website_status === "has_website") { c.has_website++; continue; }
+      const vu = dejaVu(r.siret);
+      if (vu && !vu.est_moi) c.deja_pris++;
+      if (!r.enriching && onlyWithContact && !hasContact(r)) { c.masques_sans_contact++; continue; }
+      c[r.website_status]++;
     }
     return c;
-  }, [results]);
+  }, [results, onlyWithContact, memoire.data]);
 
   const selectedResults = useMemo(
     () => sortedResults.filter((r) => selectedSirens.has(r.siren)),
@@ -515,7 +530,7 @@ function ChassePage() {
   const selectAllPrime = () => {
     const prime = sortedResults
       .filter((r) => r.website_status === "no_website" || r.website_status === "outdated")
-      .filter((r) => !importedSirets.data?.has(r.siret ?? ""))
+      .filter((r) => !dejaVu(r.siret))
       .filter((r) => hasContact(r)) // n'ajoute jamais sans coordonnées
       .map((r) => r.siren);
     setSelectedSirens(new Set(prime));
@@ -744,6 +759,28 @@ function ChassePage() {
             </div>
           </div>
 
+          {(counts.masques_sans_contact > 0 || counts.deja_pris > 0) && (
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground px-1">
+              {counts.masques_sans_contact > 0 && (
+                <span>
+                  <b className="text-foreground">{counts.masques_sans_contact}</b> masqué{counts.masques_sans_contact > 1 ? "s" : ""} — sans téléphone ni email
+                  <button
+                    type="button"
+                    className="ml-1.5 underline underline-offset-2 hover:text-foreground"
+                    onClick={() => setOnlyWithContact(false)}
+                  >
+                    afficher
+                  </button>
+                </span>
+              )}
+              {counts.deja_pris > 0 && (
+                <span className="text-amber-700 dark:text-amber-500">
+                  <b>{counts.deja_pris}</b> déjà travaillé{counts.deja_pris > 1 ? "s" : ""} par un collègue — ne pas rappeler
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Toolbar */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex gap-2 items-center flex-wrap">
@@ -799,7 +836,8 @@ function ChassePage() {
           <div className="space-y-3">
                 {sortedResults.map((r) => {
                   const meta = STATUS_META[r.website_status];
-                  const isImported = r.siret ? importedSirets.data?.has(r.siret) : false;
+                  const vu = dejaVu(r.siret);
+                  const isImported = !!vu;
                   const isSelected = selectedSirens.has(r.siren);
                   return (
                     <Card
@@ -856,9 +894,18 @@ function ChassePage() {
                               </Badge>
                             </>
                           )}
-                          {isImported && (
-                            <Badge variant="outline" className="text-xs">
-                              déjà dans CRM
+                          {vu && (
+                            <Badge
+                              variant="outline"
+                              title={`Ajouté au CRM le ${new Date(vu.vu_le).toLocaleDateString("fr-FR")} · statut : ${vu.statut}`}
+                              className={cn(
+                                "text-[10px] gap-1",
+                                vu.est_moi
+                                  ? "bg-slate-100 text-slate-600 border-slate-300"
+                                  : "bg-amber-50 text-amber-800 border-amber-400 font-semibold",
+                              )}
+                            >
+                              {vu.est_moi ? "déjà chez toi" : `déjà chez ${vu.proprietaire}`}
                             </Badge>
                           )}
                         </div>

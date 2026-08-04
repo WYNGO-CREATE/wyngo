@@ -12,9 +12,21 @@
 // Elle ne fournit PAS site web / email / téléphone : ceux-là viennent déjà de
 // Google Places (places-enrich) et des outils email du CRM.
 //
-// ⚠️ Les filtres géographiques (code_postal, departement) ne sont appliqués par
-// l'API que s'ils accompagnent une requête texte `q`. On passe donc toujours un
-// `q` (le métier).
+// ⚠️ Une note ancienne affirmait que les filtres géographiques n'étaient
+// appliqués qu'avec une requête texte `q`. C'est FAUX aujourd'hui : vérifié le
+// 3 août 2026, `activite_principale=69.10Z&code_commune=31555` renvoie bien
+// 3 256 résultats correctement filtrés, sans aucun `q`.
+//
+// Cette croyance coûtait cher : on envoyait le nom de la commune en mot-clé,
+// ce qui faisait remonter en tête les sociétés ayant la ville dans leur raison
+// sociale (« TOULOUSE ENCHÈRES ») au lieu des entreprises du métier demandé.
+// D'où des erreurs de métier et une récolte très en dessous du gisement réel.
+//
+// Quand un filtre géographique est utilisé, l'API renvoie en plus
+// `matching_etablissements` : l'établissement LOCAL, avec son propre SIRET et
+// son adresse. Le `siege`, lui, peut être à l'autre bout de la France (le
+// cabinet FIDAL de Toulouse a son siège à Courbevoie). On lit donc en priorité
+// l'établissement correspondant.
 // ─────────────────────────────────────────────────────────────────────────
 
 const BASE = "https://recherche-entreprises.api.gouv.fr/search";
@@ -86,7 +98,13 @@ function lastFinance(fin: Record<string, any> | null | undefined) {
 }
 
 export function mapEntreprise(r: any): EntrepriseInfo {
-  const s = r?.siege || {};
+  // Avec un filtre géographique, l'API renvoie l'établissement qui correspond
+  // vraiment à la zone demandée. On le préfère au siège : sinon on afficherait
+  // Courbevoie pour un cabinet cherché à Toulouse, et on le rejetterait ensuite
+  // comme « hors zone » alors qu'il y est bel et bien implanté.
+  const etabs = (r?.matching_etablissements || []) as any[];
+  const local = etabs.find((e) => e?.etat_administratif === "A") ?? etabs[0];
+  const s = local ? { ...(r?.siege || {}), ...local } : (r?.siege || {});
   const d = (r?.dirigeants || []).find((x: any) => x?.type_dirigeant === "personne physique") || r?.dirigeants?.[0];
   const eff = effectifFromCode(r?.tranche_effectif_salarie);
   const fin = lastFinance(r?.finances);
@@ -113,9 +131,10 @@ export function mapEntreprise(r: any): EntrepriseInfo {
 }
 
 export type SearchOpts = {
-  q: string;                    // OBLIGATOIRE (sinon les filtres géo sont ignorés)
+  q?: string;                   // facultatif : un filtre géo seul suffit
   naf?: string;                 // code activité principale, ex "71.11Z"
   codePostal?: string;
+  codeCommune?: string;         // code INSEE de commune : le filtre le plus précis
   departement?: string;
   trancheEffectif?: string;     // code INSEE ("01", "02", "11"…)
   page?: number;
@@ -146,8 +165,9 @@ async function creneau<T>(fn: () => Promise<T>): Promise<T> {
 
 export async function searchEntreprises(o: SearchOpts): Promise<{ results: EntrepriseInfo[]; total: number; pages: number }> {
   const u = new URL(BASE);
-  u.searchParams.set("q", o.q);
+  if (o.q) u.searchParams.set("q", o.q);
   if (o.naf) u.searchParams.set("activite_principale", o.naf);
+  if (o.codeCommune) u.searchParams.set("code_commune", o.codeCommune);
   if (o.codePostal) u.searchParams.set("code_postal", o.codePostal);
   if (o.departement) u.searchParams.set("departement", o.departement);
   if (o.trancheEffectif) u.searchParams.set("tranche_effectif_salarie", o.trancheEffectif);
