@@ -87,7 +87,7 @@ export function AppSidebar() {
 
   // ── Univers : Pilotage · Prospection · Studio · Facturation · Agenda ──
   const activeWorkspace: "prospection" | "chasse" | "studio" | "facturation" | "agenda" | "pilotage" =
-    currentPath.startsWith("/chasse") ? "chasse"
+    currentPath.startsWith("/chasse") || currentPath.startsWith("/conquete") ? "chasse"
     : currentPath.startsWith("/studio") ? "studio"
     : currentPath.startsWith("/facturation") ? "facturation"
     : currentPath.startsWith("/agenda") ? "agenda"
@@ -112,7 +112,7 @@ export function AppSidebar() {
   const chasseItems: NavItem[] = [
     { title: "Chasse aux prospects", url: "/chasse", icon: Target, badge: 0 },
     { title: "Chasse Premium", url: "/chasse-premium", icon: Crown, badge: 0 },
-    { title: "Missions", url: "/secteurs", icon: Map, badge: 0 },
+    { title: "Carte de conquête", url: "/conquete", icon: Map, badge: 0 },
   ];
 
   const studioItems: NavItem[] = [
