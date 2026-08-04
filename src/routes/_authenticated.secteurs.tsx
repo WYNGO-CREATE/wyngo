@@ -46,12 +46,23 @@ type Conquete = {
 
 const RAYONS = [10, 20, 30, 40];
 
-// Couleur par collaborateur, stable d'une session à l'autre.
-const TEINTES = ["#1B4BE3", "#0F766E", "#B45309", "#7C3AED", "#BE123C"];
-const teinte = (nom: string) => {
-  let h = 0;
-  for (const c of nom) h = (h * 31 + c.charCodeAt(0)) % 997;
-  return TEINTES[h % TEINTES.length];
+/**
+ * Couleur par collaborateur.
+ *
+ * Un hachage du prénom paraissait plus simple, mais à cinq il donnait deux
+ * collisions : Lenny et Ilyes de la même couleur, Hugo et Nino aussi — donc
+ * une carte illisible. On distribue la palette dans l'ordre alphabétique des
+ * prénoms présents : deux personnes ne peuvent plus partager une teinte tant
+ * qu'il reste des couleurs.
+ */
+const TEINTES = ["#1B4BE3", "#0F766E", "#B45309", "#7C3AED", "#BE123C",
+                 "#0369A1", "#4D7C0F", "#9D174D"];
+
+const palette = (noms: string[]) => {
+  const uniques = [...new Set(noms)].sort((a, b) => a.localeCompare(b, "fr"));
+  const m = new Map<string, string>();
+  uniques.forEach((n, i) => m.set(n, TEINTES[i % TEINTES.length]));
+  return (nom: string) => m.get(nom) ?? TEINTES[0];
 };
 
 /**
@@ -141,6 +152,7 @@ function Missions() {
   const pct = m && (m.total_connu ?? 0) > 0
     ? Math.min(100, Math.round((Number(m.verifies) / (m.total_connu ?? 1)) * 100)) : 0;
 
+  const teinte = palette((carte.data ?? []).map((c) => c.par));
   const conquises = (carte.data ?? []).filter((c) => c.etat === "conquise");
   const enCours = (carte.data ?? []).filter((c) => c.etat === "en_cours");
 
