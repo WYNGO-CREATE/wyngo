@@ -7,6 +7,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/_authenticated/chasse-premium")({
 
 type Gravite = "critique" | "majeur" | "mineur";
 type Probleme = { titre: string; impact: string; gravite: Gravite };
+
+type MemoireLigne = { siret: string; proprietaire: string; est_moi: boolean; statut: string; vu_le: string };
 
 type Candidate = {
   nom: string; secteur: string; adresse: string | null; telephone: string | null;
@@ -121,6 +124,25 @@ function ChassePremium() {
 
   const candidates = res?.candidates || [];
 
+  // Mémoire d'équipe : la chasse premium n'en avait aucune. Deux collaborateurs
+  // pouvaient donc appeler la même entreprise le même jour. Ces résultats
+  // viennent de Google Places et n'ont pas de SIRET : on rapproche sur le
+  // SIREN, que la fonction accepte également.
+  const memoire = useQuery({
+    queryKey: ["memoire-premium", candidates.map((c) => c.siren).filter(Boolean).join(",")],
+    enabled: candidates.length > 0,
+    queryFn: async () => {
+      const ids = candidates.map((c) => c.siren).filter(Boolean) as string[];
+      if (ids.length === 0) return new Map<string, MemoireLigne>();
+      const { data, error } = await (supabase as any).rpc("prospection_memoire", { sirets: ids });
+      if (error) throw new Error(error.message);
+      const m = new Map<string, MemoireLigne>();
+      for (const r of (data || []) as MemoireLigne[]) m.set(r.siret, r);
+      return m;
+    },
+  });
+  const dejaVu = (siren?: string | null) => (siren ? memoire.data?.get(siren) : undefined);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -213,8 +235,10 @@ function ChassePremium() {
               Communes balayées : {res.villes.slice(0, 25).join(" · ")}{res.villes.length > 25 ? " …" : ""}
             </p>
           ) : null}
-          {candidates.map((c) => (
-            <Card key={c.nom} className={cn(c.opportunite >= 35 && "border-amber-300")}>
+          {candidates.map((c) => {
+            const vu = dejaVu(c.siren);
+            return (
+            <Card key={c.nom} className={cn(c.opportunite >= 35 && "border-amber-300", vu && "opacity-70")}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -222,6 +246,13 @@ function ChassePremium() {
                       <span className={cn("text-xs font-bold px-2 py-0.5 rounded", PRIO_STYLE[c.priorite] || "bg-muted")}>
                         {c.priorite}
                       </span>
+                      {vu && (
+                        <Badge variant="outline" className={cn("text-[10px]", vu.est_moi
+                          ? "bg-slate-100 text-slate-600 border-slate-300"
+                          : "bg-amber-50 text-amber-800 border-amber-400 font-semibold")}>
+                          {vu.est_moi ? "déjà chez toi" : `déjà chez ${vu.proprietaire}`}
+                        </Badge>
+                      )}
                       <span className={cn("text-xs font-bold px-2 py-0.5 rounded", oppTone(c.opportunite))}>
                         Opportunité {c.opportunite}
                       </span>
@@ -334,7 +365,8 @@ function ChassePremium() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

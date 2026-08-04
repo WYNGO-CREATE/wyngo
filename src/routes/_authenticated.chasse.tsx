@@ -213,10 +213,12 @@ function ChassePage() {
   // prospection_memoire traverse ce cloisonnement sans exposer les données :
   // elle ne dit que « ce SIRET est chez X ».
   const memoire = useQuery({
-    queryKey: ["memoire-prospection", results.map((r) => r.siret).filter(Boolean).join(",")],
+    queryKey: ["memoire-prospection", results.map((r) => r.siret || r.siren).filter(Boolean).join(",")],
     enabled: results.length > 0,
     queryFn: async () => {
-      const sirets = results.map((r) => r.siret).filter(Boolean) as string[];
+      // Certains résultats n'ont pas de SIRET : le SIREN suffit, la fonction
+      // rapproche sur les 9 premiers chiffres.
+      const sirets = results.map((r) => r.siret || r.siren).filter(Boolean) as string[];
       if (sirets.length === 0) return new Map<string, DejaVu>();
       const { data, error } = await (supabase as any).rpc("prospection_memoire", { sirets });
       if (error) throw new Error(error.message);
@@ -225,7 +227,10 @@ function ChassePage() {
       return m;
     },
   });
-  const dejaVu = (siret?: string | null) => (siret ? memoire.data?.get(siret) : undefined);
+  const dejaVu = (siret?: string | null, siren?: string | null) => {
+    const cle = siret || siren;
+    return cle ? memoire.data?.get(cle) : undefined;
+  };
 
   // ─── Recherche Pappers + checks websites en parallèle ──────────────────
   const search = useMutation({
@@ -507,7 +512,7 @@ function ChassePage() {
     for (const r of results) {
       if (hasContact(r)) c.with_contact++;
       if (r.website_status === "has_website") { c.has_website++; continue; }
-      const vu = dejaVu(r.siret);
+      const vu = dejaVu(r.siret, r.siren);
       if (vu && !vu.est_moi) c.deja_pris++;
       if (!r.enriching && onlyWithContact && !hasContact(r)) { c.masques_sans_contact++; continue; }
       c[r.website_status]++;
@@ -530,7 +535,7 @@ function ChassePage() {
   const selectAllPrime = () => {
     const prime = sortedResults
       .filter((r) => r.website_status === "no_website" || r.website_status === "outdated")
-      .filter((r) => !dejaVu(r.siret))
+      .filter((r) => !dejaVu(r.siret, r.siren))
       .filter((r) => hasContact(r)) // n'ajoute jamais sans coordonnées
       .map((r) => r.siren);
     setSelectedSirens(new Set(prime));
@@ -836,7 +841,7 @@ function ChassePage() {
           <div className="space-y-3">
                 {sortedResults.map((r) => {
                   const meta = STATUS_META[r.website_status];
-                  const vu = dejaVu(r.siret);
+                  const vu = dejaVu(r.siret, r.siren);
                   const isImported = !!vu;
                   const isSelected = selectedSirens.has(r.siren);
                   return (

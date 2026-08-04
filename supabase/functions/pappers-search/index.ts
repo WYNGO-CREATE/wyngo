@@ -190,23 +190,57 @@ async function sirenDejaConnus(): Promise<Set<string>> {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return new Set();
+  const h = { apikey: key, Authorization: `Bearer ${key}` };
+  const vus = new Set<string>();
   try {
-    const vus = new Set<string>();
-    // On pagine : au-delà de quelques milliers de prospects, une seule requête
-    // serait tronquée en silence par PostgREST.
+    // (a) Entreprises déjà dans le CRM, tous collaborateurs confondus.
     for (let from = 0; from < 50000; from += 1000) {
-      const r = await fetch(
-        `${url}/rest/v1/prospects?select=siret&siret=not.is.null`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}`,
-                     Range: `${from}-${from + 999}`, Prefer: "count=none" } },
-      );
+      const r = await fetch(`${url}/rest/v1/prospects?select=siret&siret=not.is.null`,
+        { headers: { ...h, Range: `${from}-${from + 999}` } });
       if (!r.ok) break;
       const lot = await r.json() as Array<{ siret: string | null }>;
-      for (const x of lot) if (x.siret) vus.add(x.siret.slice(0, 9)); // SIREN
+      for (const x of lot) if (x.siret) vus.add(x.siret.slice(0, 9));
       if (lot.length < 1000) break;
     }
-    return vus;
-  } catch { return new Set(); }
+    // (b) Entreprises déjà PROPOSÉES par une chasse précédente, même si
+    //     personne ne les a importées. Sans ça, relancer « notaires à Lyon »
+    //     redonnait exactement la même liste, indéfiniment.
+    const depuis = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString();
+    for (let from = 0; from < 200000; from += 1000) {
+      const r = await fetch(
+        `${url}/rest/v1/chasse_vus?select=siren&derniere_vue=gte.${depuis}`,
+        { headers: { ...h, Range: `${from}-${from + 999}` } });
+      if (!r.ok) break;
+      const lot = await r.json() as Array<{ siren: string }>;
+      for (const x of lot) if (x.siren) vus.add(x.siren);
+      if (lot.length < 1000) break;
+    }
+  } catch { /* en cas de panne on préfère chasser large que planter */ }
+  return vus;
+}
+
+/** Enregistre ce que la vague vient de montrer, pour que la suivante amène du neuf. */
+async function memoriserVague(sirens: string[], metier: string, zone: string, userId: string | null) {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key || sirens.length === 0) return;
+  const now = new Date().toISOString();
+  const lignes = sirens.map((siren) => ({
+    siren, derniere_vue: now, vu_par: userId, metier, zone,
+  }));
+  try {
+    for (let i = 0; i < lignes.length; i += 500) {
+      await fetch(`${url}/rest/v1/chasse_vus?on_conflict=siren`, {
+        method: "POST",
+        headers: {
+          apikey: key, Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify(lignes.slice(i, i + 500)),
+      });
+    }
+  } catch { /* la mémoire est un confort, jamais un bloquant */ }
 }
 
 async function actionSearch(params: {
@@ -218,7 +252,8 @@ async function actionSearch(params: {
   page?: number;
   par_page?: number;
   max_results?: number;  // objectif de prospects utiles
-  exclure_connus?: boolean; // defaut true : on ecarte ce qui est deja au CRM
+  exclure_connus?: boolean; // defaut true : on ecarte deja-vus et deja-importes
+  user_id?: string | null;  // qui lance la chasse (tracabilite de la memoire)
   rayon_km?: number;     // 0/absent = ville stricte ; >0 = ville + périphérie
   mots_cles?: string;    // métier mal capté par le code NAF → recherche par mots-clés
   naf_exclus?: string;   // préfixes NAF à écarter en mode mots-clés (séparés par |)
@@ -359,9 +394,21 @@ async function actionSearch(params: {
     }
   }
 
+  // On mémorise ce qui vient d'être montré : la prochaine vague amènera
+  // d'autres entreprises, même si aucune n'est importée dans le CRM.
+  const livres = collected.slice(0, target);
+  if (params.exclure_connus !== false) {
+    await memoriserVague(
+      livres.map((e: any) => e.siren).filter(Boolean),
+      params.code_naf || params.mots_cles || "",
+      zone ? `${zone.centerName} ${rayon}km` : (params.ville || params.code_postal || ""),
+      params.user_id ?? null,
+    );
+  }
+
   return {
     ok: true,
-    entreprises: collected.slice(0, target),
+    entreprises: livres,
     pagination: { page: 1, par_page: 25, total: collected.length },
     rejected_out_of_zone: rejected,
     ignores_deja_connus: ignoresDejaConnus,
