@@ -18,6 +18,7 @@ import { Route as AuthenticatedWorkflowsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated.templates'
 import { Route as AuthenticatedTableauRouteImport } from './routes/_authenticated.tableau'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated.studio'
+import { Route as AuthenticatedSecteursRouteImport } from './routes/_authenticated.secteurs'
 import { Route as AuthenticatedScriptsRouteImport } from './routes/_authenticated.scripts'
 import { Route as AuthenticatedRelancesRouteImport } from './routes/_authenticated.relances'
 import { Route as AuthenticatedRedactionRouteImport } from './routes/_authenticated.redaction'
@@ -83,6 +84,11 @@ const AuthenticatedTableauRoute = AuthenticatedTableauRouteImport.update({
 const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSecteursRoute = AuthenticatedSecteursRouteImport.update({
+  id: '/secteurs',
+  path: '/secteurs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedScriptsRoute = AuthenticatedScriptsRouteImport.update({
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/redaction': typeof AuthenticatedRedactionRoute
   '/relances': typeof AuthenticatedRelancesRoute
   '/scripts': typeof AuthenticatedScriptsRoute
+  '/secteurs': typeof AuthenticatedSecteursRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/tableau': typeof AuthenticatedTableauRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/redaction': typeof AuthenticatedRedactionRoute
   '/relances': typeof AuthenticatedRelancesRoute
   '/scripts': typeof AuthenticatedScriptsRoute
+  '/secteurs': typeof AuthenticatedSecteursRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/tableau': typeof AuthenticatedTableauRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/redaction': typeof AuthenticatedRedactionRoute
   '/_authenticated/relances': typeof AuthenticatedRelancesRoute
   '/_authenticated/scripts': typeof AuthenticatedScriptsRoute
+  '/_authenticated/secteurs': typeof AuthenticatedSecteursRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/_authenticated/tableau': typeof AuthenticatedTableauRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/redaction'
     | '/relances'
     | '/scripts'
+    | '/secteurs'
     | '/studio'
     | '/tableau'
     | '/templates'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/redaction'
     | '/relances'
     | '/scripts'
+    | '/secteurs'
     | '/studio'
     | '/tableau'
     | '/templates'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/redaction'
     | '/_authenticated/relances'
     | '/_authenticated/scripts'
+    | '/_authenticated/secteurs'
     | '/_authenticated/studio'
     | '/_authenticated/tableau'
     | '/_authenticated/templates'
@@ -473,6 +485,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof AuthenticatedStudioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/secteurs': {
+      id: '/_authenticated/secteurs'
+      path: '/secteurs'
+      fullPath: '/secteurs'
+      preLoaderRoute: typeof AuthenticatedSecteursRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/scripts': {
@@ -672,6 +691,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRedactionRoute: typeof AuthenticatedRedactionRoute
   AuthenticatedRelancesRoute: typeof AuthenticatedRelancesRoute
   AuthenticatedScriptsRoute: typeof AuthenticatedScriptsRoute
+  AuthenticatedSecteursRoute: typeof AuthenticatedSecteursRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
   AuthenticatedTableauRoute: typeof AuthenticatedTableauRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -698,6 +718,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRedactionRoute: AuthenticatedRedactionRoute,
   AuthenticatedRelancesRoute: AuthenticatedRelancesRoute,
   AuthenticatedScriptsRoute: AuthenticatedScriptsRoute,
+  AuthenticatedSecteursRoute: AuthenticatedSecteursRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRoute,
   AuthenticatedTableauRoute: AuthenticatedTableauRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,

@@ -450,6 +450,60 @@ async function actionSearch(params: {
   };
 }
 
+/**
+ * Découpe une zone en secteurs (métier × commune) et mesure la taille RÉELLE
+ * de chacun via l'API de l'État.
+ *
+ * C'est ce qui rend la prospection finissable : « il reste 16 kinés à Blagnac »
+ * se traite, « il y a des kinés quelque part » ne se traite pas.
+ */
+async function actionSecteurs(params: {
+  code_naf?: string; metier?: string; ville?: string; rayon_km?: number;
+}) {
+  const naf = (params.code_naf || "").trim();
+  const metier = (params.metier || "").trim();
+  if (!naf || !metier) throw new Error("code_naf et metier requis");
+
+  const rayon = Math.min(Math.max(params.rayon_km ?? 20, 0), 60);
+  const zone = await resolveZone(params.ville || "", undefined, rayon);
+  if (!zone) throw new Error("Commune introuvable");
+
+  // On ne garde que les communes qui pèsent : sous 5 entreprises, un secteur
+  // ne vaut pas le détour, et on éviterait surtout d'en créer des centaines.
+  const candidates = [...zone.communes].sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 40);
+
+  const mesures = await Promise.all(candidates.map(async (c) => {
+    const { total } = await searchEntreprises({ naf, codeCommune: c.code, perPage: 1 });
+    return { code: c.code, nom: c.nom, total };
+  }));
+
+  const retenus = mesures.filter((m) => m.total >= 5);
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (url && key && retenus.length) {
+    await fetch(`${url}/rest/v1/secteurs?on_conflict=naf,commune_code`, {
+      method: "POST",
+      headers: {
+        apikey: key, Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(retenus.map((m) => ({
+        naf, metier, commune_code: m.code, commune: m.nom, total_connu: m.total,
+      }))),
+    });
+  }
+
+  return {
+    ok: true,
+    crees: retenus.length,
+    ignores_trop_petits: mesures.length - retenus.length,
+    total_entreprises: retenus.reduce((a, m) => a + m.total, 0),
+    secteurs: retenus.sort((a, b) => b.total - a.total),
+  };
+}
+
 async function actionEnrich(params: { siren: string }) {
   if (!params.siren) throw new Error("siren requis");
   const data = await callPappers("/entreprise", { siren: params.siren });
@@ -474,6 +528,8 @@ Deno.serve(async (req) => {
         return json(await actionSearch(body.params || {}));
       case "enrich":
         return json(await actionEnrich(body.params || {}));
+      case "secteurs":
+        return json(await actionSecteurs(body.params || {}));
       default:
         return json({ error: `Action inconnue : ${action}` }, 400);
     }
