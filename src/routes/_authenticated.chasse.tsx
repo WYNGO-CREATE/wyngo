@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { MissionBanner } from "@/components/mission-banner";
 import { TRADES, TRADE_CATEGORIES } from "@/lib/trades-catalog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -597,6 +598,16 @@ function ChassePage() {
           </Badge>
         )}
       </div>
+
+      {/* Proposition de secteur — pré-remplit la chasse, n'oblige à rien. */}
+      <MissionBanner
+        onPrendre={({ metier, commune }) => {
+          const t = TRADES.find((x) => x.label === metier);
+          if (t) setCodeNaf(t.naf);
+          setVille(commune);
+          setCodePostal("");
+        }}
+      />
 
       {connectionTest.isError && (
         <Card className="border-destructive/40 bg-destructive/5">

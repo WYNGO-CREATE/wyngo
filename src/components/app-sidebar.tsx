@@ -112,7 +112,7 @@ export function AppSidebar() {
   const chasseItems: NavItem[] = [
     { title: "Chasse aux prospects", url: "/chasse", icon: Target, badge: 0 },
     { title: "Chasse Premium", url: "/chasse-premium", icon: Crown, badge: 0 },
-    { title: "Secteurs", url: "/secteurs", icon: Map, badge: 0 },
+    { title: "Missions", url: "/secteurs", icon: Map, badge: 0 },
   ];
 
   const studioItems: NavItem[] = [

@@ -159,7 +159,7 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
   const lists = await Promise.all(
     [...depts].map((d) => geoJson(`/departements/${d}/communes?fields=nom,code,centre,codesPostaux,population`)),
   );
-  const communes: Array<{ nom: string; code: string; cps: string[]; pop: number }> = [];
+  const communes: Array<{ nom: string; code: string; cps: string[]; pop: number; lat?: number; lng?: number }> = [];
   const names = new Set<string>();
   const cps = new Set<string>();
   for (const list of lists) {
@@ -167,7 +167,8 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
       const co = com?.centre?.coordinates;
       if (!co) continue;
       if (haversineKm(center, { lat: co[1], lng: co[0] }) > rayonKm) continue;
-      communes.push({ nom: com.nom, code: com.code, cps: com.codesPostaux || [], pop: com.population || 0 });
+      communes.push({ nom: com.nom, code: com.code, cps: com.codesPostaux || [], pop: com.population || 0,
+        lat: com.centre?.coordinates?.[1], lng: com.centre?.coordinates?.[0] });
       names.add(normCity(com.nom));
       for (const p of com.codesPostaux || []) cps.add(p);
     }
@@ -474,7 +475,7 @@ async function actionSecteurs(params: {
 
   const mesures = await Promise.all(candidates.map(async (c) => {
     const { total } = await searchEntreprises({ naf, codeCommune: c.code, perPage: 1 });
-    return { code: c.code, nom: c.nom, total };
+    return { code: c.code, nom: c.nom, total, lat: c.lat ?? null, lng: c.lng ?? null };
   }));
 
   const retenus = mesures.filter((m) => m.total >= 5);
@@ -491,6 +492,7 @@ async function actionSecteurs(params: {
       },
       body: JSON.stringify(retenus.map((m) => ({
         naf, metier, commune_code: m.code, commune: m.nom, total_connu: m.total,
+        lat: m.lat, lng: m.lng,
       }))),
     });
   }

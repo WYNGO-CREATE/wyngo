@@ -1,22 +1,23 @@
 /**
- * ─── Secteurs de prospection ──────────────────────────────────────────
+ * ─── Missions & carte de conquête ─────────────────────────────────────
  *
- * Un secteur = un métier × une commune. L'API de l'État en donne la taille
- * réelle : 56 kinés à Blagnac, 1 467 à Toulouse.
+ * Une mission = un métier × une ville, ATTRIBUÉE automatiquement. Personne ne
+ * réserve rien à la main : la protection contre les doublons existe déjà
+ * ailleurs (ce qui entre au CRM devient inaccessible aux autres, et la mémoire
+ * de chasse les écarte). Ce qui manquait, c'était de dire à chacun où aller.
  *
- * L'intérêt n'est pas cosmétique. Tant que la prospection ressemble à un puits
- * sans fond, on ne sait jamais où on en est ni quand s'arrêter. Découpée en
- * secteurs mesurés, elle devient finissable : « il reste 16 kinés à Blagnac »
- * se traite, « il y a des kinés quelque part » ne se traite pas.
+ * Une mission se ferme quand toutes ses cibles — entreprises sans site ou au
+ * site obsolète — ont été appelées. La suivante arrive aussitôt.
  *
- * Les secteurs sont SUGGÉRÉS, jamais imposés : chacun peut aller ailleurs.
+ * La carte montre les territoires pris par l'équipe : ce qui est en cours, et
+ * ce qui est conquis. C'est le seul endroit où l'on voit le travail
+ * s'accumuler.
  */
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,39 +26,68 @@ import { Badge } from "@/components/ui/badge";
 import { TRADES } from "@/lib/trades-catalog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, Map, Check, Target, PhoneCall } from "lucide-react";
+import { Loader2, Flag, Target, PhoneCall, Trophy, Compass } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/secteurs")({
-  component: Secteurs,
-  head: () => ({ meta: [{ title: "Secteurs — Group Arsène Workspace" }] }),
+  component: Missions,
+  head: () => ({ meta: [{ title: "Missions — Group Arsène Workspace" }] }),
 });
 
-type Avancement = {
-  id: string; metier: string; commune: string;
-  suggere_a: string | null; suggere_nom: string | null;
-  total_connu: number | null;
-  verifies: number; cibles: number; au_crm: number; appeles: number;
+type Mission = {
+  id: string; metier: string; commune: string; total_connu: number | null;
+  verifies: number; cibles: number; appelees: number; etat: string;
+};
+type Conquete = {
+  commune: string; metier: string; lat: number; lng: number;
+  par: string; conquise_le: string | null; etat: string;
 };
 
 const RAYONS = [10, 20, 30, 40];
 
-function Secteurs() {
-  const { user } = useAuth();
+// Couleur par collaborateur, stable d'une session à l'autre.
+const TEINTES = ["#1B4BE3", "#0F766E", "#B45309", "#7C3AED", "#BE123C"];
+const teinte = (nom: string) => {
+  let h = 0;
+  for (const c of nom) h = (h * 31 + c.charCodeAt(0)) % 997;
+  return TEINTES[h % TEINTES.length];
+};
+
+/**
+ * Projection très simple de la France métropolitaine sur un rectangle.
+ * Suffisante pour situer des villes les unes par rapport aux autres — on ne
+ * fait pas de cartographie, on montre une progression.
+ */
+const BORNES = { latMin: 41.3, latMax: 51.1, lngMin: -5.2, lngMax: 9.6 };
+const projeter = (lat: number, lng: number) => ({
+  x: ((lng - BORNES.lngMin) / (BORNES.lngMax - BORNES.lngMin)) * 100,
+  y: ((BORNES.latMax - lat) / (BORNES.latMax - BORNES.latMin)) * 100,
+});
+
+function Missions() {
   const qc = useQueryClient();
   const [naf, setNaf] = useState(TRADES[0]?.naf ?? "");
   const [ville, setVille] = useState("Toulouse");
-  const [rayon, setRayon] = useState(20);
+  const [rayon, setRayon] = useState(30);
 
-  const secteurs = useQuery({
-    queryKey: ["secteurs-avancement"],
+  const mission = useQuery({
+    queryKey: ["mission-courante"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("secteurs_avancement");
+      const { data, error } = await (supabase as any).rpc("mission_courante");
       if (error) throw new Error(error.message);
-      return (data || []) as Avancement[];
+      return ((data || [])[0] ?? null) as Mission | null;
     },
   });
 
-  const decouper = useMutation({
+  const carte = useQuery({
+    queryKey: ["carte-conquetes"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("carte_conquetes");
+      if (error) throw new Error(error.message);
+      return (data || []) as Conquete[];
+    },
+  });
+
+  const ouvrirTerritoire = useMutation({
     mutationFn: async () => {
       const t = TRADES.find((x) => x.naf === naf);
       const { data, error } = await supabase.functions.invoke("pappers-search", {
@@ -68,44 +98,88 @@ function Secteurs() {
       return data as { crees: number; total_entreprises: number };
     },
     onSuccess: (r) => {
-      toast.success(`${r.crees} secteurs · ${r.total_entreprises.toLocaleString("fr-FR")} entreprises au total`);
-      qc.invalidateQueries({ queryKey: ["secteurs-avancement"] });
+      toast.success(`${r.crees} missions ouvertes · ${r.total_entreprises.toLocaleString("fr-FR")} entreprises`);
+      qc.invalidateQueries({ queryKey: ["mission-courante"] });
+      qc.invalidateQueries({ queryKey: ["carte-conquetes"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const prendre = useMutation({
-    mutationFn: async ({ id, mien }: { id: string; mien: boolean }) => {
-      const { error } = await (supabase as any).from("secteurs")
-        .update({ suggere_a: mien ? null : user?.id }).eq("id", id);
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["secteurs-avancement"] }),
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const m = mission.data;
+  const restantAAppeler = m ? Math.max(0, Number(m.cibles) - Number(m.appelees)) : 0;
+  const restantAVerifier = m ? Math.max(0, (m.total_connu ?? 0) - Number(m.verifies)) : 0;
+  const pct = m && (m.total_connu ?? 0) > 0
+    ? Math.min(100, Math.round((Number(m.verifies) / (m.total_connu ?? 1)) * 100)) : 0;
 
-  // Les miens d'abord, puis les libres, puis ceux des collègues. À l'intérieur,
-  // les secteurs les plus avancés en tête : on finit ce qu'on a commencé.
-  const liste = [...(secteurs.data ?? [])].sort((a, b) => {
-    const rang = (s: Avancement) => (s.suggere_a === user?.id ? 0 : s.suggere_a ? 2 : 1);
-    if (rang(a) !== rang(b)) return rang(a) - rang(b);
-    return Number(b.verifies) - Number(a.verifies);
-  });
-
-  const mien = (s: Avancement) => s.suggere_a === user?.id;
-  const restantAVerifier = (s: Avancement) => Math.max(0, (s.total_connu ?? 0) - Number(s.verifies));
-  const restantAAppeler = (s: Avancement) => Math.max(0, Number(s.cibles) - Number(s.appeles));
-  const epuise = (s: Avancement) => (s.total_connu ?? 0) > 0 && restantAVerifier(s) === 0;
+  const conquises = (carte.data ?? []).filter((c) => c.etat === "conquise");
+  const enCours = (carte.data ?? []).filter((c) => c.etat === "en_cours");
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Map className="h-6 w-6" /> Secteurs</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Compass className="h-6 w-6" /> Missions</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Un métier, une commune, un nombre réel d'entreprises. On sait où on en est, et quand un secteur est fini.
+          Un métier, une ville. La mission se ferme quand toutes les cibles ont été appelées — et la suivante arrive.
         </p>
       </div>
 
+      {/* ─── Ma mission ─── */}
+      {mission.isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+
+      {!mission.isLoading && !m && (
+        <Card>
+          <CardContent className="p-5 text-sm text-muted-foreground">
+            Aucune mission disponible. Ouvre un territoire ci-dessous : chaque commune alentour
+            devient une mission, et la plus petite te sera attribuée automatiquement.
+          </CardContent>
+        </Card>
+      )}
+
+      {m && (
+        <Card className="border-primary ring-1 ring-primary/25">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Ta mission</p>
+                <h2 className="text-xl font-bold mt-0.5">{m.metier} à {m.commune}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {(m.total_connu ?? 0).toLocaleString("fr-FR")} entreprises sur le secteur
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[11px]"><Flag className="h-3 w-3 mr-1" /> en cours</Badge>
+            </div>
+
+            <div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {Number(m.verifies)} vérifiées sur {(m.total_connu ?? 0).toLocaleString("fr-FR")}
+                {restantAVerifier > 0 && <> · <b className="text-foreground">{restantAVerifier} à vérifier dans la chasse</b></>}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <span className="flex items-center gap-1.5">
+                <Target className="h-4 w-4 text-rose-600" /><b>{Number(m.cibles)}</b> cible{Number(m.cibles) > 1 ? "s" : ""} trouvée{Number(m.cibles) > 1 ? "s" : ""}
+              </span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <PhoneCall className="h-4 w-4" />{Number(m.appelees)} appelée{Number(m.appelees) > 1 ? "s" : ""}
+              </span>
+              {restantAAppeler > 0 && (
+                <span className="font-medium text-emerald-700 dark:text-emerald-500">{restantAAppeler} à appeler</span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground border-t pt-3">
+              Lance la chasse sur <b>{m.metier}</b> à <b>{m.commune}</b> pour révéler les cibles,
+              puis appelle-les. La mission se ferme toute seule quand il n'en reste plus.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ─── Ouvrir un territoire ─── */}
       <Card>
         <CardContent className="p-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
           <div className="space-y-1.5">
@@ -131,79 +205,64 @@ function Secteurs() {
               ))}
             </div>
           </div>
-          <Button disabled={decouper.isPending} onClick={() => decouper.mutate()} className="gap-1.5">
-            {decouper.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Map className="h-4 w-4" />}
-            Découper
+          <Button disabled={ouvrirTerritoire.isPending} onClick={() => ouvrirTerritoire.mutate()} className="gap-1.5">
+            {ouvrirTerritoire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Compass className="h-4 w-4" />}
+            Ouvrir le territoire
           </Button>
         </CardContent>
       </Card>
 
-      {secteurs.isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+      {/* ─── Carte de conquête ─── */}
+      <Card>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-semibold flex items-center gap-2"><Trophy className="h-4 w-4" /> Carte de conquête</h2>
+            <p className="text-xs text-muted-foreground">
+              <b className="text-foreground">{conquises.length}</b> territoire{conquises.length > 1 ? "s" : ""} conquis ·{" "}
+              {enCours.length} en cours
+            </p>
+          </div>
 
-      {!secteurs.isLoading && liste.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Aucun secteur pour l'instant. Choisis un métier et une ville, puis « Découper » : chaque commune
-          alentour devient un secteur avec son nombre réel d'entreprises.
-        </p>
-      )}
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {liste.map((s) => {
-          const total = s.total_connu ?? 0;
-          const pct = total > 0 ? Math.min(100, Math.round((Number(s.verifies) / total) * 100)) : 0;
-          return (
-            <Card key={s.id} className={cn(
-              mien(s) && "border-primary ring-1 ring-primary/30",
-              epuise(s) && "opacity-60",
-            )}>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold leading-tight truncate">{s.commune}</h3>
-                    <p className="text-xs text-muted-foreground truncate">{s.metier}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {epuise(s) && <Badge variant="outline" className="text-[10px]">terminé</Badge>}
-                    {s.suggere_a && !mien(s) && (
-                      <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-400">
-                        {s.suggere_nom ?? "pris"}
-                      </Badge>
-                    )}
-                    <Button size="sm" variant={mien(s) ? "outline" : "default"} className="h-7 text-xs gap-1"
-                      disabled={prendre.isPending}
-                      onClick={() => prendre.mutate({ id: s.id, mien: mien(s) })}>
-                      {mien(s) ? <><Check className="h-3 w-3" /> à moi</> : "Je prends"}
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {Number(s.verifies)} vérifiés sur {total.toLocaleString("fr-FR")}
-                    {restantAVerifier(s) > 0 && <> · <b className="text-foreground">{restantAVerifier(s)} à vérifier</b></>}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  <span className="flex items-center gap-1"><Target className="h-3.5 w-3.5 text-rose-600" />
-                    <b>{Number(s.cibles)}</b> cible{Number(s.cibles) > 1 ? "s" : ""}</span>
-                  <span className="text-muted-foreground">{Number(s.au_crm)} au CRM</span>
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    <PhoneCall className="h-3.5 w-3.5" />{Number(s.appeles)} appelés</span>
-                  {restantAAppeler(s) > 0 && (
-                    <span className="text-emerald-700 dark:text-emerald-500 font-medium">
-                      {restantAAppeler(s)} à appeler
-                    </span>
+          <div className="relative w-full rounded-lg border bg-muted/20 overflow-hidden" style={{ aspectRatio: "1 / 1.05" }}>
+            {(carte.data ?? []).length === 0 && (
+              <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground px-6 text-center">
+                Aucun territoire ouvert. La carte se remplira au fil des missions.
+              </div>
+            )}
+            {(carte.data ?? []).map((c, i) => {
+              const p = projeter(c.lat, c.lng);
+              const fini = c.etat === "conquise";
+              return (
+                <div
+                  key={`${c.commune}-${c.metier}-${i}`}
+                  title={`${c.metier} à ${c.commune} — ${fini ? "conquis" : "en cours"} par ${c.par}`}
+                  className={cn(
+                    "absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition",
+                    fini ? "w-3.5 h-3.5" : "w-2.5 h-2.5 opacity-60",
                   )}
+                  style={{
+                    left: `${p.x}%`, top: `${p.y}%`,
+                    background: fini ? teinte(c.par) : "transparent",
+                    borderColor: teinte(c.par),
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {conquises.length > 0 && (
+            <div className="space-y-1.5">
+              {conquises.slice(0, 8).map((c, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: teinte(c.par) }} />
+                  <b>{c.metier} à {c.commune}</b>
+                  <span className="text-muted-foreground text-xs">— conquis par {c.par}</span>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
