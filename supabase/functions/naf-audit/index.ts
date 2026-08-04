@@ -147,18 +147,30 @@ Deno.serve(async (req) => {
     const exemples: { nom: string; naf: string }[] = [];
     let vus = 0, identifies = 0;
 
+    // En série, huit villes dépassaient le temps d'exécution alloué. On
+    // traite les lieux par paquets : les deux API interrogées supportent
+    // largement cette charge, et une ville passe de ~40 s à quelques secondes.
+    const tous: Lieu[] = [];
     for (const ville of villes) {
-      let L: Lieu[] = [];
-      try { L = await lieux(`${requete} ${ville}`); } catch (_) { continue; }
-      for (const l of L) {
-        vus++;
-        if (l.type) types[l.type] = (types[l.type] || 0) + 1;
-        const code = (await naf(l.nom, l.cp)) ?? (await nafParAdresse(l));
-        if (!code) continue;
+      try { tous.push(...await lieux(`${requete} ${ville}`)); } catch (_) { /* ville muette */ }
+    }
+    vus = tous.length;
+    for (const l of tous) if (l.type) types[l.type] = (types[l.type] || 0) + 1;
+
+    const PAQUET = 8;
+    for (let i = 0; i < tous.length; i += PAQUET) {
+      const codes = await Promise.all(
+        tous.slice(i, i + PAQUET).map(async (l) => {
+          try { return (await naf(l.nom, l.cp)) ?? (await nafParAdresse(l)); }
+          catch (_) { return null; }
+        }),
+      );
+      codes.forEach((code, k) => {
+        if (!code) return;
         identifies++;
         compte[code] = (compte[code] || 0) + 1;
-        if (exemples.length < 12) exemples.push({ nom: l.nom, naf: code });
-      }
+        if (exemples.length < 12) exemples.push({ nom: tous[i + k].nom, naf: code });
+      });
     }
 
     const classement = Object.entries(compte)
