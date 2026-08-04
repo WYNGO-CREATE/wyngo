@@ -23,3 +23,8 @@ verify_jwt = true
 
 [functions.template-generate]
 verify_jwt = true
+
+[functions.naf-audit]
+# Outil d'audit interne : chaque appel dépense du Google Places, il ne doit
+# pas être joignable sans être authentifié.
+verify_jwt = true

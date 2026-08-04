@@ -1,0 +1,21 @@
+-- ─── Coach de vie : 85.59B → 96.09Z (raisonné, non mesuré) ───────────
+--
+-- Ce métier résiste à la mesure et il faut le dire : sur 209 établissements
+-- proposés par Google dans 12 villes, 8 seulement ont pu être rattachés à
+-- Sirene — 4 %. Les coachs de vie sont des micro-entrepreneurs immatriculés à
+-- leur nom, sans enseigne et sans local : ni la raison sociale ni l'adresse ne
+-- permettent de les retrouver.
+--
+-- Le code retenu ne vient donc pas d'une mesure mais d'un faisceau :
+--   • 85.59B (« autres enseignements ») n'apparaît PAS une seule fois sur les
+--     209 établissements examinés — le code du catalogue est infirmé ;
+--   • 96.09Z est le code le plus fréquent du peu qu'on a pu lire ;
+--   • une mesure indépendante conduite le même jour, par une autre méthode, a
+--     placé naturopathe (57 %) et hypnothérapeute (67 %) en 96.09Z. Les
+--     praticiens du bien-être se déclarent là.
+--
+-- À surveiller : 96.09Z est un fourre-tout partagé avec le tatoueur, le
+-- toiletteur et la voyance. La contrainte d'unicité (naf, commune) empêche que
+-- deux personnes reçoivent deux libellés qui aboutiraient aux mêmes appels.
+
+update public.metiers_prospection set naf = '96.09Z' where metier_id = 'coach_vie';

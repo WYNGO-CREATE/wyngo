@@ -293,7 +293,7 @@ export const TRADES: Trade[] = [
   { id: "aide_domicile", label: "Aide à domicile - Auxiliaire de vie", naf: "88.10A", category: "Services aux particuliers", sector: "service" },
   { id: "garde_enfants", label: "Garde d'enfants - Crèche privée", naf: "88.91A", category: "Services aux particuliers", sector: "service" },
   { id: "soutien_scolaire", label: "Soutien scolaire - Cours particuliers", naf: "85.59B", category: "Services aux particuliers", sector: "service" },
-  { id: "coach_vie", label: "Coach de vie - Life coach", naf: "85.59B", category: "Services aux particuliers", sector: "service" },
+  { id: "coach_vie", label: "Coach de vie - Life coach", naf: "96.09Z", category: "Services aux particuliers", sector: "service" },
   { id: "mediateur_familial", label: "Médiateur familial", naf: "88.99B", category: "Services aux particuliers", sector: "service" },
   { id: "voyance", label: "Voyance - Astrologie", naf: "96.09Z", category: "Services aux particuliers", sector: "service" },
   { id: "wedding_planner", label: "Wedding planner", naf: "74.90B", category: "Services aux particuliers", sector: "service" },
