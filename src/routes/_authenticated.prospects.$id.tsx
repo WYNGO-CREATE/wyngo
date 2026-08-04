@@ -4,6 +4,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { PresenceBanner } from "@/components/presence-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,6 +267,8 @@ function ProspectDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Prévient qu'un collègue est déjà sur cette fiche, en direct. */}
+      <PresenceBanner prospectId={id} />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
