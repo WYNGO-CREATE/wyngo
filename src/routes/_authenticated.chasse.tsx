@@ -190,6 +190,8 @@ function ChassePage() {
   const [progress, setProgress] = useState(0);
   // Filtre : ne montrer que les prospects avec au moins un moyen de contact
   const [onlyWithContact, setOnlyWithContact] = useState(true);
+  // SIREN déjà proposés lors d'une vague précédente et jamais retenus.
+  const [dejaProposes, setDejaProposes] = useState<Set<string>>(new Set());
 
   // Test connexion Pappers
   const connectionTest = useQuery({
@@ -253,6 +255,10 @@ function ChassePage() {
       if ((data as { error?: string })?.error) throw new Error((data as { error?: string }).error!);
       const entreprises = (data as { entreprises?: PappersResult[] }).entreprises || [];
       const total = (data as { pagination?: { total?: number } }).pagination?.total;
+      // Entreprises déjà proposées lors d'une vague précédente et que Hugo
+      // n'avait pas retenues : elles reviennent, signalées comme telles.
+      const rappels = ((data as { deja_proposes?: string[] }).deja_proposes || []);
+      setDejaProposes(new Set(rappels));
 
       // ⚠️ Chaque nouvelle chasse REMPLACE les résultats précédents
       // (UX feedback : l'utilisateur ne veut pas se retrouver avec un mix de
@@ -397,15 +403,35 @@ function ChassePage() {
 
       await Promise.all(Array.from({ length: CONCURRENCY }, worker));
       setChecking(false);
+
+      // On renvoie les verdicts à la mémoire de chasse. Seules les entreprises
+      // qui ont DÉJÀ un bon site seront définitivement écartées : celles sans
+      // site ou au site obsolète reviendront tant qu'elles ne sont pas au CRM,
+      // pour qu'aucune cible ne se perde entre deux vagues.
+      try {
+        const lignes = enriched
+          .map((r: any) => ({ siren: r.siren, statut: r.website_status }))
+          .filter((x: any) => x.siren && x.statut && x.statut !== "unknown");
+        if (lignes.length) await (supabase as any).rpc("chasse_marquer_statuts", { lignes });
+      } catch { /* la mémoire est un confort, elle ne doit rien bloquer */ }
+
       return {
         count: enriched.length,
         total: total ?? enriched.length,
+        oublies: rappels.length as number,
       };
     },
     onSuccess: (res) => {
       toast.success(
-        `${res.count} prospects trouvés · sur ${res.total.toLocaleString("fr-FR")} disponibles dans Pappers`,
+        `${res.count} prospects trouvés · sur ${res.total.toLocaleString("fr-FR")} disponibles`,
       );
+      const oublies = res.oublies ?? 0;
+      if (oublies > 0) {
+        toast(
+          `${oublies} prospect${oublies > 1 ? "s" : ""} déjà proposé${oublies > 1 ? "s" : ""} lors d'une chasse précédente — tu ne les avais pas retenus`,
+          { icon: "↩️", duration: 7000 },
+        );
+      }
     },
     onError: (e: Error) => {
       setChecking(false);
@@ -898,6 +924,15 @@ function ChassePage() {
                                 {bestEmail(r) ? "OK" : "—"}
                               </Badge>
                             </>
+                          )}
+                          {!vu && dejaProposes.has(r.siren) && (
+                            <Badge
+                              variant="outline"
+                              title="Déjà proposé lors d'une chasse précédente, et jamais ajouté au CRM"
+                              className="text-[10px] bg-sky-50 text-sky-800 border-sky-400"
+                            >
+                              ↩ déjà vu, pas retenu
+                            </Badge>
                           )}
                           {vu && (
                             <Badge

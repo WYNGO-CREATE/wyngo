@@ -205,10 +205,14 @@ async function sirenDejaConnus(): Promise<Set<string>> {
     // (b) Entreprises déjà PROPOSÉES par une chasse précédente, même si
     //     personne ne les a importées. Sans ça, relancer « notaires à Lyon »
     //     redonnait exactement la même liste, indéfiniment.
-    const depuis = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString();
+    // ⚠️ On n'écarte QUE les entreprises dont le site est déjà bon : ce ne
+    // sont pas des cibles, inutile de les revoir. Un prospect sans site ou au
+    // site obsolète revient à chaque vague tant qu'il n'est pas entré dans le
+    // CRM — c'est précisément celui qu'il ne faut jamais laisser filer.
+    const depuis = new Date(Date.now() - 180 * 24 * 3600 * 1000).toISOString();
     for (let from = 0; from < 200000; from += 1000) {
       const r = await fetch(
-        `${url}/rest/v1/chasse_vus?select=siren&derniere_vue=gte.${depuis}`,
+        `${url}/rest/v1/chasse_vus?select=siren&statut_site=eq.has_website&derniere_vue=gte.${depuis}`,
         { headers: { ...h, Range: `${from}-${from + 999}` } });
       if (!r.ok) break;
       const lot = await r.json() as Array<{ siren: string }>;
@@ -217,6 +221,25 @@ async function sirenDejaConnus(): Promise<Set<string>> {
     }
   } catch { /* en cas de panne on préfère chasser large que planter */ }
   return vus;
+}
+
+/** SIREN déjà proposés lors d'une vague précédente (pour le rappel « oublié »). */
+async function sirenDejaProposes(sirens: string[]): Promise<string[]> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key || sirens.length === 0) return [];
+  try {
+    const out: string[] = [];
+    for (let i = 0; i < sirens.length; i += 200) {
+      const lot = sirens.slice(i, i + 200);
+      const r = await fetch(
+        `${url}/rest/v1/chasse_vus?select=siren&siren=in.(${lot.join(",")})`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) continue;
+      for (const x of await r.json() as Array<{ siren: string }>) out.push(x.siren);
+    }
+    return out;
+  } catch { return []; }
 }
 
 /** Enregistre ce que la vague vient de montrer, pour que la suivante amène du neuf. */
@@ -397,6 +420,10 @@ async function actionSearch(params: {
   // On mémorise ce qui vient d'être montré : la prochaine vague amènera
   // d'autres entreprises, même si aucune n'est importée dans le CRM.
   const livres = collected.slice(0, target);
+  // Ceux qui avaient déjà été proposés lors d'une vague précédente : le front
+  // les signale (« tu ne l'avais pas retenu ») au lieu de les faire passer
+  // pour des nouveautés.
+  const dejaProposes = await sirenDejaProposes(livres.map((e: any) => e.siren).filter(Boolean));
   if (params.exclure_connus !== false) {
     await memoriserVague(
       livres.map((e: any) => e.siren).filter(Boolean),
@@ -411,6 +438,7 @@ async function actionSearch(params: {
     entreprises: livres,
     pagination: { page: 1, par_page: 25, total: collected.length },
     rejected_out_of_zone: rejected,
+    deja_proposes: dejaProposes,
     ignores_deja_connus: ignoresDejaConnus,
     univers_connu: dejaConnus.size,
     scanned_pages: scanned,
