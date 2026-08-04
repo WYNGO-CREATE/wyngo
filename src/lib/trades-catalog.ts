@@ -228,7 +228,7 @@ export const TRADES: Trade[] = [
   { id: "pediatre", label: "Pédiatre", naf: "86.22A", category: "Santé & soins", sector: "service" },
   { id: "dentiste", label: "Cabinet dentaire", naf: "86.23Z", category: "Santé & soins", sector: "service" },
   { id: "orthodontiste", label: "Orthodontiste", naf: "86.23Z", category: "Santé & soins", sector: "service" },
-  { id: "kine", label: "Kinésithérapeute", naf: "86.90F", category: "Santé & soins", sector: "service" },
+  { id: "kine", label: "Kinésithérapeute", naf: "86.90E", category: "Santé & soins", sector: "service" },
   { id: "osteo", label: "Ostéopathe", naf: "86.90E", category: "Santé & soins", sector: "service" },
   { id: "podologue", label: "Podologue - Pédicure", naf: "86.90C", category: "Santé & soins", sector: "service" },
   { id: "veterinaire", label: "Vétérinaire", naf: "75.00Z", category: "Santé & soins", sector: "service" },
@@ -237,12 +237,12 @@ export const TRADES: Trade[] = [
   { id: "audioprothesiste", label: "Audioprothésiste", naf: "47.74Z", category: "Santé & soins", sector: "service" },
   { id: "dieteticien", label: "Diététicien - Nutritionniste", naf: "86.90F", category: "Santé & soins", sector: "service" },
   { id: "psychologue", label: "Psychologue libéral", naf: "86.90F", category: "Santé & soins", sector: "service" },
-  { id: "psychomotricien", label: "Psychomotricien", naf: "86.90F", category: "Santé & soins", sector: "service" },
-  { id: "ergotherapeute", label: "Ergothérapeute", naf: "86.90F", category: "Santé & soins", sector: "service" },
-  { id: "orthophoniste", label: "Orthophoniste", naf: "86.90F", category: "Santé & soins", sector: "service" },
+  { id: "psychomotricien", label: "Psychomotricien", naf: "86.90E", category: "Santé & soins", sector: "service" },
+  { id: "ergotherapeute", label: "Ergothérapeute", naf: "86.90E", category: "Santé & soins", sector: "service" },
+  { id: "orthophoniste", label: "Orthophoniste", naf: "86.90E", category: "Santé & soins", sector: "service" },
   { id: "sophrologue", label: "Sophrologue", naf: "86.90F", category: "Santé & soins", sector: "service" },
-  { id: "naturopathe", label: "Naturopathe", naf: "86.90F", category: "Santé & soins", sector: "service" },
-  { id: "hypnotherapeute", label: "Hypnothérapeute", naf: "86.90F", category: "Santé & soins", sector: "service" },
+  { id: "naturopathe", label: "Naturopathe", naf: "96.09Z", category: "Santé & soins", sector: "service" },
+  { id: "hypnotherapeute", label: "Hypnothérapeute", naf: "96.09Z", category: "Santé & soins", sector: "service" },
 
   // ════════════════════════════════════════════════════════════════════
   // SPORT & LOISIRS
