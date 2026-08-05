@@ -243,6 +243,29 @@ async function sirenDejaProposes(sirens: string[]): Promise<string[]> {
   } catch { return []; }
 }
 
+/**
+ * Qui lance cette chasse.
+ *
+ * Le front ne transmettait pas l'identité : `vu_par` restait donc toujours
+ * vide, et toute la mémoire de chasse — donc la carte de conquête — était
+ * anonyme. On lit l'identifiant dans le jeton de l'appelant plutôt que dans le
+ * corps de la requête : la passerelle l'a déjà vérifié, et personne ne peut se
+ * faire passer pour un collègue.
+ */
+function auteur(req: Request): string | null {
+  const brut = req.headers.get("Authorization") ?? "";
+  const jeton = brut.replace(/^Bearer\s+/i, "");
+  const morceaux = jeton.split(".");
+  if (morceaux.length !== 3) return null;
+  try {
+    const p = morceaux[1].replace(/-/g, "+").replace(/_/g, "/");
+    const charge = JSON.parse(atob(p.padEnd(Math.ceil(p.length / 4) * 4, "=")));
+    // Le jeton de service n'a pas de « sub » utilisateur : on ne veut pas
+    // attribuer une chasse à un robot.
+    return charge?.role === "service_role" ? null : (charge?.sub ?? null);
+  } catch { return null; }
+}
+
 /** Enregistre ce que la vague vient de montrer, pour que la suivante amène du neuf. */
 async function memoriserVague(sirens: string[], metier: string, zone: string, userId: string | null) {
   const url = Deno.env.get("SUPABASE_URL");
@@ -267,7 +290,7 @@ async function memoriserVague(sirens: string[], metier: string, zone: string, us
   } catch { /* la mémoire est un confort, jamais un bloquant */ }
 }
 
-async function actionSearch(params: {
+async function actionSearch(appelant: string | null, params: {
   code_naf?: string;
   ville?: string;
   code_postal?: string;
@@ -430,7 +453,7 @@ async function actionSearch(params: {
       livres.map((e: any) => e.siren).filter(Boolean),
       params.code_naf || params.mots_cles || "",
       zone ? `${zone.centerName} ${rayon}km` : (params.ville || params.code_postal || ""),
-      params.user_id ?? null,
+      params.user_id ?? appelant,
     );
   }
 
@@ -527,7 +550,7 @@ Deno.serve(async (req) => {
       case "test":
         return json(await actionTest());
       case "search":
-        return json(await actionSearch(body.params || {}));
+        return json(await actionSearch(auteur(req), body.params || {}));
       case "enrich":
         return json(await actionEnrich(body.params || {}));
       case "secteurs":
