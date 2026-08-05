@@ -137,8 +137,21 @@ async function resolveZone(ville: string | undefined, cp: string | undefined, ra
     c = l?.[0] || null;
   }
   if (!c && ville) {
-    const l = await geoJson(`/communes?nom=${encodeURIComponent(ville)}&fields=nom,centre,codeDepartement,codesPostaux&boost=population&limit=1`);
-    c = l?.[0] || null;
+    // `limit=1` était un piège : la pertinence textuelle de l'API l'emporte sur
+    // le tri par population. « Chaumont » renvoyait Chaumontel (3 332 hab,
+    // Val-d'Oise) avant Chaumont (20 827 hab, Haute-Marne) — une chasse à
+    // 250 km de la ville demandée.
+    //
+    // On demande donc plusieurs candidats et l'on privilégie une correspondance
+    // EXACTE du nom, la plus peuplée. À défaut seulement, le premier proposé.
+    const l = await geoJson(
+      `/communes?nom=${encodeURIComponent(ville)}&fields=nom,centre,codeDepartement,codesPostaux,population&boost=population&limit=15`,
+    );
+    const cands = (l || []) as any[];
+    const cherche = normCity(ville);
+    const exacts = cands.filter((x) => normCity(x?.nom) === cherche);
+    const pool = exacts.length ? exacts : cands;
+    c = pool.sort((a, b) => (b?.population || 0) - (a?.population || 0))[0] || null;
   }
   if (!c?.centre?.coordinates) return null;
   const center = { lat: c.centre.coordinates[1], lng: c.centre.coordinates[0] };
@@ -354,7 +367,26 @@ async function actionSearch(appelant: string | null, params: {
           if (ac !== bc) return bc - ac;
           return (b.pop || 0) - (a.pop || 0);
         });
-        return triees.slice(0, MAX_COMMUNES).map((c) => ({ q: "", commune: c.code, cp: c.cps[0] }));
+        // Deux endroits où le filtre par code commune ne répond pas, et où la
+        // chasse ramenait donc zéro sans le dire :
+        //
+        //   • la Corse — les codes y sont alphanumériques (2A/2B) et l'API les
+        //     ignore : `code_commune=2B033` → 0 coiffeur, `code_postal=20200`
+        //     → 161 ;
+        //   • Paris, Lyon et Marseille — une seule commune pour l'API
+        //     géographique (75056, 69123, 13055), mais l'API entreprises n'y
+        //     répond que par arrondissement : 75056 → 0, 75101 → 258.
+        //
+        // Dans les deux cas on passe par les codes postaux, qui recouvrent
+        // exactement les arrondissements.
+        const ARRONDISSEMENTS = new Set(["75056", "69123", "13055"]);
+        return triees.slice(0, MAX_COMMUNES).flatMap((c) => {
+          const parCp = /^2[AB]/i.test(c.code) || ARRONDISSEMENTS.has(c.code);
+          if (parCp && c.cps.length) {
+            return c.cps.slice(0, 20).map((cp) => ({ q: "", cp }));
+          }
+          return [{ q: "", commune: c.code, cp: c.cps[0] }];
+        });
       })()
     : [{
         q: (params.ville || params.code_postal || "").trim(),
@@ -374,7 +406,7 @@ async function actionSearch(appelant: string | null, params: {
 
   for (const cible of cibles) {
     if (collected.length >= target) break;
-    if (!cible.q && !cible.commune && !cible.dept) continue;
+    if (!cible.q && !cible.commune && !cible.dept && !cible.cp) continue;
 
     // En mode mots-clés on balaie peu de cibles (1 par département) : on peut
     // donc paginer plus profond pour ramener autant de prospects.
