@@ -6,6 +6,7 @@
 //      Worker à /p/<slug> (vrai lien partageable, content-type correct).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { baliseMesure } from "../_shared/balise-mesure.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -55,6 +56,12 @@ Deno.serve(async (req) => {
     const nav = navItems.length > 1
       ? `<nav id="wy-nav" style="position:sticky;top:0;z-index:9998;display:flex;gap:22px;justify-content:center;align-items:center;padding:14px 20px;background:color-mix(in srgb,var(--wy-surface,#fff) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid color-mix(in srgb,var(--wy-ink,#111) 10%,transparent);font-family:var(--wy-body,system-ui),sans-serif;font-size:14px;flex-wrap:wrap">${navItems.map((it) => `<a href="${origin}/p/${it.path}" style="color:var(--wy-ink,#111);text-decoration:none;font-weight:500;opacity:.85">${esc(it.title)}</a>`).join("")}</nav>`
       : "";
+    // La mesure d'audience, posée sur chaque page publiée. Sans elle, les
+    // chiffres du rapport client resteraient saisis à la main.
+    const mesure = baliseMesure(site_id, `${Deno.env.get("SUPABASE_URL")}/functions/v1/mesure`);
+    const injectMesure = (h: string) =>
+      /<\/body>/i.test(h) ? h.replace(/<\/body>/i, `${mesure}</body>`) : h + mesure;
+
     const injectNav = (h: string) => {
       if (!nav) return h;
       let out = h.replace(/<nav id="wy-nav"[\s\S]*?<\/nav>/i, "");
@@ -78,9 +85,9 @@ Deno.serve(async (req) => {
     };
 
     // Accueil + sous-pages (nav + liens internes réécrits)
-    await put(`${slug}.html`, injectNav(rewriteLinks(site.html)));
+    await put(`${slug}.html`, injectMesure(injectNav(rewriteLinks(site.html))));
     for (const p of extra) {
-      await put(`${slug}__${(p.slug || "").replace(/[^a-z0-9\-]/gi, "")}.html`, injectNav(rewriteLinks(p.html)));
+      await put(`${slug}__${(p.slug || "").replace(/[^a-z0-9\-]/gi, "")}.html`, injectMesure(injectNav(rewriteLinks(p.html))));
     }
 
     await db.from("client_sites").update({

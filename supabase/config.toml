@@ -28,3 +28,8 @@ verify_jwt = true
 # Outil d'audit interne : chaque appel dépense du Google Places, il ne doit
 # pas être joignable sans être authentifié.
 verify_jwt = true
+
+[functions.mesure]
+# Collecteur d'audience : appelé par les sites clients depuis le navigateur
+# d'un visiteur anonyme, qui ne peut par nature pas s'authentifier.
+verify_jwt = false
