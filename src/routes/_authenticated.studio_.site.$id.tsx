@@ -21,6 +21,7 @@ import { ArrowLeft, Sparkles, Wand2, Loader2, Rocket, Monitor, Smartphone, Undo2
 import { SitePhotosPanel } from "@/components/site-photos-panel";
 import { SiteCodePanel } from "@/components/site-code-panel";
 import { SiteIntegrationsPanel } from "@/components/site-integrations-panel";
+import { InviterClient } from "@/components/inviter-client";
 import { SiteDesignPanel } from "@/components/site-design-panel";
 import { buildFullPage, getCurrentPack } from "@/lib/site-design-system";
 import { useAuth } from "@/hooks/use-auth";
@@ -372,7 +373,19 @@ function SiteEditor() {
           ) : panel === "code" ? (
             <SiteCodePanel html={html} onChange={persist} />
           ) : panel === "apps" ? (
-            <SiteIntegrationsPanel html={html} onChange={persist} />
+            <div className="p-4 space-y-4 overflow-y-auto">
+              <SiteIntegrationsPanel html={html} onChange={persist} />
+              {/* L'espace client se donne ici : c'est depuis cette page qu'on
+                  livre le site, donc le moment où l'on remet ses accès. */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-semibold mb-1">Espace client</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Le client s'y connecte pour suivre son projet, écrire à l'agence et,
+                  une fois le site en ligne, voir sa fréquentation réelle.
+                </p>
+                <InviterClient siteId={id} defautNom={site.title || undefined} />
+              </div>
+            </div>
           ) : (
           <div className="p-4 space-y-3 overflow-y-auto">
             <div>

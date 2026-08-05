@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EspaceRouteImport } from './routes/espace'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthGmailCallbackRouteImport } from './routes/auth.gmail-callback'
@@ -50,6 +51,11 @@ const SignupRoute = SignupRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EspaceRoute = EspaceRouteImport.update({
+  id: '/espace',
+  path: '/espace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -213,6 +219,7 @@ const AuthenticatedFacturationDocumentIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/agenda': typeof AuthenticatedAgendaRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/studio/site/$id': typeof AuthenticatedStudioSiteIdRoute
 }
 export interface FileRoutesByTo {
+  '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/agenda': typeof AuthenticatedAgendaRoute
@@ -280,6 +288,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/espace'
     | '/login'
     | '/signup'
     | '/agenda'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/studio/site/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/espace'
     | '/login'
     | '/signup'
     | '/agenda'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/espace'
     | '/login'
     | '/signup'
     | '/_authenticated/agenda'
@@ -417,6 +429,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  EspaceRoute: typeof EspaceRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   AuthGmailCallbackRoute: typeof AuthGmailCallbackRoute
@@ -436,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/espace': {
+      id: '/espace'
+      path: '/espace'
+      fullPath: '/espace'
+      preLoaderRoute: typeof EspaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -735,6 +755,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  EspaceRoute: EspaceRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   AuthGmailCallbackRoute: AuthGmailCallbackRoute,
