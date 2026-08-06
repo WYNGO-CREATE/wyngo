@@ -38,3 +38,28 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
   },
 });
 
+
+/**
+ * ─── Retenir une arrivée par lien d'invitation ────────────────────────
+ *
+ * Le lien de première connexion dépose le jeton dans l'adresse. Mais le
+ * routeur redirige aussitôt un client vers son espace, et l'adresse — donc le
+ * jeton — est perdue en route : l'écran « choisissez votre mot de passe » ne
+ * s'affichait jamais, et le client se retrouvait connecté sans pouvoir
+ * revenir un jour.
+ *
+ * On note donc le passage dès le chargement du module, avant toute
+ * navigation. L'espace client lira ce drapeau et le consommera.
+ */
+export const MARQUE_MDP = "arsene.mdp-a-definir";
+
+if (typeof window !== "undefined") {
+  if (/type=(recovery|invite)/.test(window.location.hash)) {
+    try { sessionStorage.setItem(MARQUE_MDP, "1"); } catch { /* mode privé */ }
+  }
+  supabase.auth.onAuthStateChange((e) => {
+    if (e === "PASSWORD_RECOVERY") {
+      try { sessionStorage.setItem(MARQUE_MDP, "1"); } catch { /* mode privé */ }
+    }
+  });
+}

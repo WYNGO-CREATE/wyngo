@@ -11,6 +11,15 @@ export const Route = createFileRoute("/_authenticated")({
     if (!data.session) {
       throw redirect({ to: "/login" });
     }
+    // Un client n'a rien à faire dans le CRM. Il y atterrit pourtant après
+    // avoir choisi son mot de passe : Supabase renvoie vers la racine du site,
+    // et n'accepte pas toujours une adresse plus précise. Plutôt que de
+    // dépendre d'un réglage de tableau de bord, on le renvoie ici — il ne peut
+    // de toute façon rien voir, les politiques de sécurité l'en empêchent.
+    const { data: estClient } = await (supabase as any).rpc("est_client");
+    if (estClient) {
+      throw redirect({ to: "/espace" });
+    }
   },
   component: AuthenticatedLayout,
 });

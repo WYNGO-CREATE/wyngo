@@ -17,7 +17,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, MARQUE_MDP } from "@/integrations/supabase/client";
 import { Audience } from "@/components/espace/audience";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -363,15 +363,83 @@ function Compte({ email }: { email: string }) {
   );
 }
 
+/** Premier passage : le client choisit son mot de passe lui-même. */
+function ChoisirMotDePasse({ onFini }: { onFini: () => void }) {
+  const [mdp, setMdp] = useState("");
+  const [encore, setEncore] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+
+  const valider = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mdp.length < 8) { toast.error("Choisissez au moins 8 caractères."); return; }
+    if (mdp !== encore) { toast.error("Les deux mots de passe ne correspondent pas."); return; }
+    setEnvoi(true);
+    const { error } = await supabase.auth.updateUser({ password: mdp });
+    setEnvoi(false);
+    if (error) { toast.error(error.message); return; }
+    // On nettoie le jeton resté dans l'adresse : il ne doit pas traîner.
+    try { sessionStorage.removeItem(MARQUE_MDP); } catch { /* mode privé */ }
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    toast.success("C'est enregistré — bienvenue.");
+    onFini();
+  };
+
+  return (
+    <div className="min-h-screen grid place-items-center bg-muted/30 px-4">
+      <form onSubmit={valider} className="w-full max-w-sm space-y-4">
+        <div className="flex items-center gap-2.5 justify-center mb-2">
+          <div className="h-10 w-10 rounded-lg bg-foreground text-background grid place-items-center font-bold text-lg">A</div>
+          <div className="leading-none">
+            <div className="font-bold tracking-wide">GROUP ARSÈNE</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Espace client</div>
+          </div>
+        </div>
+        <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+          <div>
+            <h1 className="text-lg font-semibold">Choisissez votre mot de passe</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Il vous servira à revenir sur votre espace. Personne chez Group Arsène ne le connaîtra.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Mot de passe</label>
+            <input type="password" required value={mdp} onChange={(e) => setMdp(e.target.value)}
+              autoComplete="new-password" className="w-full h-10 rounded-lg border bg-background px-3 text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Confirmer</label>
+            <input type="password" required value={encore} onChange={(e) => setEncore(e.target.value)}
+              autoComplete="new-password" className="w-full h-10 rounded-lg border bg-background px-3 text-sm" />
+          </div>
+          <button type="submit" disabled={envoi}
+            className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center justify-center gap-2 disabled:opacity-60">
+            {envoi && <Loader2 className="h-4 w-4 animate-spin" />} Entrer dans mon espace
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ─────────────────────────── L'espace ───────────────────────────
 
 function Espace() {
   const [session, setSession] = useState<any>(undefined);
   const [onglet, setOnglet] = useState<"projet" | "audience" | "messages" | "compte">("projet");
+  // Arrivée par le lien d'invitation : le client est connecté, mais il n'a
+  // encore aucun mot de passe. Sans cet écran il ne pourrait jamais revenir.
+  const [aDefinir, setADefinir] = useState(false);
 
   useEffect(() => {
+    // Le drapeau est posé par le module supabase, avant toute redirection.
+    try { if (sessionStorage.getItem(MARQUE_MDP)) setADefinir(true); } catch { /* mode privé */ }
     supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
+      setSession(s);
+      if (e === "PASSWORD_RECOVERY") setADefinir(true);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -389,6 +457,8 @@ function Espace() {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
   if (!session) return <Connexion onEntre={() => site.refetch()} />;
+
+  if (aDefinir) return <ChoisirMotDePasse onFini={() => setADefinir(false)} />;
 
   if (site.isLoading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
