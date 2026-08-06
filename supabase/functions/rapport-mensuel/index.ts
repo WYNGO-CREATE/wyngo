@@ -1,8 +1,8 @@
 /**
  * ─── Le rapport mensuel, sans saisie ──────────────────────────────────
  *
- * Tout est collecté : la fréquentation vient de notre propre mesure, la note
- * et le nombre d'avis viennent de Google Places. Il ne reste rien à taper.
+ * Tout est collecté depuis notre propre mesure. Il ne reste rien à taper, et
+ * ça ne coûte rien : aucune API payante n'est appelée.
  *
  * Ce qui a été retiré : la « position Google ». Une position honnête dépend du
  * mot-clé, de la ville et de l'appareil de celui qui cherche, et ne s'obtient
@@ -10,6 +10,12 @@
  * L'inventer serait mentir. À la place, on montre la part de visiteurs arrivés
  * par un moteur de recherche — ça, ça se mesure, et ça dit la même chose au
  * client : est-ce qu'on me trouve ?
+ *
+ * La note Google a été retirée pour la même raison de coût, et pour une raison
+ * de justesse : on la retrouvait en cherchant « nom + ville », ce qui pouvait
+ * tomber sur la fiche d'un homonyme. En test, « Boulangerie Martin » à
+ * Toulouse renvoyait la note d'une vraie boulangerie sans rapport. Envoyer à
+ * un client la réputation d'un autre est pire que ne rien envoyer.
  *
  * Actions :
  *   { action: "apercu",  site_id }            → les chiffres + le HTML
@@ -25,7 +31,6 @@ const json = (b: unknown, s = 200) =>
 
 const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const PLACES = Deno.env.get("GOOGLE_PLACES_API_KEY");
 
 const H = { apikey: SRV, Authorization: `Bearer ${SRV}`, "Content-Type": "application/json" };
 
@@ -41,29 +46,6 @@ function evolution(a: number, b: number): { texte: string; monte: boolean | null
   return { texte: `${p > 0 ? "+" : "−"}${Math.abs(p)} % vs mois dernier`, monte: p > 0 };
 }
 
-/** La note Google et le nombre d'avis. Une requête par site et par mois. */
-async function noteGoogle(nom: string, ville: string | null): Promise<{ note: number; avis: number } | null> {
-  if (!PLACES || !nom) return null;
-  try {
-    const r = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": PLACES,
-        "X-Goog-FieldMask": "places.rating,places.userRatingCount",
-      },
-      body: JSON.stringify({
-        textQuery: [nom, ville].filter(Boolean).join(" "),
-        languageCode: "fr", regionCode: "FR", maxResultCount: 1,
-      }),
-    });
-    if (!r.ok) return null;
-    const p = (await r.json())?.places?.[0];
-    if (!p?.rating) return null;
-    return { note: Number(p.rating), avis: Number(p.userRatingCount ?? 0) };
-  } catch { return null; }
-}
-
 const LIB_CONTACTS: Record<string, string> = {
   telephone: "Appels depuis le site",
   formulaire: "Formulaires envoyés",
@@ -72,7 +54,7 @@ const LIB_CONTACTS: Record<string, string> = {
   whatsapp: "Messages WhatsApp",
 };
 
-function courriel(d: any, site: any, note: { note: number; avis: number } | null, lien: string) {
+function courriel(d: any, site: any, lien: string) {
   const ev = {
     visiteurs: evolution(d.visiteurs, d.visiteurs_avant),
     contacts: evolution(d.contacts, d.contacts_avant),
@@ -158,11 +140,6 @@ function courriel(d: any, site: any, note: { note: number; avis: number } | null
         <td style="padding:14px 16px;font-size:13px;color:#64748b">Temps passé par visite</td>
         <td style="padding:14px 16px;font-size:14px;font-weight:600;text-align:right;color:#0f172a">${esc(dureeTxt)}</td>
       </tr>
-      ${note ? `<tr>
-        <td style="padding:14px 16px;border-top:1px solid #eef2f7;font-size:13px;color:#64748b">Votre note Google</td>
-        <td style="padding:14px 16px;border-top:1px solid #eef2f7;font-size:14px;font-weight:600;text-align:right;color:#0f172a">
-          ${note.note.toFixed(1)} ★ <span style="font-weight:400;color:#94a3b8">(${nf(note.avis)} avis)</span></td>
-      </tr>` : ""}
       ${d.meilleur_jour ? `<tr>
         <td style="padding:14px 16px;border-top:1px solid #eef2f7;font-size:13px;color:#64748b">Votre meilleure journée</td>
         <td style="padding:14px 16px;border-top:1px solid #eef2f7;font-size:14px;font-weight:600;text-align:right;color:#0f172a">
@@ -221,20 +198,12 @@ Deno.serve(async (req) => {
     const site = (await sr.json())?.[0];
     if (!site) return json({ error: "Site introuvable." }, 404);
 
-    // Ville du prospect, pour retrouver la bonne fiche Google.
-    let ville: string | null = null;
-    if (site.prospect_id) {
-      const pr = await fetch(`${URL_SB}/rest/v1/prospects?id=eq.${site.prospect_id}&select=location`, { headers: H });
-      const p = (await pr.json())?.[0];
-      ville = (p?.location || "").match(/\d{5}\s+(.+)$/)?.[1] ?? null;
-    }
-    const note = await noteGoogle(site.title, ville);
 
     const racine = (base_url || "").replace(/\/$/, "");
-    const html = courriel(d, site, note, `${racine}/espace`);
+    const html = courriel(d, site, `${racine}/espace`);
 
     if (action !== "envoyer") {
-      return json({ ok: true, chiffres: d, note, html });
+      return json({ ok: true, chiffres: d, html });
     }
     if (!email) return json({ error: "Email du client requis." }, 400);
 
@@ -245,7 +214,6 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         site_id, owner_id: site.owner_id, period: `${d.mois}-01`,
         visits: d.visites, unique_visitors: d.visiteurs, leads: d.contacts,
-        note_google: note?.note ?? null, avis_google: note?.avis ?? null,
         releve_le: new Date().toISOString(), sent_at: new Date().toISOString(),
       }),
     });

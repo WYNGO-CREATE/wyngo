@@ -577,8 +577,8 @@ function SiteCard({
 
 // ─── Rapport mensuel ───────────────────────────────────────────────────
 //
-// Il n'y a plus rien à saisir. Les chiffres viennent de la mesure posée sur le
-// site du client ; la note Google vient de Google. On regarde, on envoie.
+// Il n'y a plus rien à saisir : les chiffres viennent de la mesure posée sur
+// le site du client. On regarde, on envoie. Aucune API payante n'est appelée.
 //
 // La « position Google » a disparu : une position honnête dépend du mot-clé,
 // de la ville et de l'appareil de celui qui cherche, et ne s'obtient qu'avec
@@ -626,7 +626,6 @@ function ReportDialog({ site, clientName, clientEmail, onClose }: {
   });
 
   const c = apercu.data?.chiffres;
-  const note = apercu.data?.note;
   const ev = (a: number, b: number) => {
     if (!b) return null;
     const p = Math.round(((a - b) / b) * 100);
@@ -674,11 +673,6 @@ function ReportDialog({ site, clientName, clientEmail, onClose }: {
               {grand("Ont voulu vous joindre", c.contacts, c.contacts_avant)}
               {grand("Venus d'une recherche", c.via_recherche, c.via_recherche_avant)}
             </div>
-            {note && (
-              <p className="text-xs text-muted-foreground">
-                Note Google relevée : <b>{note.note} ★</b> ({note.avis} avis)
-              </p>
-            )}
             {c.visites === 0 && (
               <p className="text-xs text-amber-600">
                 Aucune visite mesurée sur ce mois. Si le site est en ligne, vérifie
