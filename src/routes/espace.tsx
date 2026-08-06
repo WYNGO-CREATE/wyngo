@@ -35,6 +35,7 @@ type MonSite = {
   site_id: string; titre: string | null; slug: string | null; domaine: string | null;
   url_publique: string | null; etape: string; echeance: string | null;
   publie_le: string | null; statut: string; nom_client: string | null;
+  maquette_validee_le: string | null;
 };
 
 const ETAPES = [
@@ -132,7 +133,24 @@ function Connexion({ onEntre }: { onEntre: () => void }) {
 // ─────────────────────────── Sections ───────────────────────────
 
 function Projet({ site }: { site: MonSite }) {
+  const qc = useQueryClient();
   const idx = Math.max(0, ETAPES.findIndex((e) => e.cle === site.etape));
+
+  // La validation de maquette venait de l'ancien portail. C'est un jalon du
+  // chantier : sans elle, l'agence ne sait pas si le client a dit oui.
+  const valider = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).rpc("espace_valider_maquette");
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Merci — votre validation est enregistrée.");
+      qc.invalidateQueries({ queryKey: ["mon-site"] });
+      qc.invalidateQueries({ queryKey: ["espace-messages"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border bg-card p-6">
@@ -157,6 +175,40 @@ function Projet({ site }: { site: MonSite }) {
           )}
         </div>
       </div>
+
+      {site.etape === "review" && !site.maquette_validee_le && (
+        <div className="rounded-2xl border border-primary bg-primary/[0.04] p-5 space-y-3">
+          <div>
+            <p className="font-semibold">Votre maquette vous attend</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Regardez-la tranquillement. Si quelque chose ne va pas, dites-le dans
+              Messages — on ajuste. Sinon, validez et on met en ligne.
+            </p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {site.url_publique && (
+              <a href={site.url_publique} target="_blank" rel="noreferrer"
+                className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg border text-sm hover:bg-accent">
+                Voir la maquette <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+            <button onClick={() => valider.mutate()} disabled={valider.isPending}
+              className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60">
+              {valider.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Je valide cette maquette
+            </button>
+          </div>
+        </div>
+      )}
+
+      {site.maquette_validee_le && (
+        <p className="text-sm text-emerald-700 dark:text-emerald-500 flex items-center gap-2">
+          <Check className="h-4 w-4" />
+          Vous avez validé la maquette le{" "}
+          {new Date(site.maquette_validee_le).toLocaleDateString("fr-FR",
+            { day: "numeric", month: "long", year: "numeric" })}.
+        </p>
+      )}
 
       <ol className="space-y-3">
         {ETAPES.map((e, i) => {

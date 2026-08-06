@@ -7,7 +7,7 @@
  *   #4  Pipeline : Brief → Maquette → Validation client → En ligne → Suivi
  *       Chaque site porte une échéance + un éventuel point bloquant.
  *       Drag & drop d'une colonne à l'autre = changement d'étape.
- *   #5  Portail client : un lien public par site (suivi + validation maquette).
+ *   #5  Espace client : compte du client (suivi, messages, validation, audience).
  *   #3  Rapport mensuel : saisie des métriques + génération/envoi du rapport.
  */
 
@@ -196,7 +196,7 @@ function StudioPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["studio-clients"] });
       qc.invalidateQueries({ queryKey: ["studio-sites"] });
-      toast.success("Chantier de démo créé 🎬 — teste Portail, Messages et Rapport !");
+      toast.success("Chantier de démo créé 🎬 — teste Espace client, Messages et Rapport !");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -250,14 +250,7 @@ function StudioPage() {
     const p = previews?.get(id);
     return p?.html_url || (p?.slug ? `${APP_BASE}/p/${p.slug}` : null);
   };
-  const portalUrl = (s: Site) => (s.portal_token ? `${APP_BASE}/portail/${s.portal_token}` : null);
 
-  const copyPortal = async (s: Site) => {
-    const url = portalUrl(s);
-    if (!url) return;
-    try { await navigator.clipboard.writeText(url); toast.success("Lien du portail copié — à envoyer au client 📋"); }
-    catch { toast.error("Copie impossible — " + url); }
-  };
 
   const byStage = (stage: string) => (sites || []).filter((s) => (s.production_stage || "brief") === stage);
 
@@ -359,7 +352,6 @@ function StudioPage() {
                       onDragEnd={() => { setDragId(null); setOverCol(null); }}
                       previewUrl={previewUrl(s.prospect_id)}
                       unread={unread?.get(s.id) || 0}
-                      onCopyPortal={() => copyPortal(s)}
                       onEditDeadline={(d) => updateSite.mutate({ id: s.id, patch: { deadline: d || null } })}
                       onEditBlocker={(b) => updateSite.mutate({ id: s.id, patch: { blocker: b || null } })}
                       onReport={() => setReportSite(s)}
@@ -480,11 +472,11 @@ function MessagesDialog({ site, clientName, onClose }: { site: Site; clientName:
 // ─── Carte chantier ───────────────────────────────────────────────────
 function SiteCard({
   site, name, dragging, onDragStart, onDragEnd, previewUrl, unread,
-  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onEspace, onMessages, onDelete,
+  onEditDeadline, onEditBlocker, onReport, onEspace, onMessages, onDelete,
 }: {
   site: Site; name: string; dragging: boolean;
   onDragStart: () => void; onDragEnd: () => void; previewUrl: string | null; unread: number;
-  onCopyPortal: () => void; onEditDeadline: (d: string) => void; onEditBlocker: (b: string) => void;
+  onEditDeadline: (d: string) => void; onEditBlocker: (b: string) => void;
   onEspace: () => void;
   onReport: () => void; onMessages: () => void; onDelete: () => void;
 }) {
@@ -563,9 +555,6 @@ function SiteCard({
 
       {/* Actions */}
       <div className="flex flex-wrap gap-1 pt-0.5">
-        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onCopyPortal} title="Copier le lien du portail client">
-          <Link2 className="size-2.5" /> Portail
-        </Button>
         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onEspace}
           title="Adresse du site à mesurer et accès du client à son espace">
           <UserCog className="size-2.5" /> Espace client

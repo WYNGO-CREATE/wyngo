@@ -195,10 +195,12 @@ export default {
         return await serveTokenPage("contract-public", token, request);
       }
 
-      // Route portail client (suivi de projet + messages)
+      // L'ancien portail public (lien à jeton) a été remplacé par l'espace
+      // client, qui fait tout ce qu'il faisait — suivi, messages, validation
+      // de maquette — et en plus l'audience réelle du site. On redirige les
+      // liens déjà envoyés plutôt que de les casser.
       if (url.pathname.startsWith("/portail/")) {
-        const token = url.pathname.slice("/portail/".length);
-        return await serveTokenPage("client-portal", token, request);
+        return Response.redirect(new URL("/espace", url).toString(), 301);
       }
 
       // Route rapport mensuel public
