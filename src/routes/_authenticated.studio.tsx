@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { EspaceClientDialog } from "@/components/espace-client-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Rocket, Wand2, ExternalLink, Globe, Hammer, CheckCircle2, PlusCircle,
-  ClipboardList, Eye, HeartPulse, Link2, BarChart3, AlertTriangle, CalendarClock, MessageSquare, GripVertical,
+  ClipboardList, Eye, HeartPulse, Link2, BarChart3, AlertTriangle, CalendarClock, MessageSquare, GripVertical, UserCog,
   Sparkles, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -79,6 +80,7 @@ function StudioPage() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
   const [reportSite, setReportSite] = useState<Site | null>(null);
+  const [espaceSite, setEspaceSite] = useState<Site | null>(null);
   const [msgSite, setMsgSite] = useState<Site | null>(null);
 
   const { data: clients } = useQuery({
@@ -361,6 +363,7 @@ function StudioPage() {
                       onEditDeadline={(d) => updateSite.mutate({ id: s.id, patch: { deadline: d || null } })}
                       onEditBlocker={(b) => updateSite.mutate({ id: s.id, patch: { blocker: b || null } })}
                       onReport={() => setReportSite(s)}
+                      onEspace={() => setEspaceSite(s)}
                       onMessages={() => setMsgSite(s)}
                       onDelete={() => { if (confirm(`Supprimer le chantier « ${s.title || clientName(s.prospect_id)} » ?`)) deleteSite.mutate(s); }}
                     />
@@ -378,6 +381,14 @@ function StudioPage() {
       <p className="text-xs text-center text-muted-foreground pt-1">
         Glisse une carte d'une colonne à l'autre pour faire avancer un chantier. Le client suit l'avancement en temps réel via son <b>portail</b>.
       </p>
+
+      {espaceSite && (
+        <EspaceClientDialog
+          site={espaceSite as any}
+          clientEmail={clients?.find((c) => c.id === espaceSite.prospect_id)?.email || null}
+          onClose={() => setEspaceSite(null)}
+        />
+      )}
 
       {reportSite && (
         <ReportDialog
@@ -469,11 +480,12 @@ function MessagesDialog({ site, clientName, onClose }: { site: Site; clientName:
 // ─── Carte chantier ───────────────────────────────────────────────────
 function SiteCard({
   site, name, dragging, onDragStart, onDragEnd, previewUrl, unread,
-  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onMessages, onDelete,
+  onCopyPortal, onEditDeadline, onEditBlocker, onReport, onEspace, onMessages, onDelete,
 }: {
   site: Site; name: string; dragging: boolean;
   onDragStart: () => void; onDragEnd: () => void; previewUrl: string | null; unread: number;
   onCopyPortal: () => void; onEditDeadline: (d: string) => void; onEditBlocker: (b: string) => void;
+  onEspace: () => void;
   onReport: () => void; onMessages: () => void; onDelete: () => void;
 }) {
   const [editBlk, setEditBlk] = useState(false);
@@ -553,6 +565,10 @@ function SiteCard({
       <div className="flex flex-wrap gap-1 pt-0.5">
         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onCopyPortal} title="Copier le lien du portail client">
           <Link2 className="size-2.5" /> Portail
+        </Button>
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" onClick={onEspace}
+          title="Adresse du site à mesurer et accès du client à son espace">
+          <UserCog className="size-2.5" /> Espace client
         </Button>
         <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 relative" onClick={onMessages} title="Messages du client">
           <MessageSquare className="size-2.5" /> Messages

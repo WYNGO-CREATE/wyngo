@@ -33,3 +33,7 @@ verify_jwt = true
 # Collecteur d'audience : appelé par les sites clients depuis le navigateur
 # d'un visiteur anonyme, qui ne peut par nature pas s'authentifier.
 verify_jwt = false
+
+[functions.mesure-js]
+# Fichier de script appelé par le navigateur d'un visiteur anonyme.
+verify_jwt = false
