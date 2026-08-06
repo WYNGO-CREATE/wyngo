@@ -575,81 +575,70 @@ function SiteCard({
   );
 }
 
-// ─── Rapport mensuel (#3) ──────────────────────────────────────────────
+// ─── Rapport mensuel ───────────────────────────────────────────────────
+//
+// Il n'y a plus rien à saisir. Les chiffres viennent de la mesure posée sur le
+// site du client ; la note Google vient de Google. On regarde, on envoie.
+//
+// La « position Google » a disparu : une position honnête dépend du mot-clé,
+// de la ville et de l'appareil de celui qui cherche, et ne s'obtient qu'avec
+// Search Console, site par site. L'inventer serait mentir. À la place, le
+// rapport montre la part de visiteurs venus d'un moteur de recherche — ça se
+// mesure, et ça répond à la même question du client : est-ce qu'on me trouve ?
 function ReportDialog({ site, clientName, clientEmail, onClose }: {
   site: Site; clientName: string; clientEmail: string | null; onClose: () => void;
 }) {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const period = new Date().toISOString().slice(0, 7) + "-01"; // 1er du mois courant
-  const periodLabel = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
-
-  const { data: existing } = useQuery({
-    queryKey: ["site-metrics", site.id, period],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from("site_metrics")
-        .select("*").eq("site_id", site.id).eq("period", period).maybeSingle();
-      return data;
-    },
-  });
-
-  const [m, setM] = useState({ visits: "", unique_visitors: "", leads: "", google_rating: "", google_position: "", notes: "" });
   const [email, setEmail] = useState(clientEmail || "");
-  useMemo(() => {
-    if (existing) setM({
-      visits: String(existing.visits ?? ""), unique_visitors: String(existing.unique_visitors ?? ""),
-      leads: String(existing.leads ?? ""), google_rating: String(existing.google_rating ?? ""),
-      google_position: String(existing.google_position ?? ""), notes: existing.notes ?? "",
-    });
-  }, [existing]);
+  // Par défaut le mois écoulé : on ne fait pas le bilan d'un mois en cours.
+  const moisDefaut = (() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  })();
+  const [mois, setMois] = useState(moisDefaut);
 
-  const num = (v: string) => (v === "" ? null : Number(v));
-
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("site_metrics").upsert({
-        site_id: site.id, owner_id: user!.id, period,
-        visits: num(m.visits), unique_visitors: num(m.unique_visitors), leads: num(m.leads),
-        google_rating: num(m.google_rating), google_position: num(m.google_position), notes: m.notes || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "site_id,period" });
-      if (error) throw error;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["site-metrics", site.id] }); toast.success("Métriques enregistrées"); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const sendReport = useMutation({
-    mutationFn: async () => {
-      await save.mutateAsync();
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${SUPABASE_FN}/monthly-report`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ action: "send", site_id: site.id, period, to: email, base: APP_BASE }),
+  const apercu = useQuery({
+    queryKey: ["rapport", site.id, mois],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("rapport-mensuel", {
+        body: { action: "apercu", site_id: site.id, mois, base_url: window.location.origin },
       });
-      const out = await res.json();
-      if (!res.ok || out.error) throw new Error(out.error || "Envoi impossible");
-      return out as { url: string };
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
     },
-    onSuccess: (out) => {
-      qc.invalidateQueries({ queryKey: ["site-metrics", site.id] });
-      toast.success("Rapport envoyé au client 📧", { description: out.url, duration: 8000 });
-      onClose();
-    },
-    onError: (e: Error) => toast.error(e.message),
   });
 
-  const field = (key: keyof typeof m, label: string, ph: string, type = "number") => (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input type={type} value={m[key]} placeholder={ph}
-        onChange={(e) => setM((s) => ({ ...s, [key]: e.target.value }))} className="h-9" />
+  const envoyer = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("rapport-mensuel", {
+        body: { action: "envoyer", site_id: site.id, mois, email: email.trim(),
+                base_url: window.location.origin },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
+    },
+    onSuccess: (d) => {
+      if (d?.avertissement) toast.warning(d.avertissement);
+      else { toast.success("Rapport envoyé au client 📧"); onClose(); }
+    },
+    onError: (e: Error) => toast.error("Envoi impossible", { description: e.message }),
+  });
+
+  const c = apercu.data?.chiffres;
+  const note = apercu.data?.note;
+  const ev = (a: number, b: number) => {
+    if (!b) return null;
+    const p = Math.round(((a - b) / b) * 100);
+    if (p === 0) return "stable";
+    return `${p > 0 ? "+" : "−"}${Math.abs(p)} %`;
+  };
+
+  const grand = (label: string, v: number, av: number) => (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-2xl font-bold tabular-nums">{(v ?? 0).toLocaleString("fr-FR")}</div>
+      {ev(v, av) && <div className="text-[11px] text-muted-foreground">{ev(v, av)} vs mois dernier</div>}
     </div>
   );
 
@@ -657,36 +646,64 @@ function ReportDialog({ site, clientName, clientEmail, onClose }: {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><BarChart3 className="size-5 text-primary" /> Rapport mensuel — {clientName}</DialogTitle>
-          <DialogDescription>Bilan de <b>{periodLabel}</b>. Renseigne les chiffres, le client reçoit un rapport clair et pro.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <BarChart3 className="size-5 text-primary" /> Rapport mensuel — {clientName}
+          </DialogTitle>
+          <DialogDescription>
+            Chiffres mesurés sur le site, rien à saisir. Vérifie et envoie.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3">
-          {field("visits", "Visites", "1 240")}
-          {field("unique_visitors", "Visiteurs uniques", "870")}
-          {field("leads", "Demandes reçues", "23")}
-          {field("google_position", "Position Google", "3")}
-          {field("google_rating", "Note Google", "4.7")}
-          <div className="space-y-1">
-            <Label className="text-xs">Email du client</Label>
-            <Input type="email" value={email} placeholder="client@exemple.fr"
-              onChange={(e) => setEmail(e.target.value)} className="h-9" />
-          </div>
-        </div>
         <div className="space-y-1">
-          <Label className="text-xs">Mot du mois (optionnel)</Label>
-          <Textarea value={m.notes} rows={2} placeholder="Ex : votre fiche a gagné 2 places sur Google ce mois-ci 👏"
-            onChange={(e) => setM((s) => ({ ...s, notes: e.target.value }))} />
+          <Label className="text-xs">Mois</Label>
+          <Input type="month" value={mois.slice(0, 7)}
+            onChange={(e) => setMois(e.target.value + "-01")} className="h-9" />
         </div>
 
-        <p className="text-[11px] text-muted-foreground">
-          💡 Branchement automatique (Google Analytics / Search Console / fiche Google) prévu ensuite — d'ici là ces chiffres se saisissent à la main une fois par mois.
-        </p>
+        {apercu.isLoading && (
+          <p className="text-sm text-muted-foreground py-4">Calcul des chiffres…</p>
+        )}
+        {apercu.isError && (
+          <p className="text-sm text-destructive py-2">{(apercu.error as Error).message}</p>
+        )}
+
+        {c && (
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              {grand("Visiteurs", c.visiteurs, c.visiteurs_avant)}
+              {grand("Ont voulu vous joindre", c.contacts, c.contacts_avant)}
+              {grand("Venus d'une recherche", c.via_recherche, c.via_recherche_avant)}
+            </div>
+            {note && (
+              <p className="text-xs text-muted-foreground">
+                Note Google relevée : <b>{note.note} ★</b> ({note.avis} avis)
+              </p>
+            )}
+            {c.visites === 0 && (
+              <p className="text-xs text-amber-600">
+                Aucune visite mesurée sur ce mois. Si le site est en ligne, vérifie
+                qu'il a bien été republié depuis que la mesure existe.
+              </p>
+            )}
+          </>
+        )}
+
+        <div className="space-y-1">
+          <Label className="text-xs">Email du client</Label>
+          <Input type="email" value={email} placeholder="client@exemple.fr"
+            onChange={(e) => setEmail(e.target.value)} className="h-9" />
+        </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>Enregistrer</Button>
-          <Button onClick={() => sendReport.mutate()} disabled={sendReport.isPending || !email}>
-            {sendReport.isPending ? "Envoi…" : "Générer & envoyer"}
+          {apercu.data?.html && (
+            <Button variant="outline" onClick={() => {
+              const w = window.open("", "_blank");
+              if (w) { w.document.write(apercu.data.html); w.document.close(); }
+            }}>Voir l'email</Button>
+          )}
+          <Button onClick={() => envoyer.mutate()}
+            disabled={envoyer.isPending || !email || !c}>
+            {envoyer.isPending ? "Envoi…" : "Envoyer au client"}
           </Button>
         </DialogFooter>
       </DialogContent>
