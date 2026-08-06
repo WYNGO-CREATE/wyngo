@@ -18,7 +18,7 @@ import { CARTES, cartesChoisies, enregistrerCartes, type CarteId } from "@/lib/e
 import { cn } from "@/lib/utils";
 import {
   Phone, Mail, MapPin, MessageSquare, FileText, Eye, Users,
-  Clock, TrendingUp, TrendingDown, Minus, SlidersHorizontal, Check,
+  Clock, TrendingUp, TrendingDown, Minus, SlidersHorizontal, Check, Activity,
 } from "lucide-react";
 
 const PERIODES = [
@@ -100,8 +100,22 @@ const CONTACTS_LIB: Record<string, { label: string; icone: typeof Phone; ton: st
 
 export function Audience({ siteId }: { siteId: string }) {
   const [jours, setJours] = useState(30);
+
+  // Un site qui vient d'être mis en ligne n'a encore rien à montrer. Afficher
+  // une grille de zéros ferait croire à un site que personne ne visite —
+  // exactement le contraire de ce qu'on veut dire à ce moment-là.
+  const etat = useQuery({
+    queryKey: ["mesure-etat-client", siteId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("mesure_etat", { p_site: siteId });
+      if (error) throw new Error(error.message);
+      return (data ?? [])[0] ?? null;
+    },
+  });
   const [choix, setChoix] = useState<CarteId[]>(() => cartesChoisies());
   const [reglages, setReglages] = useState(false);
+
+  const jamaisMesure = etat.isSuccess && !etat.data?.dernier_signal;
 
   const actives = useMemo(
     () => CARTES.filter((c) => c.socle || choix.includes(c.id)),
@@ -144,6 +158,28 @@ export function Audience({ siteId }: { siteId: string }) {
 
   const courbeData = (courbe.data ?? []) as any[];
   const maxCourbe = Math.max(1, ...courbeData.map((d) => Number(d.visites)));
+
+  if (etat.isLoading) {
+    return <p className="text-sm text-muted-foreground py-6">Chargement…</p>;
+  }
+
+  if (jamaisMesure) {
+    return (
+      <div className="rounded-2xl border bg-card p-8 text-center max-w-lg mx-auto">
+        <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 grid place-items-center">
+          <Activity className="h-6 w-6 text-primary" />
+        </div>
+        <h2 className="font-semibold text-lg">La mesure vient d'être installée</h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Vos premiers chiffres apparaîtront ici dès qu'une personne visitera votre site —
+          souvent dans les heures qui suivent. Revenez demain, il y aura de quoi lire.
+        </p>
+        <p className="text-xs text-muted-foreground mt-4">
+          Rien n'est perdu : tout ce qui se passe à partir de maintenant est compté.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
