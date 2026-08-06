@@ -41,9 +41,12 @@ export function EspaceClientDialog({ site, clientEmail, onClose }: {
   onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const [email, setEmail] = useState(clientEmail ?? "");
+  // Volontairement vide : un email pré-rempli se remarque mal, et l'on
+  // envoie alors l'invitation à la mauvaise adresse sans s'en apercevoir.
+  const [email, setEmail] = useState("");
   const [url, setUrl] = useState(site.site_externe_url ?? "");
   const [lien, setLien] = useState<string | null>(null);
+  const [envoye, setEnvoye] = useState<string | null>(null);
 
   const compte = useQuery({
     queryKey: ["compte-client", site.id],
@@ -81,13 +84,19 @@ export function EspaceClientDialog({ site, clientEmail, onClose }: {
       });
       if (error) throw new Error(error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
-      return data as { lien: string | null };
+      return data as { lien: string | null; envoye: boolean; destinataire: string; souci: string | null };
     },
     onSuccess: (d) => {
       setLien(d.lien ?? null);
-      toast.success("Espace ouvert", {
-        description: "Le client reçoit un email pour choisir son mot de passe.",
-      });
+      setEnvoye(d.envoye ? d.destinataire : null);
+      if (d.envoye) {
+        toast.success("Invitation envoyée", { description: `Email parti à ${d.destinataire}.` });
+      } else {
+        toast.warning("Compte créé, mais l'email n'est pas parti", {
+          description: d.souci ?? "Transmettez le lien ci-dessous vous-même.",
+          duration: 9000,
+        });
+      }
       qc.invalidateQueries({ queryKey: ["compte-client", site.id] });
     },
     onError: (e: Error) => toast.error("Invitation impossible", { description: e.message }),
@@ -196,10 +205,24 @@ export function EspaceClientDialog({ site, clientEmail, onClose }: {
             </div>
           </div>
 
+          {clientEmail && !email && (
+            <button type="button" onClick={() => setEmail(clientEmail)}
+              className="text-[11px] text-primary hover:underline">
+              Utiliser l'email de la fiche : {clientEmail}
+            </button>
+          )}
+
+          {envoye && (
+            <p className="text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+              <CheckCircle2 className="size-4" /> Email envoyé à {envoye}.
+            </p>
+          )}
+
           {lien && (
             <div className="rounded-md border bg-muted/30 p-3 space-y-2">
               <p className="text-[11px] text-muted-foreground">
-                Lien de première connexion, si l'email n'arrive pas. Personnel, à usage unique.
+                Le même lien que celui envoyé par email. Utile si le client ne le reçoit
+                pas — vérifiez ses indésirables d'abord. Personnel, à usage unique.
               </p>
               <div className="flex gap-2">
                 <input readOnly value={lien}
