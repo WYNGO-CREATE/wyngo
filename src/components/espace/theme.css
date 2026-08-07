@@ -149,3 +149,98 @@
   .ga-onglet[data-actif="true"]::after { animation: none !important }
   .ga-carte { transition: none }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Deuxième passe — sortir de la « pile de cartes »
+   ══════════════════════════════════════════════════════════════════════
+
+   Ce qui n'allait pas : tout était une boîte blanche à coins arrondis, de
+   même poids. L'œil n'avait nulle part où se poser, et rien ne disait ce qui
+   comptait.
+
+   Trois corrections, dans l'ordre où elles se voient :
+
+     1. UNE HIÉRARCHIE PAR L'ÉCHELLE, pas par les bordures. Un seul chiffre
+        énorme, des libellés minuscules en capitales espacées. Le rapport
+        entre les deux fait tout le travail — c'est ce qui donne l'impression
+        de calme.
+
+     2. DES FILETS PLUTÔT QUE DES BOÎTES. Une ligne d'un pixel suffit à
+        séparer. Chaque bordure fermée qu'on retire fait respirer la page.
+
+     3. LA COULEUR DEVIENT RARE. Les icônes vertes, violettes, ambrées se
+        disputaient l'attention. Tout passe en encre ; seul ce qui rapporte
+        vraiment — un appel reçu — garde une couleur.
+*/
+
+/* ── Le prolongement du bandeau : le contenu remonte DANS l'encre ── */
+.ga-scene { margin-top: -84px; }
+
+.ga-plaque {
+  background: hsl(var(--ga-carte));
+  border-radius: 22px;
+  border: 1px solid hsl(var(--ga-trait));
+  box-shadow:
+    0 1px 1px hsl(var(--ga-encre) / .04),
+    0 18px 48px -24px hsl(var(--ga-encre) / .28);
+}
+
+/* ── L'échelle typographique ── */
+.ga-geant {
+  font-size: clamp(56px, 11vw, 92px);
+  line-height: .92;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--ga-encre));
+}
+.dark .ga-geant { color: #f8fafc; }
+
+.ga-etiquette {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: hsl(var(--ga-texte-doux));
+}
+
+.ga-stat {
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ── Filets ── */
+.ga-filet { border-top: 1px solid hsl(var(--ga-trait)); }
+.ga-filet-v { border-left: 1px solid hsl(var(--ga-trait)); }
+
+/* ── Le fil d'activité : un rail vertical, pas des puces ── */
+.ga-rail { position: relative; padding-left: 22px; }
+.ga-rail::before {
+  content: "";
+  position: absolute; left: 5px; top: 6px; bottom: 6px;
+  width: 1px;
+  background: linear-gradient(180deg, hsl(var(--ga-trait)), transparent);
+}
+.ga-jalon { position: relative; }
+.ga-jalon::before {
+  content: "";
+  position: absolute; left: -21px; top: 7px;
+  width: 7px; height: 7px; border-radius: 999px;
+  background: hsl(var(--ga-trait));
+  box-shadow: 0 0 0 3px hsl(var(--ga-carte));
+}
+.ga-jalon[data-fort="true"]::before { background: hsl(152 55% 42%); }
+
+/* ── Chiffre qui apparaît ── */
+.ga-compte { animation: ga-compte .7s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes ga-compte {
+  from { opacity: 0; transform: translateY(14px) scale(.96) }
+  to   { opacity: 1; transform: none }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ga-compte { animation: none !important }
+}

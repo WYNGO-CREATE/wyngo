@@ -54,9 +54,9 @@ function Carte({ titre, aquoi, large, children }: {
   titre: string; aquoi?: string; large?: boolean; children: React.ReactNode;
 }) {
   return (
-    <section className={cn("ga-carte ga-monte p-5", large && "md:col-span-2")}>
+    <section className={cn("ga-carte ga-monte p-6", large && "md:col-span-2")}>
       <header className="mb-4">
-        <h3 className="font-semibold">{titre}</h3>
+        <h3 className="text-[15px] font-semibold tracking-[-0.01em]">{titre}</h3>
         {aquoi && <p className="text-xs ga-doux mt-0.5">{aquoi}</p>}
       </header>
       {children}
@@ -87,12 +87,15 @@ function Barres({ lignes, unite }: { lignes: { nom: string; n: number }[]; unite
   );
 }
 
+// Une seule couleur dans tout l'écran : l'appel téléphonique. C'est le geste
+// qui rapporte ; le reste est de l'encre. Cinq icônes de cinq couleurs se
+// disputaient l'attention et n'en donnaient à aucune.
 const CONTACTS_LIB: Record<string, { label: string; icone: typeof Phone; ton: string }> = {
   telephone:  { label: "Appels depuis le site", icone: Phone,         ton: "text-emerald-600" },
-  formulaire: { label: "Formulaires envoyés",   icone: FileText,      ton: "text-sky-600" },
-  email:      { label: "Emails ouverts",        icone: Mail,          ton: "text-violet-600" },
-  itineraire: { label: "Itinéraires demandés",  icone: MapPin,        ton: "text-amber-600" },
-  whatsapp:   { label: "Messages WhatsApp",     icone: MessageSquare, ton: "text-teal-600" },
+  formulaire: { label: "Formulaires envoyés",   icone: FileText,      ton: "ga-doux" },
+  email:      { label: "Emails ouverts",        icone: Mail,          ton: "ga-doux" },
+  itineraire: { label: "Itinéraires demandés",  icone: MapPin,        ton: "ga-doux" },
+  whatsapp:   { label: "Messages WhatsApp",     icone: MessageSquare, ton: "ga-doux" },
 };
 
 export function Audience({ siteId }: { siteId: string }) {
@@ -178,10 +181,17 @@ export function Audience({ siteId }: { siteId: string }) {
     );
   }
 
+  const r0 = (resume.data ?? [])[0];
+
   return (
-    <div className="space-y-5">
-      {/* Le vivant d'abord : c'est ce qui donne envie de revenir. */}
-      <Direct siteId={siteId} />
+    <div className="space-y-6">
+      {/* La plaque d'ouverture remonte dans le bandeau d'encre : c'est elle
+          qu'on doit voir en premier, avant tout réglage. */}
+      <div className="ga-scene">
+        <Direct siteId={siteId}
+          contacts30={Number(r0?.contacts ?? 0)}
+          visiteurs30={Number(r0?.visiteurs ?? 0)} />
+      </div>
 
       {/* ── Période + réglages ── */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -230,39 +240,6 @@ export function Audience({ siteId }: { siteId: string }) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* ── L'essentiel ── */}
-        {affiche("resume") && (
-          <Carte titre="L'essentiel" large
-            aquoi={`Sur les ${jours} derniers jours, comparés aux ${jours} précédents.`}>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { icone: Users, label: "Visiteurs", v: Number(r?.visiteurs ?? 0), av: Number(r?.visiteurs_avant ?? 0) },
-                { icone: Eye, label: "Pages vues", v: Number(r?.visites ?? 0), av: Number(r?.visites_avant ?? 0) },
-                { icone: Phone, label: "Ont voulu vous joindre", v: Number(r?.contacts ?? 0), av: Number(r?.contacts_avant ?? 0) },
-              ].map((c) => (
-                <div key={c.label}>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <c.icone className="h-3.5 w-3.5" /> {c.label}
-                  </div>
-                  <div className="ga-chiffre text-[28px] leading-none">{nf(c.v)}</div>
-                  <Ecart actuel={c.v} avant={c.av} />
-                </div>
-              ))}
-              <div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                  <Clock className="h-3.5 w-3.5" /> Temps par visite
-                </div>
-                <div className="ga-chiffre text-[28px] leading-none">
-                  {Number(r?.duree_moyenne_s ?? 0) > 0
-                    ? `${Math.floor(Number(r.duree_moyenne_s) / 60)} min ${Math.round(Number(r.duree_moyenne_s) % 60)} s`
-                    : "—"}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {Number(r?.pages_par_visite ?? 0)} page{Number(r?.pages_par_visite ?? 0) > 1 ? "s" : ""} en moyenne
-                </span>
-              </div>
-            </div>
-          </Carte>
-        )}
 
         {/* ── Les intentions de contact : la carte qui compte ── */}
         {affiche("contacts") && (
@@ -275,12 +252,13 @@ export function Audience({ siteId }: { siteId: string }) {
                 .map((c) => {
                   const m = CONTACTS_LIB[c.genre];
                   return (
-                    <div key={c.genre} className="rounded-xl border bg-background/60 p-4 transition-colors hover:bg-background">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
-                        <m.icone className={cn("h-4 w-4", m.ton)} /> {m.label}
+                    <div key={c.genre} className="py-3 ga-filet first:border-t-0 sm:border-t-0 sm:py-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <m.icone className={cn("h-3.5 w-3.5", m.ton)} />
+                        <span className="ga-etiquette">{m.label}</span>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="ga-chiffre text-[26px] leading-none">{nf(Number(c.nombre))}</span>
+                        <span className="ga-stat">{nf(Number(c.nombre))}</span>
                         <Ecart actuel={Number(c.nombre)} avant={Number(c.avant)} />
                       </div>
                     </div>

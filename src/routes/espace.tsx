@@ -526,7 +526,8 @@ function Espace() {
             </p>
           </div>
 
-          <nav className="flex gap-6 overflow-x-auto border-t border-white/10 pt-3 -mb-px">
+          <nav className={cn("flex gap-6 overflow-x-auto border-t border-white/10 pt-3 -mb-px",
+            onglet === "audience" && "pb-[84px]")}>
             {onglets.map((o) => (
               <button key={o.cle} onClick={() => setOnglet(o.cle)} data-actif={onglet === o.cle}
                 className="ga-onglet inline-flex items-center gap-1.5 pb-3 text-[13.5px]">
@@ -537,7 +538,8 @@ function Espace() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-5 py-8">
+      <main className={cn("max-w-5xl mx-auto px-5 pb-8",
+        onglet === "audience" ? "pt-0" : "pt-8")}>
         <div className="ga-monte">
           {onglet === "projet" && <Projet site={s} />}
           {onglet === "audience" && enLigne && <Audience siteId={s.site_id} />}

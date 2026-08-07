@@ -1,19 +1,23 @@
 /**
- * ─── Le bandeau vivant de l'espace client ─────────────────────────────
+ * ─── La plaque d'ouverture de l'espace client ─────────────────────────
  *
- * Un bilan mensuel, on le regarde une fois. Ce qui donne envie de revenir,
- * c'est de voir son commerce vivre : quelqu'un est sur le site maintenant,
- * quelqu'un vient de cliquer sur le numéro.
+ * Première version : trois boîtes blanches de même poids, des icônes de cinq
+ * couleurs, et l'œil qui ne savait pas où se poser. C'était propre et ça ne
+ * disait rien.
  *
- * Rien n'est inventé — ce sont les mêmes signaux que le tableau de bord, lus
- * sur les dernières minutes. Et quand il n'y a rien à dire, on ne dit rien
- * plutôt que d'afficher un zéro qui décourage.
+ * Ici, une seule chose compte et elle occupe la place : le nombre de gens qui
+ * ont voulu joindre le commerçant. Tout le reste est plus petit, plus gris,
+ * et se lit après. Un commerçant doit comprendre sa situation en une seconde,
+ * sans lire.
+ *
+ * La plaque remonte dans le bandeau d'encre : elle appartient à l'en-tête
+ * plutôt qu'au corps de page, et le regard est happé vers le haut.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Phone, Mail, MapPin, MessageSquare, FileText, Eye, Sparkles } from "lucide-react";
+import { Phone, Mail, MapPin, MessageSquare, FileText, Eye } from "lucide-react";
 
 type Direct = {
   maintenant: number; aujourdhui: number; contacts_aujourdhui: number;
@@ -21,26 +25,27 @@ type Direct = {
               appareil: string | null; il_y_a_s: number }[];
 };
 
-const GESTES: Record<string, { texte: string; icone: typeof Phone; ton: string }> = {
-  telephone:  { texte: "a cliqué sur votre numéro",   icone: Phone,         ton: "text-emerald-600" },
-  formulaire: { texte: "a envoyé le formulaire",      icone: FileText,      ton: "text-sky-600" },
-  email:      { texte: "a cliqué sur votre email",    icone: Mail,          ton: "text-violet-600" },
-  itineraire: { texte: "a demandé l'itinéraire",      icone: MapPin,        ton: "text-amber-600" },
-  whatsapp:   { texte: "vous a écrit sur WhatsApp",   icone: MessageSquare, ton: "text-teal-600" },
-  page:       { texte: "a consulté",                  icone: Eye,           ton: "text-muted-foreground" },
+const GESTES: Record<string, { texte: string; icone: typeof Phone }> = {
+  telephone:  { texte: "a cliqué sur votre numéro",  icone: Phone },
+  formulaire: { texte: "a envoyé le formulaire",     icone: FileText },
+  email:      { texte: "a cliqué sur votre email",   icone: Mail },
+  itineraire: { texte: "a demandé l'itinéraire",     icone: MapPin },
+  whatsapp:   { texte: "vous a écrit sur WhatsApp",  icone: MessageSquare },
+  page:       { texte: "a consulté votre site",      icone: Eye },
 };
 
-/** « il y a 3 min », « il y a 2 h », « hier ». */
 function depuis(s: number): string {
   if (s < 60) return "à l'instant";
   const m = Math.floor(s / 60);
   if (m < 60) return `il y a ${m} min`;
   const h = Math.floor(m / 60);
   if (h < 24) return `il y a ${h} h`;
-  return h < 48 ? "hier" : `il y a ${Math.floor(h / 24)} jours`;
+  return h < 48 ? "hier" : `il y a ${Math.floor(h / 24)} j`;
 }
 
-export function Direct({ siteId }: { siteId: string }) {
+export function Direct({ siteId, contacts30, visiteurs30 }: {
+  siteId: string; contacts30: number; visiteurs30: number;
+}) {
   const d = useQuery({
     queryKey: ["mesure-direct", siteId],
     refetchInterval: 30_000,
@@ -62,70 +67,74 @@ export function Direct({ siteId }: { siteId: string }) {
   });
 
   const v = d.data;
-  const derniers = (v?.derniers ?? []).filter((x) => GESTES[x.genre]);
+  const derniers = (v?.derniers ?? []).filter((x) => GESTES[x.genre]).slice(0, 6);
   const maintenant = Number(v?.maintenant ?? 0);
 
   return (
-    <div className="space-y-4">
-      {/* ── Le fait marquant, en une phrase ── */}
-      {fait.data && (
-        <div className="ga-carte ga-monte p-5 ring-1 ring-primary/20"
-          style={{ background: "linear-gradient(135deg,hsl(226 79% 50% / .06),transparent 65%)" }}>
-          <div className="flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <p className="text-[15px] font-medium leading-relaxed">{fait.data}</p>
-          </div>
-        </div>
-      )}
+    <section className="ga-plaque ga-monte overflow-hidden">
+      <div className="grid lg:grid-cols-[1.05fr_1fr]">
+        {/* ── Le chiffre qui compte ── */}
+        <div className="p-7 sm:p-9 flex flex-col">
+          <p className="ga-etiquette">Ces 30 derniers jours</p>
 
-      <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
-        {/* ── En ce moment ── */}
-        <div className="ga-carte ga-monte ga-d2 p-5 sm:min-w-[200px]">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={cn("h-2 w-2 rounded-full", maintenant > 0 && "ga-pouls")}>
-              <span className={cn("block h-2 w-2 rounded-full",
-                maintenant > 0 ? "bg-emerald-500" : "bg-muted-foreground/25")} />
+          <div className="mt-5 flex items-end gap-4">
+            <span className="ga-geant ga-compte">{contacts30}</span>
+            <span className="pb-2 text-[15px] leading-snug ga-doux max-w-[190px]">
+              personnes ont voulu<br />vous joindre
             </span>
-            <span className="text-xs text-muted-foreground">En ce moment</span>
           </div>
-          <div className="ga-chiffre text-[38px] leading-none">{maintenant}</div>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            {maintenant === 0 ? "personne sur votre site"
-              : maintenant === 1 ? "personne consulte votre site"
-                : "personnes consultent votre site"}
-          </p>
-          <div className="mt-4 pt-3 border-t text-xs text-muted-foreground space-y-1">
-            <div><b className="text-foreground tabular-nums">{Number(v?.aujourdhui ?? 0)}</b> visiteurs aujourd'hui</div>
-            <div><b className="text-foreground tabular-nums">{Number(v?.contacts_aujourdhui ?? 0)}</b> ont voulu vous joindre</div>
+
+          {fait.data && (
+            <p className="mt-6 mb-7 text-[14.5px] leading-relaxed max-w-[420px]">{fait.data}</p>
+          )}
+
+          <div className="mt-auto pt-6 ga-filet grid grid-cols-3 gap-4">
+            <div>
+              <div className="ga-stat">{visiteurs30}</div>
+              <p className="ga-etiquette mt-1.5">Visiteurs</p>
+            </div>
+            <div>
+              <div className="ga-stat">{Number(v?.aujourdhui ?? 0)}</div>
+              <p className="ga-etiquette mt-1.5">Aujourd'hui</p>
+            </div>
+            <div>
+              <div className="ga-stat flex items-center gap-2">
+                {maintenant}
+                {maintenant > 0 && (
+                  <span className="ga-pouls">
+                    <span className="block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                )}
+              </div>
+              <p className="ga-etiquette mt-1.5">En ce moment</p>
+            </div>
           </div>
         </div>
 
-        {/* ── Ce qui vient de se passer ── */}
-        <div className="ga-carte ga-monte ga-d3 p-5">
-          <h3 className="font-semibold mb-1">Ce qui vient de se passer</h3>
-          <p className="text-xs ga-doux mb-3">
-            Les derniers gestes de vos visiteurs, en direct.
-          </p>
+        {/* ── Le fil, sur un rail ── */}
+        <div className="p-7 sm:p-9 lg:ga-filet-v ga-filet lg:border-t-0 bg-[hsl(var(--ga-fond))]/40">
+          <p className="ga-etiquette">En direct</p>
+
           {derniers.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">
-              Rien depuis deux jours. Dès qu'une personne visitera votre site, ça apparaîtra ici.
+            <p className="mt-5 text-sm ga-doux leading-relaxed">
+              Rien depuis deux jours. Dès qu'une personne visitera votre site,
+              vous la verrez apparaître ici.
             </p>
           ) : (
-            <ul className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+            <ul className="mt-5 ga-rail space-y-3.5">
               {derniers.map((x, i) => {
                 const g = GESTES[x.genre];
                 const fort = x.genre !== "page";
                 return (
-                  <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <g.icone className={cn("h-4 w-4 flex-shrink-0 mt-0.5", g.ton)} />
-                    <span className={cn("min-w-0", !fort && "text-muted-foreground")}>
-                      <span className={cn(fort && "font-medium")}>
-                        Quelqu'un {g.texte}
-                        {x.genre === "page" && x.titre ? ` « ${x.titre} »` : ""}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {x.appareil ? ` depuis un ${x.appareil}` : ""} · {depuis(Number(x.il_y_a_s))}
-                      </span>
+                  <li key={i} data-fort={fort} className="ga-jalon text-[13.5px] leading-snug">
+                    <span className={cn(fort ? "font-medium" : "ga-doux")}>
+                      Quelqu'un {g.texte}
+                    </span>
+                    <span className="ga-doux">
+                      {x.appareil ? ` depuis un ${x.appareil}` : ""}
+                    </span>
+                    <span className="block text-[11.5px] ga-doux mt-0.5">
+                      {depuis(Number(x.il_y_a_s))}
                     </span>
                   </li>
                 );
@@ -134,6 +143,6 @@ export function Direct({ siteId }: { siteId: string }) {
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
