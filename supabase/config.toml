@@ -37,3 +37,7 @@ verify_jwt = false
 [functions.mesure-js]
 # Fichier de script appelé par le navigateur d'un visiteur anonyme.
 verify_jwt = false
+
+[functions.client-notifier]
+# Appelée par un déclencheur en base, qui présente le secret partagé.
+verify_jwt = false
