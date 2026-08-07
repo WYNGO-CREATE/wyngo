@@ -1,0 +1,151 @@
+/**
+ * ─── L'identité visuelle de l'espace client ───────────────────────────
+ *
+ * Le CRM est un outil de travail : dense, efficace, gris. L'espace client est
+ * autre chose — c'est ce que le client de Group Arsène voit de l'agence. Il
+ * doit avoir l'allure d'un document soigné, pas d'un tableau de bord.
+ *
+ * Trois partis pris :
+ *
+ *   • UN BANDEAU D'ENCRE. Le haut de page est profond, presque noir bleuté,
+ *     avec un halo discret. Le reste respire sur un fond clair légèrement
+ *     chaud — jamais le blanc pur, qui fait « page non finie ».
+ *
+ *   • LE BLEU EST RARE. Une seule couleur d'accent, celle de la marque, et on
+ *     ne la sort que pour ce qui compte : l'étape en cours, un chiffre qui
+ *     monte, un bouton. Partout ailleurs, de l'encre et du gris.
+ *
+ *   • LE MOUVEMENT EST DISCRET. Les cartes montent de quelques pixels en
+ *     apparaissant, décalées les unes des autres. Rien ne rebondit, rien ne
+ *     tourne. Et tout s'arrête si le système demande moins d'animations.
+ */
+
+.ga-espace {
+  --ga-encre: 222 47% 7%;
+  --ga-encre-clair: 222 40% 13%;
+  --ga-accent: 226 79% 50%;
+  --ga-fond: 220 20% 97%;
+  --ga-carte: 0 0% 100%;
+  --ga-trait: 220 16% 90%;
+  --ga-texte-doux: 220 9% 46%;
+
+  background:
+    radial-gradient(900px 420px at 12% -8%, hsl(var(--ga-accent) / 0.07), transparent 60%),
+    radial-gradient(700px 380px at 92% 4%, hsl(200 80% 50% / 0.05), transparent 62%),
+    hsl(var(--ga-fond));
+  min-height: 100vh;
+}
+
+.dark .ga-espace {
+  --ga-fond: 222 30% 9%;
+  --ga-carte: 222 28% 12%;
+  --ga-trait: 222 20% 22%;
+  --ga-texte-doux: 220 12% 62%;
+}
+
+/* ── Le bandeau d'encre ── */
+.ga-entete {
+  background:
+    radial-gradient(700px 220px at 18% 130%, hsl(var(--ga-accent) / 0.30), transparent 70%),
+    linear-gradient(180deg, hsl(var(--ga-encre)) 0%, hsl(var(--ga-encre-clair)) 100%);
+  color: #fff;
+  position: relative;
+}
+
+/* Un grain très fin : sans lui, un aplat sombre paraît plat et bon marché. */
+.ga-entete::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.055'/%3E%3C/svg%3E");
+}
+
+.ga-entete > * { position: relative; z-index: 1; }
+
+/* ── Cartes ── */
+.ga-carte {
+  background: hsl(var(--ga-carte));
+  border: 1px solid hsl(var(--ga-trait));
+  border-radius: 16px;
+  box-shadow: 0 1px 2px hsl(var(--ga-encre) / 0.04), 0 8px 24px -12px hsl(var(--ga-encre) / 0.10);
+  transition: box-shadow .35s ease, transform .35s ease;
+}
+.ga-carte:hover {
+  box-shadow: 0 1px 2px hsl(var(--ga-encre) / 0.05), 0 14px 34px -14px hsl(var(--ga-encre) / 0.16);
+}
+
+/* ── Les grands chiffres ── */
+.ga-chiffre {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  color: hsl(var(--ga-encre));
+}
+.dark .ga-chiffre { color: #f1f5f9; }
+
+.ga-doux { color: hsl(var(--ga-texte-doux)); }
+
+/* ── Onglets ── */
+.ga-onglet {
+  position: relative;
+  color: hsl(0 0% 100% / 0.62);
+  transition: color .2s ease;
+  white-space: nowrap;
+}
+.ga-onglet:hover { color: hsl(0 0% 100% / 0.9); }
+.ga-onglet[data-actif="true"] { color: #fff; }
+.ga-onglet[data-actif="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, hsl(var(--ga-accent)), hsl(200 90% 60%));
+  animation: ga-souligne .28s ease both;
+}
+@keyframes ga-souligne { from { transform: scaleX(.3); opacity: 0 } to { transform: scaleX(1); opacity: 1 } }
+
+/* ── Apparition en cascade ── */
+.ga-monte { animation: ga-monte .5s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes ga-monte {
+  from { opacity: 0; transform: translateY(10px) }
+  to   { opacity: 1; transform: none }
+}
+.ga-d1 { animation-delay: .04s } .ga-d2 { animation-delay: .10s }
+.ga-d3 { animation-delay: .16s } .ga-d4 { animation-delay: .22s }
+.ga-d5 { animation-delay: .28s } .ga-d6 { animation-delay: .34s }
+
+/* ── Barres de progression ── */
+.ga-barre > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(var(--ga-accent)), hsl(212 90% 58%));
+  animation: ga-remplit .8s cubic-bezier(.2,.7,.3,1) both;
+  transform-origin: left;
+}
+@keyframes ga-remplit { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+
+/* ── Le point « en direct » ── */
+.ga-pouls { position: relative; display: inline-flex; }
+.ga-pouls::before {
+  content: "";
+  position: absolute; inset: -4px;
+  border-radius: 999px;
+  background: hsl(152 60% 45% / .35);
+  animation: ga-pouls 2.4s ease-out infinite;
+}
+@keyframes ga-pouls {
+  0%   { transform: scale(.6); opacity: .8 }
+  70%  { transform: scale(1.9); opacity: 0 }
+  100% { opacity: 0 }
+}
+
+/* Le confort d'abord : si le système demande moins d'animations, on s'arrête. */
+@media (prefers-reduced-motion: reduce) {
+  .ga-monte, .ga-barre > span, .ga-pouls::before,
+  .ga-onglet[data-actif="true"]::after { animation: none !important }
+  .ga-carte { transition: none }
+}

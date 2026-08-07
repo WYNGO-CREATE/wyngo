@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, MARQUE_MDP } from "@/integrations/supabase/client";
 import { Audience } from "@/components/espace/audience";
+import "@/components/espace/theme.css";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -83,17 +84,19 @@ function Connexion({ onEntre }: { onEntre: () => void }) {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-muted/30 px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="h-10 w-10 rounded-lg bg-foreground text-background grid place-items-center font-bold text-lg">A</div>
+    <div className="ga-espace grid place-items-center px-4 py-12">
+      <div className="w-full max-w-sm ga-monte">
+        <div className="flex items-center gap-3 mb-8 justify-center">
+          <div className="h-11 w-11 rounded-xl grid place-items-center font-bold text-lg text-white"
+            style={{ background: "linear-gradient(145deg,hsl(222 47% 11%),hsl(222 40% 20%))",
+                     boxShadow: "0 6px 20px -8px hsl(222 47% 11% / .6)" }}>A</div>
           <div className="leading-none">
-            <div className="font-bold tracking-wide">GROUP ARSÈNE</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Espace client</div>
+            <div className="font-bold tracking-[0.08em] text-[15px]">GROUP ARSÈNE</div>
+            <div className="text-[10px] uppercase tracking-[0.22em] ga-doux mt-1.5">Espace client</div>
           </div>
         </div>
 
-        <form onSubmit={entrer} className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+        <form onSubmit={entrer} className="ga-carte p-7 space-y-4">
           <div>
             <h1 className="text-lg font-semibold">Bonjour</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -152,32 +155,24 @@ function Projet({ site }: { site: MonSite }) {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border bg-card p-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="text-xl font-bold">{site.titre || "Votre site"}</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {site.etape === "live" || site.etape === "care"
-                ? "Votre site est en ligne."
-                : `Étape en cours : ${ETAPES[idx]?.titre.toLowerCase()}.`}
-              {site.echeance && site.etape !== "live" && site.etape !== "care" && (
-                <> Livraison prévue le {new Date(site.echeance).toLocaleDateString("fr-FR",
-                  { day: "numeric", month: "long", year: "numeric" })}.</>
-              )}
-            </p>
-          </div>
-          {site.url_publique && (
-            <a href={site.url_publique} target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border text-sm hover:bg-accent">
-              Voir mon site <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
-        </div>
-      </div>
+    <div className="space-y-5">
+      {site.url_publique && (
+        <a href={site.url_publique} target="_blank" rel="noreferrer"
+          className="ga-carte inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium hover:bg-accent/40">
+          Voir mon site <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      )}
+
+      {site.echeance && site.etape !== "live" && site.etape !== "care" && (
+        <p className="text-sm ga-doux">
+          Livraison prévue le {new Date(site.echeance).toLocaleDateString("fr-FR",
+            { day: "numeric", month: "long", year: "numeric" })}.
+        </p>
+      )}
 
       {site.etape === "review" && !site.maquette_validee_le && (
-        <div className="rounded-2xl border border-primary bg-primary/[0.04] p-5 space-y-3">
+        <div className="ga-carte ga-monte p-5 space-y-3 ring-1 ring-primary/30"
+          style={{ background: "linear-gradient(135deg,hsl(226 79% 50% / .05),transparent 70%)" }}>
           <div>
             <p className="font-semibold">Votre maquette vous attend</p>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -210,14 +205,15 @@ function Projet({ site }: { site: MonSite }) {
         </p>
       )}
 
-      <ol className="space-y-3">
+      <ol className="space-y-2.5">
         {ETAPES.map((e, i) => {
           const fait = i < idx, encours = i === idx;
           return (
             <li key={e.cle} className={cn(
-              "flex gap-4 rounded-xl border p-4 transition",
-              encours && "border-primary ring-1 ring-primary/20 bg-primary/[0.03]",
-              fait && "opacity-70",
+              "ga-carte ga-monte flex gap-4 p-4",
+              `ga-d${Math.min(i + 1, 6)}`,
+              encours && "ring-1 ring-primary/25",
+              fait && "opacity-60",
             )}>
               <span className={cn(
                 "h-7 w-7 rounded-full grid place-items-center flex-shrink-0 text-xs font-semibold",
@@ -271,7 +267,7 @@ function Messages({ siteId }: { siteId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border bg-card p-5 min-h-[240px] space-y-3">
+      <div className="ga-carte p-5 min-h-[260px] space-y-3">
         {msgs.length === 0 && (
           <p className="text-sm text-muted-foreground">
             Une question, une photo à envoyer, un texte à corriger ? Écrivez-nous ici.
@@ -281,8 +277,10 @@ function Messages({ siteId }: { siteId: string }) {
           const client = m.author === "client";
           return (
             <div key={m.id} className={cn("flex", client ? "justify-end" : "justify-start")}>
-              <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
-                client ? "bg-primary text-primary-foreground" : "bg-muted")}>
+              <div className={cn("max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ga-monte",
+                client
+                  ? "bg-primary text-primary-foreground rounded-br-md"
+                  : "bg-muted rounded-bl-md")}>
                 <p className="whitespace-pre-wrap">{m.body}</p>
                 <p className={cn("text-[10px] mt-1", client ? "opacity-70" : "text-muted-foreground")}>
                   {new Date(m.created_at).toLocaleString("fr-FR",
@@ -326,7 +324,7 @@ function Compte({ email }: { email: string }) {
 
   return (
     <div className="space-y-5 max-w-md">
-      <div className="rounded-2xl border bg-card p-5">
+      <div className="ga-carte ga-monte p-5">
         <h3 className="font-semibold mb-3">Mon compte</h3>
         <dl className="text-sm">
           <dt className="text-muted-foreground">Email de connexion</dt>
@@ -334,7 +332,7 @@ function Compte({ email }: { email: string }) {
         </dl>
       </div>
 
-      <form onSubmit={changer} className="rounded-2xl border bg-card p-5 space-y-3">
+      <form onSubmit={changer} className="ga-carte ga-monte ga-d2 p-5 space-y-3">
         <h3 className="font-semibold">Changer mon mot de passe</h3>
         <div className="space-y-1.5">
           <label className="text-sm">Nouveau mot de passe</label>
@@ -387,16 +385,17 @@ function ChoisirMotDePasse({ onFini }: { onFini: () => void }) {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-muted/30 px-4">
-      <form onSubmit={valider} className="w-full max-w-sm space-y-4">
-        <div className="flex items-center gap-2.5 justify-center mb-2">
-          <div className="h-10 w-10 rounded-lg bg-foreground text-background grid place-items-center font-bold text-lg">A</div>
+    <div className="ga-espace grid place-items-center px-4 py-12">
+      <form onSubmit={valider} className="w-full max-w-sm space-y-4 ga-monte">
+        <div className="flex items-center gap-3 justify-center mb-2">
+          <div className="h-11 w-11 rounded-xl grid place-items-center font-bold text-lg text-white"
+            style={{ background: "linear-gradient(145deg,hsl(222 47% 11%),hsl(222 40% 20%))" }}>A</div>
           <div className="leading-none">
             <div className="font-bold tracking-wide">GROUP ARSÈNE</div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Espace client</div>
           </div>
         </div>
-        <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+        <div className="ga-carte p-7 space-y-4">
           <div>
             <h1 className="text-lg font-semibold">Choisissez votre mot de passe</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -493,42 +492,61 @@ function Espace() {
   ].filter((o) => o.actif);
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-foreground text-background grid place-items-center font-bold">A</div>
-          <div className="leading-none min-w-0">
-            <div className="font-bold tracking-wide text-sm">GROUP ARSÈNE</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-1 truncate">
-              {s.nom_client || s.titre || "Espace client"}
+    <div className="ga-espace">
+      {/* Le bandeau d'encre : c'est lui qui donne le ton dès l'ouverture. */}
+      <header className="ga-entete">
+        <div className="max-w-5xl mx-auto px-5 pt-6 pb-1">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-11 w-11 rounded-xl grid place-items-center font-bold text-lg flex-shrink-0"
+                style={{ background: "rgba(255,255,255,.10)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.16)" }}>
+                A
+              </div>
+              <div className="leading-none min-w-0">
+                <div className="font-bold tracking-[0.08em] text-[13px]">GROUP ARSÈNE</div>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-white/45 mt-1.5">Espace client</div>
+              </div>
             </div>
-          </div>
-          <button onClick={() => supabase.auth.signOut()}
-            className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Se déconnecter</span>
-          </button>
-        </div>
-        <div className="max-w-5xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          {onglets.map((o) => (
-            <button key={o.cle} onClick={() => setOnglet(o.cle)}
-              className={cn("inline-flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 -mb-px whitespace-nowrap transition",
-                onglet === o.cle
-                  ? "border-primary text-foreground font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground")}>
-              <o.icone className="h-4 w-4" /> {o.label}
+            <button onClick={() => supabase.auth.signOut()}
+              className="inline-flex items-center gap-1.5 text-[13px] text-white/55 hover:text-white transition-colors">
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Se déconnecter</span>
             </button>
-          ))}
+          </div>
+
+          <div className="mt-7 mb-6">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">
+              {s.nom_client ? `Bonjour ${s.nom_client}` : "Votre projet"}
+            </p>
+            <h1 className="text-[26px] sm:text-[30px] font-semibold mt-1.5 tracking-[-0.02em]">
+              {s.titre || "Votre site"}
+            </h1>
+            <p className="text-sm text-white/50 mt-1.5">
+              {enLigne ? "En ligne et suivi par Group Arsène."
+                : "Votre site est en cours de fabrication."}
+            </p>
+          </div>
+
+          <nav className="flex gap-6 overflow-x-auto border-t border-white/10 pt-3 -mb-px">
+            {onglets.map((o) => (
+              <button key={o.cle} onClick={() => setOnglet(o.cle)} data-actif={onglet === o.cle}
+                className="ga-onglet inline-flex items-center gap-1.5 pb-3 text-[13.5px]">
+                <o.icone className="h-4 w-4" /> {o.label}
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        {onglet === "projet" && <Projet site={s} />}
-        {onglet === "audience" && enLigne && <Audience siteId={s.site_id} />}
-        {onglet === "messages" && <Messages siteId={s.site_id} />}
-        {onglet === "compte" && <Compte email={session.user?.email ?? ""} />}
+      <main className="max-w-5xl mx-auto px-5 py-8">
+        <div className="ga-monte">
+          {onglet === "projet" && <Projet site={s} />}
+          {onglet === "audience" && enLigne && <Audience siteId={s.site_id} />}
+          {onglet === "messages" && <Messages siteId={s.site_id} />}
+          {onglet === "compte" && <Compte email={session.user?.email ?? ""} />}
+        </div>
       </main>
 
-      <footer className="max-w-5xl mx-auto px-4 pb-10 pt-4 text-center text-xs text-muted-foreground">
+      <footer className="max-w-5xl mx-auto px-5 pb-12 pt-2 text-center text-[11px] ga-doux">
         Group Arsène · contact@grouparsene.fr
       </footer>
     </div>

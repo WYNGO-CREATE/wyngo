@@ -54,13 +54,10 @@ function Carte({ titre, aquoi, large, children }: {
   titre: string; aquoi?: string; large?: boolean; children: React.ReactNode;
 }) {
   return (
-    <section className={cn(
-      "rounded-2xl border bg-card p-5 shadow-sm",
-      large && "md:col-span-2",
-    )}>
+    <section className={cn("ga-carte ga-monte p-5", large && "md:col-span-2")}>
       <header className="mb-4">
         <h3 className="font-semibold">{titre}</h3>
-        {aquoi && <p className="text-xs text-muted-foreground mt-0.5">{aquoi}</p>}
+        {aquoi && <p className="text-xs ga-doux mt-0.5">{aquoi}</p>}
       </header>
       {children}
     </section>
@@ -81,9 +78,8 @@ function Barres({ lignes, unite }: { lignes: { nom: string; n: number }[]; unite
               {nf(l.n)} {unite}
             </span>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-primary/80 rounded-full transition-all"
-              style={{ width: `${(l.n / max) * 100}%` }} />
+          <div className="ga-barre h-2 rounded-full bg-muted overflow-hidden">
+            <span style={{ width: `${(l.n / max) * 100}%` }} />
           </div>
         </div>
       ))}
@@ -247,7 +243,7 @@ export function Audience({ siteId }: { siteId: string }) {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                     <c.icone className="h-3.5 w-3.5" /> {c.label}
                   </div>
-                  <div className="text-2xl font-bold tabular-nums">{nf(c.v)}</div>
+                  <div className="ga-chiffre text-[28px] leading-none">{nf(c.v)}</div>
                   <Ecart actuel={c.v} avant={c.av} />
                 </div>
               ))}
@@ -255,7 +251,7 @@ export function Audience({ siteId }: { siteId: string }) {
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                   <Clock className="h-3.5 w-3.5" /> Temps par visite
                 </div>
-                <div className="text-2xl font-bold tabular-nums">
+                <div className="ga-chiffre text-[28px] leading-none">
                   {Number(r?.duree_moyenne_s ?? 0) > 0
                     ? `${Math.floor(Number(r.duree_moyenne_s) / 60)} min ${Math.round(Number(r.duree_moyenne_s) % 60)} s`
                     : "—"}
@@ -279,12 +275,12 @@ export function Audience({ siteId }: { siteId: string }) {
                 .map((c) => {
                   const m = CONTACTS_LIB[c.genre];
                   return (
-                    <div key={c.genre} className="rounded-xl border bg-background p-4">
+                    <div key={c.genre} className="rounded-xl border bg-background/60 p-4 transition-colors hover:bg-background">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                         <m.icone className={cn("h-4 w-4", m.ton)} /> {m.label}
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold tabular-nums">{nf(Number(c.nombre))}</span>
+                        <span className="ga-chiffre text-[26px] leading-none">{nf(Number(c.nombre))}</span>
                         <Ecart actuel={Number(c.nombre)} avant={Number(c.avant)} />
                       </div>
                     </div>
@@ -308,7 +304,7 @@ export function Audience({ siteId }: { siteId: string }) {
                   {Number(d.contacts) > 0 && (
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                   )}
-                  <div className="w-full bg-primary/25 hover:bg-primary/50 rounded-t transition-all"
+                  <div className="w-full rounded-t transition-all bg-gradient-to-t from-primary/20 to-primary/45 hover:from-primary/40 hover:to-primary/70"
                     style={{ height: `${(Number(d.visites) / maxCourbe) * 100}%`, minHeight: 2 }} />
                   <span className="absolute -top-7 hidden group-hover:block text-[11px] bg-foreground text-background rounded px-1.5 py-0.5 whitespace-nowrap z-10">
                     {new Date(d.jour).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · {d.visites}

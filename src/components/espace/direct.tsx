@@ -69,7 +69,8 @@ export function Direct({ siteId }: { siteId: string }) {
     <div className="space-y-4">
       {/* ── Le fait marquant, en une phrase ── */}
       {fait.data && (
-        <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.07] to-transparent p-5">
+        <div className="ga-carte ga-monte p-5 ring-1 ring-primary/20"
+          style={{ background: "linear-gradient(135deg,hsl(226 79% 50% / .06),transparent 65%)" }}>
           <div className="flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <p className="text-[15px] font-medium leading-relaxed">{fait.data}</p>
@@ -79,18 +80,15 @@ export function Direct({ siteId }: { siteId: string }) {
 
       <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
         {/* ── En ce moment ── */}
-        <div className="rounded-2xl border bg-card p-5 sm:min-w-[190px]">
+        <div className="ga-carte ga-monte ga-d2 p-5 sm:min-w-[200px]">
           <div className="flex items-center gap-2 mb-1">
-            <span className="relative flex h-2.5 w-2.5">
-              {maintenant > 0 && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              )}
-              <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5",
-                maintenant > 0 ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+            <span className={cn("h-2 w-2 rounded-full", maintenant > 0 && "ga-pouls")}>
+              <span className={cn("block h-2 w-2 rounded-full",
+                maintenant > 0 ? "bg-emerald-500" : "bg-muted-foreground/25")} />
             </span>
             <span className="text-xs text-muted-foreground">En ce moment</span>
           </div>
-          <div className="text-3xl font-bold tabular-nums leading-none">{maintenant}</div>
+          <div className="ga-chiffre text-[38px] leading-none">{maintenant}</div>
           <p className="text-xs text-muted-foreground mt-1.5">
             {maintenant === 0 ? "personne sur votre site"
               : maintenant === 1 ? "personne consulte votre site"
@@ -103,9 +101,9 @@ export function Direct({ siteId }: { siteId: string }) {
         </div>
 
         {/* ── Ce qui vient de se passer ── */}
-        <div className="rounded-2xl border bg-card p-5">
+        <div className="ga-carte ga-monte ga-d3 p-5">
           <h3 className="font-semibold mb-1">Ce qui vient de se passer</h3>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-xs ga-doux mb-3">
             Les derniers gestes de vos visiteurs, en direct.
           </p>
           {derniers.length === 0 ? (
