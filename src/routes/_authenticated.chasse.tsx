@@ -151,14 +151,22 @@ function ChassePage() {
   const qc = useQueryClient();
 
   // Form state
-  const [codeNaf, setCodeNaf] = useState("70.22Z");
+  // On retient l'IDENTIFIANT du métier, pas son code NAF.
+  //
+  // 158 des 287 métiers du catalogue partagent leur code avec un autre :
+  // avocat, notaire et huissier sont tous en 69.10Z. En ne gardant que le
+  // code, la recherche du métier correspondant renvoyait toujours le PREMIER
+  // de la liste — on choisissait « Étude notariale » et l'écran affichait
+  // « Cabinet d'avocats ».
+  const [metierId, setMetierId] = useState("conseil_entreprises");
   const [ville, setVille] = useState("");
   const [codePostal, setCodePostal] = useState("");
   // Rayon de chasse : 0 = ville stricte, >0 = ville + communes/villages alentour.
   const [rayon, setRayon] = useState(30);
   // L'API officielle ne renvoie pas le libellé du code NAF : on retombe sur le
   // métier sélectionné dans la liste, qui dit exactement la même chose.
-  const selectedTrade = TRADES.find((t) => t.naf === codeNaf);
+  const selectedTrade = TRADES.find((t) => t.id === metierId);
+  const codeNaf = selectedTrade?.naf ?? metierId;
   const nafLabel = selectedTrade?.label ?? codeNaf;
   // Métier mal capté par son code NAF → la recherche bascule en mots-clés.
   const motsCles = selectedTrade?.keywords;
@@ -603,7 +611,7 @@ function ChassePage() {
       <MissionBanner
         onPrendre={({ metier, commune }) => {
           const t = TRADES.find((x) => x.label === metier);
-          if (t) setCodeNaf(t.naf);
+          if (t) setMetierId(t.id);
           setVille(commune);
           setCodePostal("");
         }}
@@ -648,12 +656,12 @@ function ChassePage() {
                 id="naf"
                 className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                 value={codeNaf}
-                onChange={(e) => setCodeNaf(e.target.value)}
+                onChange={(e) => setMetierId(e.target.value)}
               >
                 {TRADE_CATEGORIES.map((cat) => (
                   <optgroup key={cat} label={cat}>
                     {TRADES.filter((t) => t.category === cat).map((t) => (
-                      <option key={t.id} value={t.naf}>
+                      <option key={t.id} value={t.id}>
                         {t.label}
                       </option>
                     ))}
@@ -675,7 +683,7 @@ function ChassePage() {
                   className="text-sm"
                   placeholder="ex: 10.71B"
                   value={codeNaf}
-                  onChange={(e) => setCodeNaf(e.target.value)}
+                  onChange={(e) => setMetierId(e.target.value)}
                   title="Code NAF à 5 caractères (ex: 10.71B)"
                 />
               )}
@@ -739,7 +747,18 @@ function ChassePage() {
           </div>
           <div className="flex justify-end">
             <Button
-              onClick={() => search.mutate()}
+              type="button"
+              onClick={() => {
+                // Une chasse REMPLACE les résultats affichés. Lancée par
+                // inadvertance — un doigt qui glisse sur mobile — elle efface
+                // le travail en cours sans rien demander. On confirme.
+                if (results.length > 0 &&
+                    !window.confirm(
+                      `Lancer une nouvelle chasse effacera les ${results.length} résultats affichés. Continuer ?`)) {
+                  return;
+                }
+                search.mutate();
+              }}
               disabled={!isConnected || search.isPending || checking}
               className="gap-2 w-full sm:w-auto bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white"
             >
