@@ -11,7 +11,7 @@
 
 export type CarteId =
   | "resume" | "courbe" | "contacts" | "provenance"
-  | "pages" | "appareils" | "villes" | "rythme";
+  | "pages" | "appareils" | "rythme";
 
 export type Carte = {
   id: CarteId;
@@ -56,11 +56,9 @@ export const CARTES: Carte[] = [
     aquoi: "Téléphone, ordinateur ou tablette.",
     rpc: "mesure_public",
   },
-  {
-    id: "villes", titre: "De quelles villes",
-    aquoi: "Utile pour savoir jusqu'où porte votre visibilité.",
-    rpc: "mesure_public",
-  },
+  // « De quelles villes » a été retirée : le collecteur ne reçoit aucune
+  // donnée de localisation — pays et ville sont nuls sur 100 % des lignes —
+  // la carte affichait donc « inconnue » à 100 %.
   {
     id: "rythme", titre: "À quelles heures", large: true,
     aquoi: "Les moments de la semaine où l'on vous consulte le plus.",

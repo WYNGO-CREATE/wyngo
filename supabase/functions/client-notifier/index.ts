@@ -26,6 +26,17 @@ const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: SRV, Authorization: `Bearer ${SRV}`, "Content-Type": "application/json" };
 
+/** Trace de chaque tentative : sans ça, « il n'a rien reçu » est indébogable. */
+async function consigner(site_id: string, envoye: boolean, raison: string | null, destinataire?: string) {
+  try {
+    await fetch(`${URL_SB}/rest/v1/notifications_journal`, {
+      method: "POST",
+      headers: { ...H, Prefer: "return=minimal" },
+      body: JSON.stringify({ site_id, envoye, raison, destinataire: destinataire ?? null }),
+    });
+  } catch { /* le journal ne doit jamais casser l'envoi */ }
+}
+
 const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
@@ -70,10 +81,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     // Appelée par le déclencheur en base, qui présente le secret partagé.
+    // On accepte aussi la clé de service : sans ça, impossible de tester la
+    // fonction et de voir pourquoi un envoi échoue.
     const secret = req.headers.get("x-cron-secret");
-    if (!secret || secret !== Deno.env.get("CRON_SECRET")) {
-      return json({ error: "Non autorisé." }, 401);
-    }
+    const porteur = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const autorise = (secret && secret === Deno.env.get("CRON_SECRET")) || porteur === SRV;
+    if (!autorise) { try { const b = await req.clone().json(); await consigner(b?.site_id, false, "appel non autorisé"); } catch { /* rien */ }
+      return json({ error: "Non autorisé." }, 401); }
 
     const { site_id, base_url } = await req.json();
     if (!site_id) return json({ error: "site_id requis." }, 400);
@@ -83,11 +97,11 @@ Deno.serve(async (req) => {
       `${URL_SB}/rest/v1/client_comptes?site_id=eq.${site_id}&actif=is.true&select=user_id,nom`,
       { headers: H });
     const compte = (await cr.json())?.[0];
-    if (!compte) return json({ ok: true, envoye: false, raison: "aucun compte client sur ce site" });
+    if (!compte) { await consigner(site_id, false, "aucun compte client sur ce site"); return json({ ok: true, envoye: false }); }
 
     const ur = await fetch(`${URL_SB}/auth/v1/admin/users/${compte.user_id}`, { headers: H });
     const email = (await ur.json())?.email;
-    if (!email) return json({ ok: true, envoye: false, raison: "compte sans email" });
+    if (!email) { await consigner(site_id, false, "compte sans email"); return json({ ok: true, envoye: false }); }
 
     const sr = await fetch(`${URL_SB}/rest/v1/client_sites?id=eq.${site_id}&select=title`, { headers: H });
     const titre = (await sr.json())?.[0]?.title || "votre site";
@@ -95,7 +109,7 @@ Deno.serve(async (req) => {
     // Envoi par le Gmail de l'agence — même chemin que l'invitation.
     const ga = await fetch(`${URL_SB}/rest/v1/gmail_accounts?select=email,refresh_token&limit=1`, { headers: H });
     const gmail = (await ga.json())?.[0];
-    if (!gmail?.refresh_token) return json({ ok: true, envoye: false, raison: "aucun Gmail connecté" });
+    if (!gmail?.refresh_token) { await consigner(site_id, false, "aucun Gmail connecté", email); return json({ ok: true, envoye: false }); }
 
     const tr = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -107,7 +121,7 @@ Deno.serve(async (req) => {
         grant_type: "refresh_token",
       }),
     });
-    if (!tr.ok) return json({ ok: true, envoye: false, raison: "jeton Gmail expiré" });
+    if (!tr.ok) { await consigner(site_id, false, "jeton Gmail expiré : " + (await tr.text()).slice(0,120), email); return json({ ok: true, envoye: false }); }
     const { access_token } = await tr.json();
 
     const racine = (base_url || Deno.env.get("WYNGO_APP_URL") || "").replace(/\/$/, "");
@@ -128,8 +142,9 @@ Deno.serve(async (req) => {
         raw: b64(brut).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
       }),
     });
-    if (!env.ok) return json({ ok: true, envoye: false, raison: (await env.text()).slice(0, 140) });
+    if (!env.ok) { await consigner(site_id, false, (await env.text()).slice(0, 200), email); return json({ ok: true, envoye: false }); }
 
+    await consigner(site_id, true, null, email);
     return json({ ok: true, envoye: true, destinataire: email });
   } catch (e) {
     return json({ error: String(e) }, 500);

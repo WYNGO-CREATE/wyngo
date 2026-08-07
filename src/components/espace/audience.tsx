@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CARTES, cartesChoisies, enregistrerCartes, type CarteId } from "@/lib/espace-cartes";
+import { Direct } from "@/components/espace/direct";
 import { cn } from "@/lib/utils";
 import {
   Phone, Mail, MapPin, MessageSquare, FileText, Eye, Users,
@@ -141,7 +142,7 @@ export function Audience({ siteId }: { siteId: string }) {
   const courbe     = mesure("mesure_courbe", affiche("courbe"));
   const provenance = mesure("mesure_provenance", affiche("provenance"));
   const pages      = mesure("mesure_pages", affiche("pages"));
-  const publics    = mesure("mesure_public", affiche("appareils") || affiche("villes"));
+  const publics    = mesure("mesure_public", affiche("appareils"));
   const rythme     = mesure("mesure_rythme", affiche("rythme"));
 
   const r = (resume.data ?? [])[0];
@@ -183,6 +184,9 @@ export function Audience({ siteId }: { siteId: string }) {
 
   return (
     <div className="space-y-5">
+      {/* Le vivant d'abord : c'est ce qui donne envie de revenir. */}
+      <Direct siteId={siteId} />
+
       {/* ── Période + réglages ── */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex rounded-lg border overflow-hidden">
@@ -335,11 +339,6 @@ export function Audience({ siteId }: { siteId: string }) {
           </Carte>
         )}
 
-        {affiche("villes") && (
-          <Carte titre="De quelles villes" aquoi="Jusqu'où porte votre visibilité.">
-            <Barres unite="visiteurs" lignes={parCategorie("ville")} />
-          </Carte>
-        )}
 
         {affiche("rythme") && (
           <Carte titre="À quelles heures" large
