@@ -1,4 +1,33 @@
 /**
+ * ─── Switzer, la police de l'espace client ────────────────────────────
+ *
+ * Hébergée avec l'application, jamais chargée chez un tiers : aucune adresse
+ * IP de client ne part chez Google ou Fontshare, et rien ne casse le jour où
+ * leur service tombe. Trois graisses, 56 Ko au total.
+ *
+ * `font-display: swap` : le texte s'affiche immédiatement dans la police
+ * système, puis bascule. Personne ne regarde une page blanche en attendant
+ * une police.
+ *
+ * Licence ITF Free Font — usage commercial autorisé.
+ */
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-400.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-500.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-600.woff2") format("woff2");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+
+/**
  * ─── L'identité visuelle de l'espace client ───────────────────────────
  *
  * Le CRM est un outil de travail : dense, efficace, gris. L'espace client est
@@ -21,6 +50,7 @@
  */
 
 .ga-espace {
+  font-family: "Switzer", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --ga-encre: 222 47% 7%;
   --ga-encre-clair: 222 40% 13%;
   --ga-accent: 226 79% 50%;

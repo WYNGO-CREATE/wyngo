@@ -9,6 +9,11 @@
   // vers « wyngoworkspace.bold-unit-739e.workers.dev » ne peut pas prendre
   // l'agence au sérieux — et ce nom ne veut plus rien dire depuis Group Arsène.
   // Les deux pointent sur le même worker ; c'est le chemin qui distingue.
+  // Déclarer des routes DÉSACTIVE l'adresse workers.dev par défaut. Le site
+  // entier est tombé pendant quelques minutes (erreur 1042) parce que les
+  // certificats des nouveaux domaines n'étaient pas encore émis. On garde
+  // l'adresse workers.dev comme filet.
+  "workers_dev": true,
   "routes": [
     { "pattern": "espace.grouparsene.fr", "custom_domain": true },
     { "pattern": "app.grouparsene.fr", "custom_domain": true }
