@@ -4,6 +4,15 @@
   // "tanstack-start-app" (nom du gabarit de départ), ce qui envoyait tout
   // `wrangler deploy` sans argument sur un worker inutilisé.
   "name": "wyngoworkspace",
+
+  // Les adresses du CRM et de l'espace client. Un client qui reçoit un lien
+  // vers « wyngoworkspace.bold-unit-739e.workers.dev » ne peut pas prendre
+  // l'agence au sérieux — et ce nom ne veut plus rien dire depuis Group Arsène.
+  // Les deux pointent sur le même worker ; c'est le chemin qui distingue.
+  "routes": [
+    { "pattern": "espace.grouparsene.fr", "custom_domain": true },
+    { "pattern": "app.grouparsene.fr", "custom_domain": true }
+  ],
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
