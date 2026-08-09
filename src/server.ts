@@ -172,10 +172,44 @@ async function servePreview(slug: string): Promise<Response> {
   });
 }
 
+/**
+ * ─── Toujours en https ────────────────────────────────────────────────
+ *
+ * Un navigateur à qui on tape « espaceclient.grouparsene.fr » sans préfixe
+ * essaie http:// en premier. Le worker répondait 200 en clair : la page
+ * s'affichait, mais avec « Non sécurisé » dans la barre d'adresse. Sur
+ * l'espace client, où un commerçant saisit son mot de passe, c'est
+ * inacceptable — et le mot de passe circulait vraiment en clair.
+ *
+ * Le réglage « Always Use HTTPS » de Cloudflare ferait la même chose, mais
+ * le jeton wrangler ne peut pas modifier les réglages de zone. On le fait
+ * donc dans le worker : c'est sous notre contrôle et ça suit le code.
+ *
+ * `cf-visitor` porte le schéma vu par le visiteur ; l'URL du worker ne le
+ * reflète pas toujours. On garde l'URL comme second signal.
+ */
+function versHttps(request: Request, url: URL): Response | null {
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return null;
+
+  let schemaVisiteur: string | null = null;
+  try {
+    schemaVisiteur = JSON.parse(request.headers.get("cf-visitor") || "{}")?.scheme ?? null;
+  } catch { /* en-tête absent ou malformé : on retombe sur l'URL */ }
+
+  const enClair = schemaVisiteur ? schemaVisiteur === "http" : url.protocol === "http:";
+  if (!enClair) return null;
+
+  url.protocol = "https:";
+  return Response.redirect(url.toString(), 301);
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);
+
+      const securise = versHttps(request, url);
+      if (securise) return securise;
 
       // Route preview proxy avant TanStack handler
       if (url.pathname.startsWith("/p/")) {
