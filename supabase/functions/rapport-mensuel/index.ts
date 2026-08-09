@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
     if (!site) return json({ error: "Site introuvable." }, 404);
 
 
-    const racine = (base_url || "").replace(/\/$/, "");
+    // Le client doit recevoir l'adresse de SON espace, pas celle du CRM.
+    const racine = "https://espace.grouparsene.fr";
     const html = courriel(d, site, `${racine}/espace`);
 
     if (action !== "envoyer") {

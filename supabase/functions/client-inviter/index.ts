@@ -134,7 +134,10 @@ Deno.serve(async (req) => {
 
     // Lien de première connexion. Attention : generate_link n'envoie rien,
     // il ne fait que fabriquer l'adresse.
-    const redirect = `${(base_url || "").replace(/\/$/, "")}/espace`;
+    // Toujours l'adresse de l'espace client, quelle que soit celle depuis
+    // laquelle l'agence travaille (workers.dev, app.grouparsene.fr…).
+    const ESPACE = "https://espace.grouparsene.fr";
+    const redirect = `${ESPACE}/espace`;
     const lr = await fetch(`${URL_SB}/auth/v1/admin/generate_link`, {
       method: "POST",
       headers: H,
