@@ -68,7 +68,7 @@ const FACTS = [
 ];
 
 
-// ── L'offre Wyngo : constantes FIXES injectées dans la présentation.
+// ── L'offre Group Arsène : constantes FIXES injectées dans la présentation.
 //    L'IA ne doit RIEN inventer ici : ni prix, ni délai, ni garantie.
 const PALIERS = [
   { nom: "Site Performance", prix: "2 144 €", heures: "102 h", pour: "une vitrine premium qui convertit vraiment",
@@ -270,7 +270,7 @@ ${ENGAGEMENTS.map((x) => `• ${x}`).join("\n")}`;
 - Fiche "questions" : commence par les questions d'argent, ce sont celles qui vont tomber — « combien ça coûte au total », « pourquoi une tranche et pas un prix fixe », « est-ce que je peux commencer par la base et ajouter plus tard », « y a-t-il des frais après ».`
       : `LE PRIX A DÉJÀ ÉTÉ ANNONCÉ au 1er appel : la diapo 7 le CONFIRME, elle ne le redécouvre pas. Reste cohérent avec ce qui a été dit, sans jamais annoncer un autre montant de base.`;
 
-    const system = `Tu es expert en présentation commerciale B2B pour Wyngo, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
+    const system = `Tu es expert en présentation commerciale B2B pour Group Arsène, une agence qui crée des sites web et la présence digitale des TPE/artisans/commerçants français.
 Tu produis une présentation de vente de 9 diapos pour le 2e rendez-vous, présentée EN VISIO (partage d'écran) et ULTRA adaptée à CE prospect.
 
 OBJECTIF UNIQUE DE CE RENDEZ-VOUS : qu'il accepte de caler un 3e appel pour finaliser (contrat). On ne cherche PAS à faire signer aujourd'hui.
@@ -347,7 +347,7 @@ LES 9 DIAPOS (dans cet ordre exact, via l'outil) :
 6. kind="technique" : titre et contenu posés par le code. Renvoie le kind avec un titre vide et un tableau de bullets vide.
 
 7. kind="methode" : « Comment ça se passe » — reprends EXACTEMENT les 4 étapes de la MÉTHODE fournie, reformulées pour lui (une phrase chacune). Pas de chiffre inventé, les délais fournis sont les seuls autorisés.
-   INTERDIT : promettre un déplacement, une visite sur place, une journée d'immersion, des photos prises chez lui. Wyngo travaille depuis Toulouse et ne se déplace pas.
+   INTERDIT : promettre un déplacement, une visite sur place, une journée d'immersion, des photos prises chez lui. Group Arsène travaille depuis Toulouse et ne se déplace pas.
 8. kind="inclus" : « Ce qui est compris » — la liste INCLUS fournie + les ENGAGEMENTS fournis. Mets la garantie 2 ans en avant. Reprends les formulations fournies, ne les invente pas.
 9. kind="panier" : « Votre investissement ». C'est un CONFIGURATEUR que le prospect manipule en direct pendant la visio : la base est une TRANCHE, et il coche les options qu'il veut, le total se recalcule sous ses yeux.
    - N'annonce JAMAIS un montant unique pour la base : uniquement la tranche fournie.
@@ -379,7 +379,7 @@ ${callNotes || "(aucune)"}
 FACTS (les SEULS chiffres de marché autorisés — [thème] aide à choisir selon le métier, avec sources) :
 ${FACTS.map((f, i) => `${i + 1}. [${f.theme}] ${f.fig} — ${f.txt} (Source : ${f.source})`).join("\n")}
 
-L'OFFRE WYNGO (prix, méthode, inclus, engagements — VALEURS EXACTES, aucune invention) :
+L'OFFRE GROUP ARSÈNE (prix, méthode, inclus, engagements — VALEURS EXACTES, aucune invention) :
 ${OFFRE_BLOC}
 
 Génère la présentation via l'outil "build_deck". Tout doit être taillé pour ${ctx.entreprise} (${ctx.secteur}, ${ctx.ville}). Reprends ce qui s'est dit aux appels pour que ${ctx.interlocuteur || "le dirigeant"} se sente compris.`;

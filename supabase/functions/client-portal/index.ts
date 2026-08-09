@@ -163,7 +163,7 @@ function renderPage(ctx: {
 <body><div class="wrap">
   <div class="hero">
     <div class="logo">
-      <svg viewBox="0 0 100 100" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-label="Wyngo">
+      <svg viewBox="0 0 100 100" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-label="Group Arsène">
         <rect width="100" height="100" rx="24" fill="#0a0a0a"/>
         <text x="50" y="64" font-family="Georgia,'Times New Roman',serif" font-size="56" font-weight="700" fill="#F1EDE0" text-anchor="middle">W</text>
         <rect x="37" y="78" width="26" height="5" rx="2.5" fill="#1B4BE3"/>
@@ -192,7 +192,7 @@ function renderPage(ctx: {
     <p class="err" id="mErr"></p>
   </div>
 
-  <div class="foot">Espace sécurisé propulsé par Wyngo</div>
+  <div class="foot">Espace sécurisé propulsé par Group Arsène</div>
 </div>
 <script>
   var token = ${JSON.stringify(site.portal_token)};
@@ -295,9 +295,9 @@ Deno.serve(async (req) => {
     const { data: messages } = await db.from("portal_messages")
       .select("author, body, created_at").eq("site_id", site.id).order("created_at", { ascending: true });
 
-    // Nom de l'agence (réglages facturation, sinon "Wyngo")
+    // Nom de l'agence (réglages facturation, sinon "Group Arsène")
     const { data: settings } = await db.from("billing_settings").select("trade_name, legal_name").eq("id", true).maybeSingle();
-    const agencyName = settings?.trade_name || settings?.legal_name || "Wyngo";
+    const agencyName = settings?.trade_name || settings?.legal_name || "Group Arsène";
 
     return html(renderPage({
       site, clientName, maquetteUrl, liveUrl: liveUrlFor(site),

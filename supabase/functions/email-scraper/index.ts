@@ -46,7 +46,7 @@ function json(body: unknown, status = 200) {
 }
 
 const FETCH_TIMEOUT_MS = 6000;
-const USER_AGENT = "WyngoBot/1.0 (+https://wyngo.fr)";
+const USER_AGENT = "ArseneBot/1.0 (+https://grouparsene.fr)";
 const MAX_PAGES = 6; // on s'arrête dès qu'on a trouvé suffisamment d'emails
 
 // 12 chemins contact à tester. On les essaie dans l'ordre.

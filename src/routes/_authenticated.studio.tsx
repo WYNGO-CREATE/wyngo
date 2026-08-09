@@ -177,7 +177,7 @@ function StudioPage() {
       const company = `🎬 Démo — Boulangerie Martin`;
       const { data: prospect, error: pErr } = await supabase.from("prospects").insert({
         owner_id: user!.id, first_name: "Julien", last_name: "Martin",
-        company, email: "demo@wyngo.fr", phone: "06 12 34 56 78",
+        company, email: "demo@grouparsene.fr", phone: "06 12 34 56 78",
         status: "converti", source: "demo", location: "Toulouse",
         notes: `Chantier de démonstration créé le ${stamp}.`,
       }).select("id").single();

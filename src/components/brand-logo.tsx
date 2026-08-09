@@ -15,7 +15,7 @@ export function BrandLogo({
 }: BrandLogoProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      {/* Monogramme typographique : l'ancien logo portait « WYNGO » en dur.
+      {/* Monogramme typographique : l'ancien logo portait « GROUP ARSÈNE » en dur.
           À remplacer par le vrai logo Group Arsène quand il existera. */}
       <div
         aria-label="Group Arsène"

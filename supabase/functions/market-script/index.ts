@@ -12,7 +12,7 @@
 //    Tri par nombre d'avis (proxy de domination). Le prospect lui-même est exclu.
 //    Aucun acteur n'est inventé : uniquement des données Places vérifiées.
 // 4. Génère un script d'appel complet (Claude) qui n'utilise QUE ces concurrents
-//    réels, sans jamais prétendre que Wyngo collabore avec eux (angle "ils dominent
+//    réels, sans jamais prétendre que Group Arsène collabore avec eux (angle "ils dominent
 //    le web, pas vous"). Respecte la philosophie de vente de l'agence.
 // ─────────────────────────────────────────────────────────────────────────
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -199,12 +199,12 @@ async function generateScript(args: {
     .map((c, i) => `${i + 1}. ${c.name} — ${c.reviews} avis Google${c.rating ? ` (${c.rating}/5)` : ""}`)
     .join("\n");
 
-  const prompt = `Tu es un directeur commercial d'élite. Tu prépares une FICHE D'APPEL — pas un script à lire mot à mot, mais une fiche d'aide-mémoire ultra-efficace, qui donne à celui qui appelle LES ARGUMENTS CHIFFRÉS pour convaincre en 30 secondes. Cabinet : Wyngo (création de sites web sur-mesure + référencement local, Toulouse).
+  const prompt = `Tu es un directeur commercial d'élite. Tu prépares une FICHE D'APPEL — pas un script à lire mot à mot, mais une fiche d'aide-mémoire ultra-efficace, qui donne à celui qui appelle LES ARGUMENTS CHIFFRÉS pour convaincre en 30 secondes. Cabinet : Group Arsène (création de sites web sur-mesure + référencement local, Toulouse).
 
 RÈGLES ABSOLUES :
 - Tu n'INVENTES JAMAIS de chiffre. Tu utilises UNIQUEMENT les statistiques réelles fournies ci-dessous, en choisissant les 3 ou 4 les plus percutantes pour CE métier, et tu les formules de façon parlante pour son secteur.
 - Tu ne promets JAMAIS un résultat chiffré propre au prospect ("vous gagnerez X €"). Tu parles de ce que le marché montre, et de ce qu'il RISQUE de perdre en restant absent.
-- Concurrents : tu n'utilises QUE ceux listés (réels, vérifiés). Tu ne dis JAMAIS que Wyngo collabore avec eux — ils DOMINENT déjà le web, pas lui.
+- Concurrents : tu n'utilises QUE ceux listés (réels, vérifiés). Tu ne dis JAMAIS que Group Arsène collabore avec eux — ils DOMINENT déjà le web, pas lui.
 - Ton : direct, sûr, humain. Chaque phrase doit servir à convaincre. Zéro remplissage.
 
 ── LE PROSPECT ──
@@ -219,7 +219,7 @@ ${compList || "(aucun concurrent vérifié — n'en cite aucun, reste sur les st
 
 ${args.philosophy ? `── PHILOSOPHIE DE VENTE (respecte-la) ──\n${args.philosophy}\n` : ""}${args.dos ? `── TOUJOURS FAIRE ──\n${args.dos}\n` : ""}${args.donts ? `── NE JAMAIS FAIRE ──\n${args.donts}\n` : ""}
 
-POSITIONNEMENT WYNGO (haut de gamme — on ne vend PAS un "site vitrine", on vend un SYSTÈME DIGITAL, un investissement à ROI) :
+POSITIONNEMENT GROUP ARSÈNE (haut de gamme — on ne vend PAS un "site vitrine", on vend un SYSTÈME DIGITAL, un investissement à ROI) :
 - On vend des RÉSULTATS, pas du code : plus de clients captés, plus de conversions, moins de charge mentale administrative.
 - Interconnexion (la grande force) : on relie le site aux outils internes du client (CRM, facturation, agenda, ERP) → fin de la double saisie, des dizaines d'heures gagnées par mois.
 - Clés en main premium : SEO de base inclus, copywriting intégré, automatisation des emails de contact.
@@ -232,11 +232,11 @@ POSITIONNEMENT WYNGO (haut de gamme — on ne vend PAS un "site vitrine", on ven
 
 Rends UNIQUEMENT un JSON strict, sans texte autour, de cette forme EXACTE :
 {
-  "accroche": "Bonjour {{prospect}}, je suis {{expediteur}}, fondateur de Wyngo. [1 formule de politesse courte]. J'ai regardé de près le secteur de ${args.metier} à ${args.ville}, et il y a quelque chose que je voulais vous partager.",
+  "accroche": "Bonjour {{prospect}}, je suis {{expediteur}}, fondateur de Group Arsène. [1 formule de politesse courte]. J'ai regardé de près le secteur de ${args.metier} à ${args.ville}, et il y a quelque chose que je voulais vous partager.",
   "chiffres": [ { "stat": "le chiffre clé formulé simplement", "punch": "ce que ça veut dire concrètement pour LUI (ce qu'il rate / risque)" } ],
   "concurrents": "1 phrase nommant 2-3 concurrents qui captent déjà cette demande à ${args.ville} (ou \\"\\" si aucun concurrent fourni)",
-  "atouts": [ "4 à 5 atouts Wyngo issus du positionnement ci-dessus, chacun en une formule courte et percutante" ],
-  "questions": [ "EXACTEMENT 5 questions d'audit courtes et ORIENTÉES, taillées pour le métier « ${args.metier} », qui font émerger un besoin de système digital (temps perdu en admin, double saisie, suivi client, prise de RDV, gestion des commandes/devis, visibilité). Chaque question doit ouvrir sur une douleur qu'un système Wyngo résout." ],
+  "atouts": [ "4 à 5 atouts Group Arsène issus du positionnement ci-dessus, chacun en une formule courte et percutante" ],
+  "questions": [ "EXACTEMENT 5 questions d'audit courtes et ORIENTÉES, taillées pour le métier « ${args.metier} », qui font émerger un besoin de système digital (temps perdu en admin, double saisie, suivi client, prise de RDV, gestion des commandes/devis, visibilité). Chaque question doit ouvrir sur une douleur qu'un système Group Arsène résout." ],
   "valeur": [ { "axe": "Temps" ou "Argent" ou "Visibilité", "detail": "bénéfice concret et crédible pour CE métier (ex : heures d'administratif économisées, clients captés, double saisie supprimée) — sans promettre de chiffre inventé" } ],
   "cout_inaction": "1 phrase de closing sur le COÛT DE NE PAS AGIR, propre au métier « ${args.metier} » : ce qu'il perd CHAQUE MOIS en restant ainsi (heures de double saisie / d'administratif + clients captés par les concurrents visibles). En ordres de grandeur crédibles, JAMAIS de chiffre précis inventé.",
   "close": "1 phrase de clôture qui propose de bloquer un créneau, simple et directe"

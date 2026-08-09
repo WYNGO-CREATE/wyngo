@@ -177,7 +177,7 @@ async function executeStep(run: any, step: any, prospect: any, ownerProfile: any
       senderName:    profile?.full_name,
       senderEmail:   profile?.email || account.email,
       senderPhone:   profile?.phone,
-      agencyName:    agency?.name || "Wyngo",
+      agencyName:    agency?.name || "Group Arsène",
       agencyWebsite: agency?.website_url,
       agencyLogoUrl: agency?.logo_url,
     };
@@ -186,7 +186,7 @@ async function executeStep(run: any, step: any, prospect: any, ownerProfile: any
 
     // ─── Construction du From avec nom d'affichage (RFC 5322) ───
     // Format "Nom" <email> — indispensable pour la délivrabilité.
-    const fromDisplayName = sigData.agencyName || sigData.senderName || "Wyngo";
+    const fromDisplayName = sigData.agencyName || sigData.senderName || "Group Arsène";
     const encodedFromName = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(fromDisplayName)))}?=`;
     const fromHeader = `${encodedFromName} <${account.email}>`;
 

@@ -18,7 +18,7 @@
  * Le HTML généré inclut :
  *   • Open Graph + Twitter Card pour preview riche dans iMessage/Mail/WhatsApp
  *   • Tracking opened_at + view_count via /functions/v1/preview-ping
- *   • Phone CTA flottant mobile, watermark Wyngo discret
+ *   • Phone CTA flottant mobile, watermark Group Arsène discret
  *   • Reveal animations au scroll, photo hero pleine page, gallery masonry
  *   • Mobile-first (clamp() pour les titres, container queries pour le layout)
  *
@@ -247,7 +247,7 @@ async function fetchBrand(website?: string | null): Promise<{ logoUrl: string | 
   let logoUrl: string | null = null;
   let brandColor: string | null = null;
   try {
-    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (compatible; WyngoBot/1.0)" }, signal: AbortSignal.timeout(6000) });
+    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (compatible; ArseneBot/1.0)" }, signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const html = await res.text();
       const base = new URL(url);
@@ -989,7 +989,7 @@ function buildHtml(input: BuildInput): string {
     .day-row .day-hours { white-space: nowrap; font-variant-numeric: tabular-nums; opacity: 0.85; }
     .day-row.today .day-hours { opacity: 1; }
 
-    .wyngo-watermark {
+    .ga-watermark {
       position: fixed; bottom: 16px; right: 16px; z-index: 100;
       display: inline-flex; align-items: center; gap: 8px;
       background: rgba(0,0,0,0.82); color: white;
@@ -1000,8 +1000,8 @@ function buildHtml(input: BuildInput): string {
       box-shadow: 0 12px 32px -4px rgba(0,0,0,0.4);
       text-decoration: none; transition: all 0.3s;
     }
-    .wyngo-watermark:hover { background: rgba(0,0,0,0.95); transform: translateY(-2px); }
-    @media (max-width: 640px) { .wyngo-watermark { font-size: 10px; padding: 7px 11px; bottom: 12px; right: 12px; } }
+    .ga-watermark:hover { background: rgba(0,0,0,0.95); transform: translateY(-2px); }
+    @media (max-width: 640px) { .ga-watermark { font-size: 10px; padding: 7px 11px; bottom: 12px; right: 12px; } }
 
     .phone-float {
       position: fixed; bottom: 16px; left: 16px; z-index: 99;
@@ -1267,10 +1267,10 @@ function buildHtml(input: BuildInput): string {
   </a>
   ` : ""}
 
-  <a href="https://wyngo.fr" target="_blank" rel="noopener" class="wyngo-watermark">
+  <span class="ga-watermark">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    Aperçu généré par Wyngo
-  </a>
+    Aperçu généré par Group Arsène
+  </span>
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -1455,7 +1455,15 @@ serve(async (req) => {
     // 4. Construction HTML
     const slug = makeSlug(company);
     const previewId = crypto.randomUUID();
-    const appUrl = Deno.env.get("WYNGO_APP_URL") || "https://wyngo.bold-unit-739e.workers.dev";
+    // L'adresse à laquelle le prospect ouvrira son aperçu — c'est ce lien
+    // qu'on lui envoie. Le repli pointait sur `wyngo.bold-unit-739e…`, une
+    // adresse qui N'EXISTE PAS (erreur 1042) : le worker s'appelle
+    // `wyngoworkspace`. Un aperçu généré sans le secret partait donc avec un
+    // lien mort. On lit APP_URL en premier ; l'ancien nom reste accepté pour
+    // ne rien casser, et le repli est désormais une adresse qui répond.
+    const appUrl = Deno.env.get("APP_URL")
+      || Deno.env.get("WYNGO_APP_URL")
+      || "https://app.grouparsene.fr";
     const html = buildHtml({
       company,
       sector,

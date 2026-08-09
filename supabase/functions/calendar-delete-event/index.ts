@@ -1,4 +1,4 @@
-// ─── Supprime un rendez-vous (Wyngo + Google Agenda) ──────────────────
+// ─── Supprime un rendez-vous (Group Arsène + Google Agenda) ──────────────────
 //  POST (JWT utilisateur) { appointment_id }
 //   • supprime l'événement Google Agenda (sendUpdates=all → le client est
 //     prévenu de l'annulation), s'il existe

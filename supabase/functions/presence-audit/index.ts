@@ -93,7 +93,7 @@ async function siteCheck(website?: string | null): Promise<SiteCheck> {
   const https = url.toLowerCase().startsWith("https://");
   const t0 = Date.now();
   try {
-    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (compatible; WyngoBot/1.0)" }, signal: AbortSignal.timeout(8000) });
+    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (compatible; ArseneBot/1.0)" }, signal: AbortSignal.timeout(8000) });
     const ms = Date.now() - t0;
     if (!res.ok) return { ...blank, https, ms };
     const html = (await res.text()).slice(0, 120000);

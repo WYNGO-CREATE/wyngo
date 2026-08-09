@@ -1,5 +1,5 @@
 /**
- * ─── Site Edit — Éditeur de site IA BLINDÉ (Wyngo Studio) ─────────────
+ * ─── Site Edit — Éditeur de site IA BLINDÉ (Group Arsène Studio) ─────────────
  *
  * Objectif : n'importe quelle demande de modif doit s'appliquer, 0 bug.
  *

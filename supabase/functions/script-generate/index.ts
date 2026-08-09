@@ -2,7 +2,7 @@
  * ─── Script Generate ───
  *
  * Génère un script d'appel téléphonique OU une réponse à une objection,
- * en suivant la méthodologie Wyngo (5 phases pour les scripts, posture
+ * en suivant la méthodologie Group Arsène (5 phases pour les scripts, posture
  * fondateur-transparent pour les objections).
  *
  * Provider auto-détecté :
@@ -48,7 +48,7 @@ Ton métier : transcrire fidèlement la voix d'une agence existante en scripts d
 ╠════════════════════════════════════════════════════════════════════╣
 ${ctx.agencyName ? `║  Nom : ${ctx.agencyName}\n` : ""}${ctx.activity ? `║  Activité : ${ctx.activity}\n` : ""}${ctx.businessBrief ? `║\n║  ─── DESCRIPTION DÉTAILLÉE (la vraie identité de l'agence) ───\n║  ${ctx.businessBrief.replace(/\n/g, "\n║  ")}\n` : ""}${ctx.targetClient ? `║\n║  ─── CLIENT CIBLE ───\n║  ${ctx.targetClient.replace(/\n/g, "\n║  ")}\n` : ""}${ctx.valueProps ? `║\n║  ─── PROPOSITIONS DE VALEUR (à intégrer SANS LES PARAPHRASER) ───\n║  ${ctx.valueProps.replace(/\n/g, "\n║  ")}\n` : ""}${ctx.philosophy ? `║\n║  ─── PHILOSOPHIE DE VENTE DU FONDATEUR (RESPECTE-LA À LA LETTRE) ───\n║  ${ctx.philosophy.replace(/\n/g, "\n║  ")}\n` : ""}${ctx.callDos ? `║\n║  ─── TOUJOURS FAIRE (règles d'or de l'agence) ───\n║  ${ctx.callDos.replace(/\n/g, "\n║  ")}\n` : ""}${ctx.callDonts ? `║\n║  ─── INTERDICTIONS ABSOLUES (rouges de l'agence) ───\n║  ${ctx.callDonts.replace(/\n/g, "\n║  ")}\n` : ""}╚════════════════════════════════════════════════════════════════════╝
 
-═══ MÉTHODE WYNGO — 5 PHASES (squelette des scripts d'ouverture longs) ═══
+═══ MÉTHODE GROUP ARSÈNE — 5 PHASES (squelette des scripts d'ouverture longs) ═══
 
 PHASE 1 — La transparence du Fondateur
   Se présenter comme fondateur (autorité). Silence 2s. Annoncer franchement que c'est un appel de prospection.
@@ -194,7 +194,7 @@ Renvoie aussi :
   // kind === script
   const lengthGuide = {
     court: "60-120 mots — adapté aux voicemails et messages courts",
-    standard: "le script complet en 5 phases (méthode Wyngo) — environ 300-450 mots",
+    standard: "le script complet en 5 phases (méthode Group Arsène) — environ 300-450 mots",
     long: "version étoffée avec variantes d'option A/B — environ 500-700 mots",
   }[input.length || "standard"];
 
@@ -264,7 +264,7 @@ async function generateWithGemini(systemPrompt: string, userPrompt: string) {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       generationConfig: {
-        // Bas pour rester fidèle au contexte agence et à la méthode Wyngo.
+        // Bas pour rester fidèle au contexte agence et à la méthode Group Arsène.
         temperature: 0.4,
         // 6000 tokens = budget large pour thinking + JSON final.
         maxOutputTokens: 6000,

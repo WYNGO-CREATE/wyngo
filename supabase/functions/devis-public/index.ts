@@ -179,7 +179,7 @@ function renderPage(doc: any, s: any): string {
       </div>
     </div>
   </div>
-  <div class="foot">Document émis via Wyngo · signature électronique horodatée</div>
+  <div class="foot">Document émis via Group Arsène · signature électronique horodatée</div>
 </div>
 <script>
   var token = ${JSON.stringify(doc.share_token)};

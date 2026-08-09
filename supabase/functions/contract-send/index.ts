@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     if (!ct.client_email) return json({ error: "no_email", message: "Renseigne l'email du client sur le contrat." });
 
     const { data: s } = await admin.from("billing_settings").select("*").eq("id", true).maybeSingle();
-    const sellerName = s?.trade_name || s?.legal_name || "Wyngo";
+    const sellerName = s?.trade_name || s?.legal_name || "Group Arsène";
     const baseUrl = (typeof origin === "string" && origin.startsWith("http")) ? origin.replace(/\/$/, "") : "https://wyngoworkspace.bold-unit-739e.workers.dev";
     const ctaUrl = `${baseUrl}/contrat/${ct.share_token}`;
     const title = (ct.body && ct.body.title) || ct.title || "Contrat de prestation";

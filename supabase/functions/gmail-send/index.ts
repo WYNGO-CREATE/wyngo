@@ -2,7 +2,7 @@
  * ─── Gmail Send ───
  *
  * Envoie un email HTML+texte multipart depuis le compte Gmail connecté de l'utilisateur,
- * avec signature professionnelle et logo (wordmark Wyngo par défaut, ou logo custom
+ * avec signature professionnelle et logo (wordmark Group Arsène par défaut, ou logo custom
  * défini dans agency_settings.logo_url).
  */
 

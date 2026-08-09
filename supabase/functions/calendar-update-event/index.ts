@@ -1,4 +1,4 @@
-// ─── Modifie un rendez-vous (Wyngo + Google Agenda) ───────────────────
+// ─── Modifie un rendez-vous (Group Arsène + Google Agenda) ───────────────────
 //  POST (JWT utilisateur)
 //   { appointment_id, title, start_iso, end_iso, is_video, location, notes, client_email }
 //  Met à jour l'événement Google (sendUpdates=all → le client est prévenu)

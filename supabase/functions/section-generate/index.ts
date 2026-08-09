@@ -1,7 +1,7 @@
 // ─── Section Generate — section sur-mesure par IA (thème du site) ──────
 //
 //  POST { description }  → { html }
-//  L'IA code UNE seule <section> en utilisant le design-system Wyngo
+//  L'IA code UNE seule <section> en utilisant le design-system Group Arsène
 //  (classes .wy-* + variables --wy-*), donc elle adopte automatiquement
 //  le thème/les couleurs actifs du site. Aucune couleur en dur.
 
@@ -23,7 +23,7 @@ const PHOTO_PLACEHOLDER = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/
 
 const SYS = `Tu es développeur front. On te décrit UNE section de site à créer. Tu renvoies UNIQUEMENT le code HTML d'UNE SEULE balise <section> (rien avant, rien après, pas de <html>/<body>, pas de \`\`\`).
 
-CONTRAINTES STRICTES (design-system Wyngo — pour que la section adopte le thème) :
+CONTRAINTES STRICTES (design-system Group Arsène — pour que la section adopte le thème) :
 - Racine : <section class="wy-section" style="background:var(--wy-bg)"> (ou var(--wy-bg2) pour alterner).
 - Conteneur : <div class="wy-wrap">.
 - Classes à utiliser : wy-eyebrow (sur-titre), wy-h2 (titre), wy-lead (intro), wy-card, wy-btn, wy-btn-ghost, wy-grid2 (2 colonnes), wy-pill, wy-step/wy-steps, wy-reveal (anime à l'apparition — mets-la sur les éléments).

@@ -49,7 +49,7 @@ function json(body: unknown, status = 200) {
 type Status = "has_website" | "outdated" | "no_website" | "unknown";
 
 const FETCH_TIMEOUT_MS = 6000;
-const USER_AGENT = "WyngoBot/1.0 (+https://wyngo.fr)";
+const USER_AGENT = "ArseneBot/1.0 (+https://grouparsene.fr)";
 
 // ── Mots qui NE sont PAS distinctifs d'une entreprise ──────────────────────
 // Génériques (métier, structure juridique) : présents sur des milliers de sites.
@@ -555,7 +555,7 @@ Deno.serve(async (req) => {
     // ═══ ÉTAPE 3 : domaines devinés (vérification STRICTE par nom) ═══
     // Pour chaque candidat deviné, on exige que la page contienne le nom
     // de l'entreprise. Sinon on considère qu'on s'est trompé de domaine et
-    // que l'entreprise n'a PAS de site → cible prime pour Wyngo.
+    // que l'entreprise n'a PAS de site → cible prime pour Group Arsène.
     if (company_name) {
       const candidates = generateDomainCandidates(company_name, city);
       // On teste tous les domaines candidats EN PARALLÈLE (avant : un par un,

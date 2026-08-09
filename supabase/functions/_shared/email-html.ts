@@ -112,7 +112,7 @@ function buildSignatureHtml(sig: EmailSignatureData): string {
 }
 
 /**
- * Wordmark texte stylé : "Wyngo." en serif fin + tagline en sans gris clair.
+ * Wordmark texte stylé : "Group Arsène." en serif fin + tagline en sans gris clair.
  * Inspiré des en-têtes de publications (Le Monde, FT, etc.) — sobre et premium.
  */
 function renderWordmark(name: string, tagline?: string): string {
@@ -149,7 +149,7 @@ export function transactionalEmail(opts: {
   accent?: string;
 }): string {
   const accent = opts.accent || "#1B4BE3";
-  const brand = escapeHtml(opts.brand || "Wyngo");
+  const brand = escapeHtml(opts.brand || "Group Arsène");
   const greeting = opts.greetingName ? `Bonjour ${escapeHtml(opts.greetingName)},` : "Bonjour,";
   const footer = (opts.footerLines || []).filter(Boolean).join("<br>");
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -174,7 +174,7 @@ export function transactionalEmail(opts: {
       <div style="border-top:1px solid #f1f2f4;padding-top:16px;font-size:12px;line-height:1.6;color:#98a2b3;">${footer}</div>
     </td></tr>
   </table>
-  <div style="font-size:11px;color:#c0c4cc;margin-top:16px;">Transmis avec Wyngo</div>
+  <div style="font-size:11px;color:#c0c4cc;margin-top:16px;">Transmis avec Group Arsène</div>
 </td></tr></table>
 </body></html>`;
 }

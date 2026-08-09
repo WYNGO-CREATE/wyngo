@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       admin.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
       admin.from("agency_settings").select("name").eq("id", true).maybeSingle(),
     ]);
-    const senderName = agency?.name || profile?.full_name || "Wyngo";
+    const senderName = agency?.name || profile?.full_name || "Group Arsène";
 
     // 3. Email
     const htmlBody = `<!doctype html><html lang="fr"><head><meta charset="utf-8"></head>
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       </td></tr></table>
       <p style="margin:0;font-size:12px;color:#8a8a8a">Ou copiez ce lien : ${esc(deckUrl)}</p>
     </td></tr>
-    <tr><td style="padding:16px 28px;border-top:1px solid #f0f1f3;font-size:12px;color:#8a8a8a">${esc(senderName)} · envoyé avec Wyngo</td></tr>
+    <tr><td style="padding:16px 28px;border-top:1px solid #f0f1f3;font-size:12px;color:#8a8a8a">${esc(senderName)} · envoyé avec Group Arsène</td></tr>
   </table>
 </td></tr></table></body></html>`;
     const textBody = `Bonjour ${p.first_name || ""},\n\nVoici la présentation préparée pour ${clientName} :\n${deckUrl}\n\n${senderName}`;

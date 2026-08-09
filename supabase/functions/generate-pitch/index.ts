@@ -4,8 +4,8 @@
  * Pour un prospect donné, génère un email de prospection sur-mesure qui :
  *   1. Mentionne quelque chose de SPÉCIFIQUE sur l'entreprise (analyse de
  *      son site web actuel s'il en a un, ou pointe l'absence du site)
- *   2. Identifie une douleur concrète liée à l'offre Wyngo
- *   3. Pose la valeur Wyngo en réponse à cette douleur
+ *   2. Identifie une douleur concrète liée à l'offre Group Arsène
+ *   3. Pose la valeur Group Arsène en réponse à cette douleur
  *   4. Soft CTA (suggestion d'échange de 15 min, pas de "ACHETEZ MAINTENANT")
  *
  * Le but est de passer d'un cold email générique (taux de réponse 1-3%) à
@@ -56,7 +56,7 @@ async function fetchWebsiteSnapshot(url: string): Promise<{
     const timeout = setTimeout(() => ctrl.abort(), 5000);
     const res = await fetch(url, {
       signal: ctrl.signal,
-      headers: { "User-Agent": "WyngoBot/1.0 (+https://wyngo.fr)" },
+      headers: { "User-Agent": "ArseneBot/1.0 (+https://grouparsene.fr)" },
       redirect: "follow",
     });
     clearTimeout(timeout);
@@ -87,8 +87,8 @@ async function fetchWebsiteSnapshot(url: string): Promise<{
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// SCÉNARIOS D'EMAIL — chaque situation du cycle commercial Wyngo.
-// La `mission` dit à l'IA CE QU'IL FAUT ACCOMPLIR ; le cœur "valeurs Wyngo"
+// SCÉNARIOS D'EMAIL — chaque situation du cycle commercial Group Arsène.
+// La `mission` dit à l'IA CE QU'IL FAUT ACCOMPLIR ; le cœur "valeurs Group Arsène"
 // (transparence, honnêteté, français natif) s'applique à TOUS.
 // `usesContext` = ce scénario s'appuie sur une note fournie par Hugo
 // (compte-rendu d'appel, message reçu du prospect, date de RDV…).
@@ -103,7 +103,7 @@ const SCENARIOS: Record<string, Scenario> = {
 • 90 mots MAXIMUM, lu en 15 secondes.
 • Pointe UNE douleur concrète liée au statut de son site (invisible sur Google, site daté…).
 • CTA doux et non commercial : proposer 15 min d'échange, ou une analyse rapide gratuite.
-• Ton humain : "Bonjour M. X, je suis Hugo, j'ai créé Wyngo pour aider…".`,
+• Ton humain : "Bonjour M. X, je suis Hugo, j'ai créé Group Arsène pour aider…".`,
   },
   relance: {
     id: "relance", label: "Relance (sans réponse)", group: "Prospection", usesContext: false,
@@ -132,7 +132,7 @@ const SCENARIOS: Record<string, Scenario> = {
     id: "apres_appel_2", label: "Après le 2e appel (vers la conclusion)", group: "Cycle d'appel", usesContext: true,
     mission: `Email après un 2e appel, on se rapproche de la décision.
 • Remercie et fais une courte SYNTHÈSE de ce qui a été convenu (utilise le CONTEXTE de Hugo).
-• Rassure sur les garanties RÉELLES de Wyngo : aucun paiement avant validation de la première maquette, code source remis (le site lui appartient).
+• Rassure sur les garanties RÉELLES de Group Arsène : aucun paiement avant validation de la première maquette, code source remis (le site lui appartient).
 • Propose un dernier appel pour finaliser, et amorce les étapes concrètes (proposition / contrat).
 • 150 mots environ, ton confiant et transparent.`,
   },
@@ -182,7 +182,7 @@ const SCENARIOS: Record<string, Scenario> = {
   },
   presentation_offre: {
     id: "presentation_offre", label: "Présentation de l'offre / produit", group: "Closing", usesContext: true,
-    mission: `Le prospect a montré de l'intérêt, on lui présente concrètement l'offre Wyngo (voir CONTEXTE).
+    mission: `Le prospect a montré de l'intérêt, on lui présente concrètement l'offre Group Arsène (voir CONTEXTE).
 • Structure claire : ce qu'il obtient (site sur-mesure, immersion, textes + photos, référencement local, suivi mensuel, code source remis).
 • Mets en avant la MÉTHODE différenciante (journée d'immersion, on vient chez lui).
 • Une seule offre, pas de catalogue. Termine sur la prochaine étape.`,
@@ -206,14 +206,14 @@ const SCENARIOS: Record<string, Scenario> = {
 const CORE_VALUES = `═══════════════════════════════════════════════════════════════════════
 QUI TU ES — VALEURS NON NÉGOCIABLES
 ═══════════════════════════════════════════════════════════════════════
-Tu écris au nom de Wyngo, cabinet français de présence digitale (Toulouse), qui
+Tu écris au nom de Group Arsène, cabinet français de présence digitale (Toulouse), qui
 crée des sites internet sur-mesure et gère le référencement local des artisans,
 commerçants et TPE. Tu écris à la 1ère personne, comme Hugo, le fondateur.
 
-Wyngo se distingue par la TRANSPARENCE et l'EXIGENCE. Donc, RÈGLES ABSOLUES :
+Group Arsène se distingue par la TRANSPARENCE et l'EXIGENCE. Donc, RÈGLES ABSOLUES :
 • N'invente JAMAIS un chiffre, un résultat, une référence client, un témoignage
   ou une collaboration. Si tu n'as pas la donnée, ne l'invente pas.
-• Ne promets QUE ce qui est réel chez Wyngo : journée d'immersion chez le client,
+• Ne promets QUE ce qui est réel chez Group Arsène : journée d'immersion chez le client,
   textes et photos produits sur place, référencement local, suivi mensuel,
   AUCUN paiement avant validation de la première maquette, code source remis
   (le site appartient au client), sélection de 9 entrepreneurs par trimestre.
@@ -247,7 +247,7 @@ function buildSystemPrompt(ctx: {
   const hasContext = ctx.businessBrief || ctx.targetClient || ctx.valueProps;
   const agencyBlock = hasContext
     ? `${ctx.businessBrief ? `Brief activité :\n${ctx.businessBrief}\n` : ""}${ctx.targetClient ? `Client cible :\n${ctx.targetClient}\n` : ""}${ctx.valueProps ? `Propositions de valeur :\n${ctx.valueProps}\n` : ""}`
-    : "(Utilise ta connaissance de Wyngo, cabinet de création digitale pour TPE françaises.)";
+    : "(Utilise ta connaissance de Group Arsène, cabinet de création digitale pour TPE françaises.)";
 
   return `Tu es le meilleur rédacteur commercial francophone. Tu écris des emails
 qui obtiennent une réponse, sans jamais sonner "commercial" ni robotisé.
@@ -355,7 +355,7 @@ function buildUserPrompt(p: {
   }
 
   lines.push(``);
-  lines.push(`Rédige maintenant l'email pour la situation « ${scenario.label} », en respectant les valeurs Wyngo et la mission décrites dans les instructions système.`);
+  lines.push(`Rédige maintenant l'email pour la situation « ${scenario.label} », en respectant les valeurs Group Arsène et la mission décrites dans les instructions système.`);
   return lines.join("\n");
 }
 
@@ -525,7 +525,7 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = buildSystemPrompt({
-      agencyName: agency?.name || "Wyngo",
+      agencyName: agency?.name || "Group Arsène",
       businessBrief: agency?.business_brief,
       targetClient: agency?.target_client,
       valueProps: agency?.value_props,

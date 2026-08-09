@@ -1,4 +1,4 @@
-// ─── Calendly Sync — importe les réservations dans Wyngo ──────────────
+// ─── Calendly Sync — importe les réservations dans Group Arsène ──────────────
 //
 //  POST (JWT utilisateur). Lit les événements Calendly réservés via l'API
 //  v2 (jeton CALENDLY_TOKEN), et pour chacun :

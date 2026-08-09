@@ -117,7 +117,7 @@ function DeclarationsPage() {
     rows.push(["", "", "TOTAL ENCAISSÉ", "", "", caEncaisse.toFixed(2), "", ""]);
     const csv = "﻿" + rows.map((r) => r.join(";")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a"); a.href = url; a.download = `wyngo-declaration-${periodKey}.csv`; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `group-arsene-declaration-${periodKey}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 

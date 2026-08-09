@@ -111,7 +111,7 @@ function renderReport(ctx: { m: any; prev: any; siteTitle: string; agencyName: s
     <p>Une question, une idée d'amélioration ?</p>
     <b>${esc(agencyName)} reste à vos côtés.</b>
   </div>
-  <div class="foot">Rapport généré automatiquement par Wyngo</div>
+  <div class="foot">Rapport généré automatiquement par Group Arsène</div>
 </div>
 </body></html>`;
 }
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       const { data: settings } = await db.from("billing_settings").select("trade_name, legal_name").eq("id", true).maybeSingle();
       return html(renderReport({
         m, prev, siteTitle: site?.title || "Votre site",
-        agencyName: settings?.trade_name || settings?.legal_name || "Wyngo",
+        agencyName: settings?.trade_name || settings?.legal_name || "Group Arsène",
       }));
     }
 
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: settings } = await db.from("billing_settings").select("trade_name, legal_name").eq("id", true).maybeSingle();
-    const agencyName = settings?.trade_name || settings?.legal_name || "Wyngo";
+    const agencyName = settings?.trade_name || settings?.legal_name || "Group Arsène";
     const subject = `Votre rapport ${label} — ${site.title || "votre site"}`;
     const textBody =
       `Bonjour,\n\nVoici votre rapport de performance pour ${label}.\n\n` +

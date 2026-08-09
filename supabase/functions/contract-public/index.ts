@@ -59,7 +59,7 @@ function renderPage(ct: any, s: any): string {
   return `<!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>${esc(body.title || "Contrat")} — ${esc(s?.trade_name || s?.legal_name || "Wyngo")}</title>
+<title>${esc(body.title || "Contrat")} — ${esc(s?.trade_name || s?.legal_name || "Group Arsène")}</title>
 <style>
   *{box-sizing:border-box}html,body{margin:0}
   body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0f172a;background:#f1f5f9;font-size:14px;line-height:1.6}
@@ -93,7 +93,7 @@ function renderPage(ct: any, s: any): string {
 <body><div class="wrap">
   <div class="doc">
     <div class="head">
-      <div class="brand">${esc(s?.trade_name || s?.legal_name || "Wyngo")}</div>
+      <div class="brand">${esc(s?.trade_name || s?.legal_name || "Group Arsène")}</div>
       ${s?.siret ? `<div class="sub">SIRET : ${esc(s.siret)}</div>` : ""}
       <h1 class="ttl">${esc(body.title || "Contrat de prestation")}</h1>
       <div class="n">${ct.number ? "Réf. " + esc(ct.number) + " · " : ""}Établi le ${dateFr(ct.created_at)}</div>
@@ -105,7 +105,7 @@ function renderPage(ct: any, s: any): string {
       <div class="disc">${esc(body.disclaimer || "")}</div>
     </div>
   </div>
-  <div class="foot">Contrat transmis via Wyngo · signature électronique horodatée (eIDAS)</div>
+  <div class="foot">Contrat transmis via Group Arsène · signature électronique horodatée (eIDAS)</div>
 </div>
 <script>
   var token=${JSON.stringify(ct.share_token)};

@@ -7,7 +7,7 @@
  * ─── Cache mutualisé ────────────────────────────────────────────────
  * Tous les résultats sont stockés dans `email_verifications` avec un TTL
  * de 30 jours. Si un email a déjà été vérifié récemment (par n'importe
- * quel user Wyngo), on retourne le résultat caché → 0 crédit consommé.
+ * quel user Group Arsène), on retourne le résultat caché → 0 crédit consommé.
  *
  * ─── Statuts normalisés ─────────────────────────────────────────────
  *   valid    : envoi sûr (vert)
@@ -99,7 +99,7 @@ async function callCaptainVerify(email: string): Promise<{ status: NormalizedSta
   url.searchParams.set("email", email);
 
   const res = await fetch(url.toString(), {
-    headers: { "Accept": "application/json", "User-Agent": "WyngoBot/1.0 (+https://wyngo.fr)" },
+    headers: { "Accept": "application/json", "User-Agent": "ArseneBot/1.0 (+https://grouparsene.fr)" },
   });
   const text = await res.text();
   let data: Record<string, unknown> = {};

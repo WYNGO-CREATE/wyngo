@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     if (doc.status === "brouillon") return json({ error: "draft", message: "Émets le document avant de l'envoyer." });
 
     const { data: s } = await admin.from("billing_settings").select("*").eq("id", true).maybeSingle();
-    const sellerName = s?.trade_name || s?.legal_name || "Wyngo";
+    const sellerName = s?.trade_name || s?.legal_name || "Group Arsène";
     const baseUrl = (typeof origin === "string" && origin.startsWith("http")) ? origin.replace(/\/$/, "") : "https://wyngoworkspace.bold-unit-739e.workers.dev";
 
     const isFacture = doc.type === "facture";

@@ -2,7 +2,7 @@
 //
 //  POST { description }  → { vars }
 //  L'IA traduit une description ("bleu marine et or, ambiance luxe") en une
-//  palette cohérente de variables CSS du design-system Wyngo (--wy-*),
+//  palette cohérente de variables CSS du design-system Group Arsène (--wy-*),
 //  en choisissant UNE des 4 typos autorisées (Inter, Fraunces, Archivo,
 //  Playfair Display). Le front applique ensuite ces vars à tout le site.
 
