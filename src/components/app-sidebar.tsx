@@ -123,6 +123,9 @@ export function AppSidebar() {
     { title: "Tableau de bord", url: "/facturation", icon: LayoutDashboard, badge: 0 },
     { title: "Contrats", url: "/facturation/contrats", icon: FileSignature, badge: 0 },
     { title: "Déclarations", url: "/facturation/declarations", icon: FileBarChart, badge: 0 },
+    // Les factures que Group Arsène établit AU NOM de ses prestataires
+    // (autofacturation) — à ne pas confondre avec les factures clients.
+    { title: "Prestataires", url: "/facturation/prestataires", icon: Users, badge: 0 },
     { title: "Réglages", url: "/facturation/reglages", icon: UserCog, badge: 0 },
   ];
 

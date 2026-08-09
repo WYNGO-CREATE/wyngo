@@ -237,6 +237,16 @@ export default {
         return Response.redirect(new URL("/espace", url).toString(), 301);
       }
 
+      // Le mandat de facturation qu'un prestataire signe, et chaque facture
+      // établie pour son compte qu'il valide ou conteste. Deux chemins, une
+      // seule fonction : c'est le jeton qui dit de quoi il s'agit.
+      if (url.pathname.startsWith("/mandat/")) {
+        return await serveTokenPage("prestataire-public", url.pathname.slice("/mandat/".length), request);
+      }
+      if (url.pathname.startsWith("/note/")) {
+        return await serveTokenPage("prestataire-public", url.pathname.slice("/note/".length), request);
+      }
+
       // Route rapport mensuel public
       if (url.pathname.startsWith("/rapport/")) {
         const token = url.pathname.slice("/rapport/".length);

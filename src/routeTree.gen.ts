@@ -38,6 +38,7 @@ import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProspectsIndexRouteImport } from './routes/_authenticated.prospects.index'
 import { Route as AuthenticatedProspectsIdRouteImport } from './routes/_authenticated.prospects.$id'
 import { Route as AuthenticatedFacturationReglagesRouteImport } from './routes/_authenticated.facturation.reglages'
+import { Route as AuthenticatedFacturationPrestatairesRouteImport } from './routes/_authenticated.facturation.prestataires'
 import { Route as AuthenticatedFacturationDeclarationsRouteImport } from './routes/_authenticated.facturation.declarations'
 import { Route as AuthenticatedFacturationContratsRouteImport } from './routes/_authenticated.facturation.contrats'
 import { Route as AuthenticatedStudioSiteIdRouteImport } from './routes/_authenticated.studio_.site.$id'
@@ -192,6 +193,12 @@ const AuthenticatedFacturationReglagesRoute =
     path: '/reglages',
     getParentRoute: () => AuthenticatedFacturationRoute,
   } as any)
+const AuthenticatedFacturationPrestatairesRoute =
+  AuthenticatedFacturationPrestatairesRouteImport.update({
+    id: '/prestataires',
+    path: '/prestataires',
+    getParentRoute: () => AuthenticatedFacturationRoute,
+  } as any)
 const AuthenticatedFacturationDeclarationsRoute =
   AuthenticatedFacturationDeclarationsRouteImport.update({
     id: '/declarations',
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/auth/gmail-callback': typeof AuthGmailCallbackRoute
   '/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
   '/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
+  '/facturation/prestataires': typeof AuthenticatedFacturationPrestatairesRoute
   '/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/prospects/': typeof AuthenticatedProspectsIndexRoute
@@ -279,6 +287,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
   '/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
+  '/facturation/prestataires': typeof AuthenticatedFacturationPrestatairesRoute
   '/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/prospects': typeof AuthenticatedProspectsIndexRoute
@@ -315,6 +324,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/facturation/contrats': typeof AuthenticatedFacturationContratsRoute
   '/_authenticated/facturation/declarations': typeof AuthenticatedFacturationDeclarationsRoute
+  '/_authenticated/facturation/prestataires': typeof AuthenticatedFacturationPrestatairesRoute
   '/_authenticated/facturation/reglages': typeof AuthenticatedFacturationReglagesRoute
   '/_authenticated/prospects/$id': typeof AuthenticatedProspectsIdRoute
   '/_authenticated/prospects/': typeof AuthenticatedProspectsIndexRoute
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/auth/gmail-callback'
     | '/facturation/contrats'
     | '/facturation/declarations'
+    | '/facturation/prestataires'
     | '/facturation/reglages'
     | '/prospects/$id'
     | '/prospects/'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/'
     | '/facturation/contrats'
     | '/facturation/declarations'
+    | '/facturation/prestataires'
     | '/facturation/reglages'
     | '/prospects/$id'
     | '/prospects'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/facturation/contrats'
     | '/_authenticated/facturation/declarations'
+    | '/_authenticated/facturation/prestataires'
     | '/_authenticated/facturation/reglages'
     | '/_authenticated/prospects/$id'
     | '/_authenticated/prospects/'
@@ -640,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFacturationReglagesRouteImport
       parentRoute: typeof AuthenticatedFacturationRoute
     }
+    '/_authenticated/facturation/prestataires': {
+      id: '/_authenticated/facturation/prestataires'
+      path: '/prestataires'
+      fullPath: '/facturation/prestataires'
+      preLoaderRoute: typeof AuthenticatedFacturationPrestatairesRouteImport
+      parentRoute: typeof AuthenticatedFacturationRoute
+    }
     '/_authenticated/facturation/declarations': {
       id: '/_authenticated/facturation/declarations'
       path: '/declarations'
@@ -674,6 +694,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedFacturationRouteChildren {
   AuthenticatedFacturationContratsRoute: typeof AuthenticatedFacturationContratsRoute
   AuthenticatedFacturationDeclarationsRoute: typeof AuthenticatedFacturationDeclarationsRoute
+  AuthenticatedFacturationPrestatairesRoute: typeof AuthenticatedFacturationPrestatairesRoute
   AuthenticatedFacturationReglagesRoute: typeof AuthenticatedFacturationReglagesRoute
   AuthenticatedFacturationDocumentIdRoute: typeof AuthenticatedFacturationDocumentIdRoute
 }
@@ -684,6 +705,8 @@ const AuthenticatedFacturationRouteChildren: AuthenticatedFacturationRouteChildr
       AuthenticatedFacturationContratsRoute,
     AuthenticatedFacturationDeclarationsRoute:
       AuthenticatedFacturationDeclarationsRoute,
+    AuthenticatedFacturationPrestatairesRoute:
+      AuthenticatedFacturationPrestatairesRoute,
     AuthenticatedFacturationReglagesRoute:
       AuthenticatedFacturationReglagesRoute,
     AuthenticatedFacturationDocumentIdRoute:
