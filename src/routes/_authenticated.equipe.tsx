@@ -253,15 +253,19 @@ function EquipePage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["team-stats"],
     queryFn: async () => {
+      type Membre = {
+        id: string; full_name: string | null; email: string; role?: string;
+        created_at: string; is_active: boolean | null; archived_at: string | null;
+      };
       const [{ data: profiles }, { data: prospects }, { data: calls }] = await Promise.all([
-        // Cast : archived_at vient d'une migration récente, types Supabase pas à jour
-        (supabase as unknown as { from: (t: string) => { select: (s: string) => Promise<{ data: Array<{ id: string; full_name: string | null; email: string; created_at: string; is_active: boolean | null; archived_at: string | null }> }> } })
-          .from("profiles")
-          .select("id, full_name, email, created_at, is_active, archived_at"),
+        // On passe par equipe() et jamais par profiles : la table contient
+        // aussi les comptes d'espace client, qui s'affichaient donc comme des
+        // collaborateurs. La fonction est la seule définition de l'équipe.
+        (supabase as any).rpc("equipe") as Promise<{ data: Membre[] | null }>,
         supabase.from("prospects").select("owner_id, status"),
         supabase.from("call_logs").select("owner_id"),
       ]);
-      return (profiles || []).map((p) => {
+      return ((profiles || []) as Membre[]).map((p) => {
         const own = (prospects || []).filter((x: { owner_id: string | null }) => x.owner_id === p.id);
         return {
           ...p,
