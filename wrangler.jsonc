@@ -15,7 +15,7 @@
   // l'adresse workers.dev comme filet.
   "workers_dev": true,
   "routes": [
-    { "pattern": "espace.grouparsene.fr", "custom_domain": true },
+    { "pattern": "espaceclient.grouparsene.fr", "custom_domain": true },
     { "pattern": "app.grouparsene.fr", "custom_domain": true }
   ],
   "compatibility_date": "2025-09-24",

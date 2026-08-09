@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     if (!tr.ok) { await consigner(site_id, false, "jeton Gmail expiré : " + (await tr.text()).slice(0,120), email); return json({ ok: true, envoye: false }); }
     const { access_token } = await tr.json();
 
-    const racine = (base_url || "https://espace.grouparsene.fr").replace(/\/$/, "");
+    const racine = (base_url || "https://espaceclient.grouparsene.fr").replace(/\/$/, "");
     const html = courriel(compte.nom, titre, `${racine}/espace`);
     const b64 = (t: string) => btoa(String.fromCharCode(...new TextEncoder().encode(t)));
     const brut =

@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
 
 
     // Le client doit recevoir l'adresse de SON espace, pas celle du CRM.
-    const racine = "https://espace.grouparsene.fr";
+    const racine = "https://espaceclient.grouparsene.fr";
     const html = courriel(d, site, `${racine}/espace`);
 
     if (action !== "envoyer") {

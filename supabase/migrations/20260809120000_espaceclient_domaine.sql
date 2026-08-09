@@ -1,9 +1,7 @@
--- ─── Les liens envoyés aux clients pointent sur leur vraie adresse ───
+-- ─── Le sous-domaine s'appelle espaceclient, pas espace ─────────────
 --
--- Le déclencheur de notification portait l'adresse workers.dev en dur. Un
--- client recevait donc « wyngoworkspace.bold-unit-739e.workers.dev » — un nom
--- qui n'inspire pas confiance et qui ne veut plus rien dire depuis Group
--- Arsène.
+-- Choix de Hugo : « espaceclient.grouparsene.fr » dit ce que c'est à un
+-- commerçant qui lit l'adresse dans son mail. « espace » seul est ambigu.
 
 create or replace function public.notifier_reponse_client()
 returns trigger
@@ -16,9 +14,7 @@ declare
   secret  text;
   recent  boolean;
 begin
-  if new.author is distinct from 'agency' then
-    return new;
-  end if;
+  if new.author is distinct from 'agency' then return new; end if;
 
   select exists (
     select 1 from public.notifications_envoyees
@@ -36,17 +32,11 @@ begin
 
   perform net.http_post(
     url := base || '/functions/v1/client-notifier',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'x-cron-secret', secret
-    ),
-    body := jsonb_build_object(
-      'site_id', new.site_id,
-      'base_url', 'https://espaceclient.grouparsene.fr'
-    ),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', secret),
+    body := jsonb_build_object('site_id', new.site_id,
+                               'base_url', 'https://espaceclient.grouparsene.fr'),
     timeout_milliseconds := 10000
   );
-
   return new;
 exception when others then
   return new;
