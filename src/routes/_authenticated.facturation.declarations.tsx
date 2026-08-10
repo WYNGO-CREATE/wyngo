@@ -47,7 +47,7 @@ function DeclarationsPage() {
 
   const { data: settings } = useQuery({
     queryKey: ["billing_settings"],
-    queryFn: async () => (await supabase.from("billing_settings").select("legal_name, siret, vat_regime, is_ei").eq("id", true).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("billing_settings").select("legal_name, siret, vat_regime, is_ei").limit(1).maybeSingle()).data,
   });
   const isFranchise = settings?.vat_regime !== "normal";
 

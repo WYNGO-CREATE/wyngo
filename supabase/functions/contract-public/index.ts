@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
     if (!ct) return html(`<div style="font-family:sans-serif;text-align:center;padding:60px"><h1>Contrat introuvable</h1><p style="color:#64748b">Ce lien n'est plus valide.</p></div>`, 404);
     if (ct.status === "brouillon") return html(`<div style="font-family:sans-serif;text-align:center;padding:60px"><h1>Contrat indisponible</h1><p style="color:#64748b">Ce contrat n'a pas encore été envoyé.</p></div>`, 403);
     if (!ct.viewed_at && ct.status === "envoye") await db.from("contracts").update({ viewed_at: new Date().toISOString() }).eq("id", ct.id);
-    const { data: settings } = await db.from("billing_settings").select("*").eq("id", true).maybeSingle();
+    const { data: settings } = await db.from("billing_settings").select("*").eq("owner_id", ct.owner_id).maybeSingle();
     return html(renderPage(ct, settings || {}));
   } catch (e) {
     console.error("contract-public error", e);

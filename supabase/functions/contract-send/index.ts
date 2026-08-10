@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     if (!ct) return json({ error: "not_found", message: "Contrat introuvable." });
     if (!ct.client_email) return json({ error: "no_email", message: "Renseigne l'email du client sur le contrat." });
 
-    const { data: s } = await admin.from("billing_settings").select("*").eq("id", true).maybeSingle();
+    const { data: s } = await admin.from("billing_settings").select("*").eq("owner_id", ct.owner_id).maybeSingle();
     const sellerName = s?.trade_name || s?.legal_name || "Group Arsène";
     const baseUrl = (typeof origin === "string" && origin.startsWith("http")) ? origin.replace(/\/$/, "") : "https://wyngoworkspace.bold-unit-739e.workers.dev";
     const ctaUrl = `${baseUrl}/contrat/${ct.share_token}`;

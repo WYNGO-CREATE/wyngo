@@ -9,6 +9,7 @@
  * ⚠️ Modèles à faire valider par un professionnel du droit.
  */
 
+import { AdminSeul } from "@/components/admin-seul";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { buildContract, type ContractKind, type ContractBody } from "@/lib/contract-templates";
 
 export const Route = createFileRoute("/_authenticated/facturation/contrats")({
-  component: ContractsPage,
+  component: PageProtegee,
   head: () => ({ meta: [{ title: "Contrats — Facturation Group Arsène" }] }),
 });
 
@@ -52,7 +53,7 @@ function ContractsPage() {
 
   const { data: settings } = useQuery({
     queryKey: ["billing-settings"],
-    queryFn: async () => (await supabase.from("billing_settings").select("*").eq("id", true).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("billing_settings").select("*").limit(1).maybeSingle()).data,
   });
 
   const { data: rows = [] } = useQuery({
@@ -290,4 +291,10 @@ function CreateForm({ settings, userId, onDone, onCancel }: { settings: any; use
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
+}
+
+
+/** Les contrats : gestion de l'agence — pas le métier d'un collaborateur. */
+function PageProtegee() {
+  return <AdminSeul quoi="Les contrats"><ContractsPage /></AdminSeul>;
 }

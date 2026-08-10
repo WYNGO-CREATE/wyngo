@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     if (!doc.client_email) return json({ error: "no_email", message: "Renseigne l'email du client sur le document." });
     if (doc.status === "brouillon") return json({ error: "draft", message: "Émets le document avant de l'envoyer." });
 
-    const { data: s } = await admin.from("billing_settings").select("*").eq("id", true).maybeSingle();
+    const { data: s } = await admin.from("billing_settings").select("*").eq("owner_id", doc.owner_id).maybeSingle();
     const sellerName = s?.trade_name || s?.legal_name || "Group Arsène";
     const baseUrl = (typeof origin === "string" && origin.startsWith("http")) ? origin.replace(/\/$/, "") : "https://wyngoworkspace.bold-unit-739e.workers.dev";
 

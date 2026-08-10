@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
+  Euro,
   Users,
   CalendarClock,
   CalendarDays,
@@ -85,17 +86,35 @@ export function AppSidebar() {
 
   type NavItem = { title: string; url: string; icon: typeof Users; badge: number };
 
-  // ── Univers : Pilotage · Prospection · Studio · Facturation · Agenda ──
-  const activeWorkspace: "prospection" | "chasse" | "studio" | "facturation" | "agenda" | "pilotage" =
+  // ── Ce que chacun voit ────────────────────────────────────────────
+  //
+  // Le CRM sert deux métiers différents. Hugo PILOTE l'entreprise : la
+  // trésorerie, les contrats, la production, ce qu'il doit à ses
+  // prestataires. Les collaborateurs PROSPECTENT et facturent leur
+  // commission : le reste ne les concerne pas, et leur montrer le chiffre
+  // d'affaires de la maison n'a aucun sens.
+  //
+  // On ne masque pas seulement les liens : chaque page réservée refuse aussi
+  // l'accès direct par l'URL (cf. `AdminSeul`), et les données sont
+  // cloisonnées par les politiques de sécurité en base. Trois couches, parce
+  // qu'un menu caché n'a jamais protégé personne.
+  const estAdmin = role === "admin";
+
+  const activeWorkspace: "prospection" | "chasse" | "studio" | "facturation" | "agenda" | "pilotage" | "revenus" =
     currentPath.startsWith("/chasse") || currentPath.startsWith("/conquete") ? "chasse"
     : currentPath.startsWith("/studio") ? "studio"
     : currentPath.startsWith("/facturation") ? "facturation"
     : currentPath.startsWith("/agenda") ? "agenda"
     : currentPath.startsWith("/pilotage") ? "pilotage"
+    : currentPath.startsWith("/revenus") ? "revenus"
     : "prospection";
 
   const pilotageItems: NavItem[] = [
     { title: "Vue d'ensemble", url: "/pilotage", icon: BarChart3, badge: 0 },
+  ];
+
+  const revenusItems: NavItem[] = [
+    { title: "Ce que je gagne", url: "/revenus", icon: Euro, badge: 0 },
   ];
 
   const prospectionItems: NavItem[] = [
@@ -119,14 +138,22 @@ export function AppSidebar() {
     { title: "Production", url: "/studio", icon: Rocket, badge: 0 },
   ];
 
+  // Un collaborateur facture aussi — Group Arsène, ou n'importe quel autre
+  // client. Il garde donc devis, factures, déclarations et sa propre identité
+  // de facturation. Ce qu'il n'a pas : les contrats de l'agence et les
+  // factures des autres prestataires.
   const facturationItems: NavItem[] = [
     { title: "Tableau de bord", url: "/facturation", icon: LayoutDashboard, badge: 0 },
-    { title: "Contrats", url: "/facturation/contrats", icon: FileSignature, badge: 0 },
+    ...(estAdmin
+      ? [{ title: "Contrats", url: "/facturation/contrats", icon: FileSignature, badge: 0 }]
+      : []),
     { title: "Déclarations", url: "/facturation/declarations", icon: FileBarChart, badge: 0 },
     // Les factures que Group Arsène établit AU NOM de ses prestataires
     // (autofacturation) — à ne pas confondre avec les factures clients.
-    { title: "Prestataires", url: "/facturation/prestataires", icon: Users, badge: 0 },
-    { title: "Réglages", url: "/facturation/reglages", icon: UserCog, badge: 0 },
+    ...(estAdmin
+      ? [{ title: "Prestataires", url: "/facturation/prestataires", icon: Users, badge: 0 }]
+      : []),
+    { title: "Mon identité", url: "/facturation/reglages", icon: UserCog, badge: 0 },
   ];
 
   const agendaItems: NavItem[] = [
@@ -138,6 +165,7 @@ export function AppSidebar() {
     : activeWorkspace === "facturation" ? facturationItems
     : activeWorkspace === "agenda" ? agendaItems
     : activeWorkspace === "pilotage" ? pilotageItems
+    : activeWorkspace === "revenus" ? revenusItems
     : prospectionItems;
 
   // Items "compte", communs aux deux univers
@@ -182,14 +210,26 @@ export function AppSidebar() {
         <div className="px-2 pt-1 pb-2">
           <p className="px-1 pb-1 text-[10px] uppercase tracking-wider font-semibold text-sidebar-foreground/40">Univers</p>
           <div className="flex flex-col gap-1 rounded-lg bg-sidebar-accent/30 p-1">
-            {([
-              { ws: "pilotage", to: "/pilotage", icon: BarChart3, label: "Pilotage" },
-              { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
-              { ws: "chasse", to: "/chasse", icon: Crosshair, label: "Chasse" },
-              { ws: "studio", to: "/studio", icon: Rocket, label: "Studio" },
-              { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
-              { ws: "agenda", to: "/agenda", icon: CalendarDays, label: "Agenda" },
-            ] as const).map((w) => (
+            {(estAdmin
+              ? [
+                  { ws: "pilotage", to: "/pilotage", icon: BarChart3, label: "Pilotage" },
+                  { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
+                  { ws: "chasse", to: "/chasse", icon: Crosshair, label: "Chasse" },
+                  { ws: "studio", to: "/studio", icon: Rocket, label: "Studio" },
+                  { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
+                  { ws: "agenda", to: "/agenda", icon: CalendarDays, label: "Agenda" },
+                ]
+              // Le collaborateur ne pilote pas l'entreprise : il gagne sa vie.
+              // « Mes revenus » prend la place du Pilotage, et le Studio
+              // disparaît — la production n'est pas son métier.
+              : [
+                  { ws: "revenus", to: "/revenus", icon: Euro, label: "Mes revenus" },
+                  { ws: "prospection", to: "/tableau", icon: Target, label: "Prospection" },
+                  { ws: "chasse", to: "/chasse", icon: Crosshair, label: "Chasse" },
+                  { ws: "facturation", to: "/facturation", icon: Receipt, label: "Facturation" },
+                  { ws: "agenda", to: "/agenda", icon: CalendarDays, label: "Mon agenda" },
+                ]
+            ).map((w) => (
               <Link key={w.ws} to={w.to} className={cn(
                 "flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-semibold transition",
                 activeWorkspace === w.ws
@@ -203,7 +243,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel>{activeWorkspace === "chasse" ? "Chasse"
-            : activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : activeWorkspace === "pilotage" ? "Pilotage" : "Prospection"}</SidebarGroupLabel>
+            : activeWorkspace === "studio" ? "Studio — Production" : activeWorkspace === "facturation" ? "Facturation" : activeWorkspace === "agenda" ? "Agenda" : activeWorkspace === "pilotage" ? "Pilotage" : activeWorkspace === "revenus" ? "Mes revenus" : "Prospection"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{mainItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>

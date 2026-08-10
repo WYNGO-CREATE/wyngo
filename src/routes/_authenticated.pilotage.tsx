@@ -4,6 +4,7 @@
  * closing, courbe de CA sur 6 mois, entonnoir prospection → client, à-venir.
  */
 
+import { AdminSeul } from "@/components/admin-seul";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +16,7 @@ import { format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/pilotage")({
-  component: PilotagePage,
+  component: PageProtegee,
   head: () => ({ meta: [{ title: "Pilotage — Group Arsène" }] }),
 });
 
@@ -249,4 +250,10 @@ function Kpi({ icon: Icon, label, value, sub, tone }: { icon: React.ElementType;
       {sub && <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>}
     </div>
   );
+}
+
+
+/** Pilotage : gestion de l'agence — pas le métier d'un collaborateur. */
+function PageProtegee() {
+  return <AdminSeul quoi="Pilotage"><PilotagePage /></AdminSeul>;
 }

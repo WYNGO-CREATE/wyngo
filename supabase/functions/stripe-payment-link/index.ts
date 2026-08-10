@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     if (doc.payment_url) return json({ ok: true, url: doc.payment_url }); // déjà généré
 
     // Montant recalculé depuis les lignes (source de vérité, jamais périmé)
-    const { data: bs } = await supa.from("billing_settings").select("vat_regime").eq("id", true).maybeSingle();
+    const { data: bs } = await supa.from("billing_settings").select("vat_regime").eq("owner_id", doc.owner_id).maybeSingle();
     const franchise = bs?.vat_regime !== "normal";
     const docLines = Array.isArray(doc.lines) ? doc.lines : [];
     let total = 0;

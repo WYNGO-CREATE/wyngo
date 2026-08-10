@@ -114,7 +114,11 @@ const message = (titre: string, texte: string) =>
 
 /** L'identité de Group Arsène, telle qu'elle doit figurer sur la facture. */
 async function agence() {
-  const s = (await api("billing_settings?select=*&limit=1"))?.[0] ?? {};
+  // Le client de la facture, c'est Group Arsène — donc l'administrateur.
+  // Depuis que chaque membre a sa propre fiche, « la première ligne » aurait
+  // pu être celle d'un collaborateur.
+  const adm = (await api("user_roles?role=eq.admin&select=user_id&order=created_at&limit=1"))?.[0];
+  const s = (adm && (await api(`billing_settings?owner_id=eq.${adm.user_id}&select=*`))?.[0]) || {};
   return {
     nom: s.trade_name || s.legal_name || "Group Arsène",
     forme: s.legal_form || "Entreprise Individuelle",

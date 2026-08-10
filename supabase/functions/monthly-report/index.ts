@@ -116,6 +116,19 @@ function renderReport(ctx: { m: any; prev: any; siteTitle: string; agencyName: s
 </body></html>`;
 }
 
+
+/** L'identité de l'agence = celle de l'administrateur. Depuis que chaque
+ *  membre a sa propre fiche de facturation, prendre « la première ligne »
+ *  reviendrait à signer au nom d'un collaborateur. */
+async function identiteAgence(db: any) {
+  const { data: adm } = await db.from("user_roles").select("user_id")
+    .eq("role", "admin").order("created_at").limit(1).maybeSingle();
+  if (!adm?.user_id) return null;
+  const { data } = await db.from("billing_settings").select("*")
+    .eq("owner_id", adm.user_id).maybeSingle();
+  return data;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   const url = new URL(req.url);
@@ -135,7 +148,7 @@ Deno.serve(async (req) => {
       prevPeriod.setMonth(prevPeriod.getMonth() - 1);
       const { data: prev } = await db.from("site_metrics").select("*")
         .eq("site_id", m.site_id).eq("period", prevPeriod.toISOString().slice(0, 10)).maybeSingle();
-      const { data: settings } = await db.from("billing_settings").select("trade_name, legal_name").eq("id", true).maybeSingle();
+      const settings = await identiteAgence(db);
       return html(renderReport({
         m, prev, siteTitle: site?.title || "Votre site",
         agencyName: settings?.trade_name || settings?.legal_name || "Group Arsène",
@@ -185,7 +198,7 @@ Deno.serve(async (req) => {
         .eq("id", account.id);
     }
 
-    const { data: settings } = await db.from("billing_settings").select("trade_name, legal_name").eq("id", true).maybeSingle();
+    const settings = await identiteAgence(db);
     const agencyName = settings?.trade_name || settings?.legal_name || "Group Arsène";
     const subject = `Votre rapport ${label} — ${site.title || "votre site"}`;
     const textBody =

@@ -13,6 +13,7 @@
  * clients du mois, rattachées aux prospects que la personne a apportés.
  */
 
+import { AdminSeul } from "@/components/admin-seul";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,7 +32,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/facturation/prestataires")({
-  component: PrestatairesPage,
+  component: PageProtegee,
   head: () => ({ meta: [{ title: "Prestataires — Facturation Group Arsène" }] }),
 });
 
@@ -599,4 +600,10 @@ function Champ({ label, value, onChange }: {
       <Input className="text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
+}
+
+
+/** Les prestataires : gestion de l'agence — pas le métier d'un collaborateur. */
+function PageProtegee() {
+  return <AdminSeul quoi="Les prestataires"><PrestatairesPage /></AdminSeul>;
 }

@@ -11,6 +11,7 @@
  *   #3  Rapport mensuel : saisie des métriques + génération/envoi du rapport.
  */
 
+import { AdminSeul } from "@/components/admin-seul";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -35,7 +36,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/studio")({
-  component: StudioPage,
+  component: PageProtegee,
   head: () => ({ meta: [{ title: "Group Arsène Studio — Suivi client & espace client" }] }),
 });
 
@@ -728,4 +729,10 @@ function Stat({ icon: Icon, label, value, tone }: { icon: React.ElementType; lab
       </div>
     </div>
   );
+}
+
+
+/** Le Studio : gestion de l'agence — pas le métier d'un collaborateur. */
+function PageProtegee() {
+  return <AdminSeul quoi="Le Studio"><StudioPage /></AdminSeul>;
 }

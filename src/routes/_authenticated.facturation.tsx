@@ -46,7 +46,7 @@ function FacturationDashboard() {
 
   const { data: settings } = useQuery({
     queryKey: ["billing-settings"],
-    queryFn: async () => (await supabase.from("billing_settings").select("legal_name, siret").eq("id", true).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("billing_settings").select("legal_name, siret").limit(1).maybeSingle()).data,
   });
   const configured = !!settings?.legal_name && !!settings?.siret;
 

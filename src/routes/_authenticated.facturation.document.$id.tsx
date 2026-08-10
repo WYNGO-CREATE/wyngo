@@ -56,7 +56,7 @@ function DocumentEditor() {
   });
   const { data: settings } = useQuery({
     queryKey: ["billing-settings"],
-    queryFn: async () => (await supabase.from("billing_settings").select("*").eq("id", true).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("billing_settings").select("*").limit(1).maybeSingle()).data,
   });
   const franchise = settings?.vat_regime !== "normal";
   const defaultVat = Number(settings?.default_vat_rate ?? 20);

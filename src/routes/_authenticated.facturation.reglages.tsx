@@ -44,7 +44,7 @@ function ReglagesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["billing-settings"],
     queryFn: async () => {
-      const { data } = await supabase.from("billing_settings").select("*").eq("id", true).maybeSingle();
+      const { data } = await supabase.from("billing_settings").select("*").limit(1).maybeSingle();
       return data;
     },
   });
@@ -55,7 +55,15 @@ function ReglagesPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("billing_settings").upsert({ id: true, ...s, updated_at: new Date().toISOString() } as never);
+      // Chacun a désormais SA fiche : c'est `owner_id` qui l'identifie, plus
+      // la colonne `id` d'avant, qui ne valait que pour l'unique ligne du
+      // temps où le CRM n'avait qu'un utilisateur.
+      const { data: sess } = await supabase.auth.getUser();
+      const moi = sess.user?.id;
+      if (!moi) throw new Error("Session expirée — reconnectez-vous.");
+      const { error } = await supabase.from("billing_settings")
+        .upsert({ owner_id: moi, ...s, updated_at: new Date().toISOString() } as never,
+                { onConflict: "owner_id" });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["billing-settings"] }); toast.success("Réglages enregistrés"); },

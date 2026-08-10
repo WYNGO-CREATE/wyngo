@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
       }).eq("id", doc.id);
 
       // 2. Facture brouillon auto-créée (à partir du devis) — n° légal à l'émission
-      const { data: settings } = await db.from("billing_settings").select("payment_terms_days").eq("id", true).maybeSingle();
+      const { data: settings } = await db.from("billing_settings").select("payment_terms_days").eq("owner_id", doc.owner_id).maybeSingle();
       const terms = Number(settings?.payment_terms_days ?? 30);
       const today = now.slice(0, 10);
       const due = new Date(Date.now() + terms * 86400000).toISOString().slice(0, 10);
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
       await db.from("documents").update({ viewed_at: new Date().toISOString() }).eq("id", doc.id);
     }
 
-    const { data: settings } = await db.from("billing_settings").select("*").eq("id", true).maybeSingle();
+    const { data: settings } = await db.from("billing_settings").select("*").eq("owner_id", doc.owner_id).maybeSingle();
     return html(renderPage(doc, settings || {}));
   } catch (e) {
     console.error("devis-public error", e);
