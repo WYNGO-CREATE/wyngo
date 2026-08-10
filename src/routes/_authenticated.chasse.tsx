@@ -461,16 +461,25 @@ function ChassePage() {
     mutationFn: async (selected: EnrichedResult[]) => {
       if (!user) throw new Error("Non connecté");
 
+      // Garde-fou : une entreprise déjà suivie ne se réimporte pas. Le badge
+      // le dit sur la carte, mais rien n'empêchait de la cocher quand même —
+      // et deux personnes se retrouvaient à appeler le même commerçant.
+      const connus = selected.filter((r) => dejaVu(r.siret, r.siren));
+      const inedits = selected.filter((r) => !dejaVu(r.siret, r.siren));
+
       // Garde-fou : on n'importe JAMAIS un prospect sans email ni téléphone
-      const eligible = selected.filter(
+      const eligible = inedits.filter(
         (r) =>
           (r.scraped_email || r.hunter_email || r.email) ||
           (r.google_phone || r.telephone),
       );
-      const skipped = selected.length - eligible.length;
+      const skipped = inedits.length - eligible.length;
+      const dejaSuivis = connus.length;
       if (eligible.length === 0) {
         throw new Error(
-          "Aucun prospect sélectionné n'a d'email ni de téléphone. Les prospects sans coordonnées ne sont pas ajoutés.",
+          dejaSuivis > 0 && inedits.length === 0
+            ? `Ces ${dejaSuivis} entreprise(s) sont déjà suivies dans le CRM — rien à ajouter.`
+            : "Aucun prospect sélectionné n'a d'email ni de téléphone. Les prospects sans coordonnées ne sont pas ajoutés.",
         );
       }
 
@@ -508,17 +517,24 @@ function ChassePage() {
 
       const { data, error } = await supabase.from("prospects").insert(payloads as never).select("id");
       if (error) throw new Error(error.message);
-      return { created: data?.length ?? 0, skipped };
+      return { created: data?.length ?? 0, skipped, dejaSuivis };
     },
-    onSuccess: ({ created, skipped }) => {
-      if (skipped > 0) {
-        toast.success(`${created} prospect(s) ajouté(s) — ${skipped} ignoré(s) sans coordonnées`);
-      } else {
-        toast.success(`${created} prospect(s) ajouté(s) au CRM`);
-      }
+    onSuccess: ({ created, skipped, dejaSuivis }) => {
+      const ecartes = [
+        skipped > 0 ? `${skipped} sans coordonnées` : null,
+        dejaSuivis > 0 ? `${dejaSuivis} déjà suivi(s)` : null,
+      ].filter(Boolean).join(", ");
+      toast.success(`${created} prospect(s) ajouté(s) au CRM`,
+        ecartes ? { description: `Écarté(s) : ${ecartes}.` } : undefined);
       setSelectedSirens(new Set());
       qc.invalidateQueries({ queryKey: ["imported-sirets"] });
       qc.invalidateQueries({ queryKey: ["prospects"] });
+      // La mémoire de prospection est ce qui affiche « déjà chez toi » ou
+      // « déjà chez Lenny » sur chaque carte. Sans ce rafraîchissement, les
+      // entreprises qu'on venait d'ajouter restaient présentées comme
+      // disponibles jusqu'au prochain rechargement — et quelqu'un d'autre
+      // les reprenait.
+      qc.invalidateQueries({ queryKey: ["memoire-prospection"] });
     },
     onError: (e: Error) => toast.error("Échec ajout", { description: e.message }),
   });

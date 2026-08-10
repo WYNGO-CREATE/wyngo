@@ -613,22 +613,20 @@ function ProspectsPage() {
                   });
                   const lastCallAt = lastCallMap.get(p.id);
                   const bucket = callBucket(p.id);
-                  // Fil vert : ajouté depuis moins de 7 jours, encore au statut
-                  // initial et jamais appelé. Il disparaît dès qu'on travaille
-                  // le prospect — c'est ce qui permet de voir d'un coup d'œil
-                  // où commence le dernier lot ajouté depuis la chasse.
-                  const estNouveau =
-                    p.status === "nouveau" &&
-                    !lastCallAt &&
-                    Date.now() - new Date(p.created_at).getTime() < 7 * 24 * 3600 * 1000;
+                  // Fil vert : encore au statut initial et JAMAIS appelé. Il
+                  // reste tant que le prospect n'a pas été travaillé — c'est
+                  // ce qui permet de voir d'un coup d'œil ce qui reste à faire
+                  // dans le dernier lot ajouté.
+                  //
+                  // Il y avait ici une péremption à 7 jours : un prospect ajouté
+                  // il y a dix jours et jamais appelé perdait sa marque alors
+                  // qu'il était justement celui qu'on avait oublié. Retirée.
+                  const estNouveau = p.status === "nouveau" && !lastCallAt;
                   return (
                   <TableRow
                     key={p.id}
                     title={estNouveau ? "Nouveau — jamais appelé" : undefined}
-                    className={cn(
-                      "cursor-pointer hover:bg-muted/50 transition-colors",
-                      estNouveau && "shadow-[inset_3px_0_0_0_theme(colors.emerald.500)]",
-                    )}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={(e) => {
                       // Si l'utilisateur clique sur un élément interactif interne
                       // (bouton, lien, select, menu), on laisse l'élément agir
@@ -643,7 +641,17 @@ function ProspectsPage() {
                       navigate({ to: "/prospects/$id", params: { id: p.id } });
                     }}
                   >
-                    <TableCell>
+                    {/* Le fil vert vit DANS la première cellule, pas sur la
+                        ligne : un box-shadow posé sur un <tr> n'est pas peint
+                        par la plupart des navigateurs — la marque existait
+                        dans le code mais ne s'est jamais affichée à l'écran. */}
+                    <TableCell className="relative">
+                      {estNouveau && (
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-emerald-500"
+                        />
+                      )}
                       <Link
                         to="/prospects/$id"
                         params={{ id: p.id }}
