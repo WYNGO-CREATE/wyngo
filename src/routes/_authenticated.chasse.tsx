@@ -244,19 +244,27 @@ function ChassePage() {
   };
 
   // ─── Recherche Pappers + checks websites en parallèle ──────────────────
+  // « Chasser ce secteur » doit partir tout de suite. Or au clic, les
+  // `setState` du formulaire ne sont pas encore appliqués : lancer dans la
+  // foulée aurait cherché avec l'ANCIEN métier. On accepte donc un secteur
+  // explicite, qui prend le pas sur le formulaire le temps de la requête.
+  type Secteur = { metierId: string; ville: string };
+
   const search = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (secteur?: Secteur) => {
+      const metier = secteur ? TRADES.find((t) => t.id === secteur.metierId) : selectedTrade;
+      const naf = metier?.naf ?? (secteur?.metierId ?? codeNaf);
       const { data, error } = await supabase.functions.invoke("pappers-search", {
         body: {
           action: "search",
           params: {
-            code_naf: codeNaf,
-            ville: ville || undefined,
-            code_postal: codePostal || undefined,
+            code_naf: naf,
+            ville: (secteur ? secteur.ville : ville) || undefined,
+            code_postal: secteur ? undefined : (codePostal || undefined),
             max_results: targetCount,
             rayon_km: rayon || undefined,
-            mots_cles: motsCles || undefined,
-            naf_exclus: nafExclus || undefined,
+            mots_cles: (secteur ? metier?.keywords : motsCles) || undefined,
+            naf_exclus: (secteur ? metier?.excludeNaf : nafExclus) || undefined,
           },
         },
       });
@@ -579,6 +587,30 @@ function ChassePage() {
   const isConnected = connectionTest.data && !connectionTest.isError;
 
   // ─── UI ───────────────────────────────────────────────────────────────
+  /**
+   * Le seul chemin pour lancer une chasse — bouton du formulaire comme
+   * bandeau de mission. Une chasse REMPLACE les résultats à l'écran : lancée
+   * par inadvertance, elle efface le travail en cours. On confirme une fois,
+   * au même endroit, quelle que soit la porte d'entrée.
+   */
+  const lancerChasse = (secteur?: { metierId: string; ville: string }) => {
+    if (search.isPending || checking) return;
+    // Sans cette alerte, un clic sur « Chasser ce secteur » ne produirait
+    // rien du tout et passerait pour une panne.
+    if (!isConnected) {
+      toast.error("Pappers n'est pas connecté", {
+        description: "Ajoute la clé PAPPERS_API_KEY avant de lancer une chasse.",
+      });
+      return;
+    }
+    if (results.length > 0 &&
+        !window.confirm(
+          `Lancer une nouvelle chasse effacera les ${results.length} résultats affichés. Continuer ?`)) {
+      return;
+    }
+    search.mutate(secteur);
+  };
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -607,13 +639,16 @@ function ChassePage() {
         )}
       </div>
 
-      {/* Proposition de secteur — pré-remplit la chasse, n'oblige à rien. */}
+      {/* Proposition de secteur — un clic, et la chasse part. On met aussi le
+          formulaire à jour pour que l'écran dise ce qui a été cherché. */}
       <MissionBanner
+        enCours={search.isPending || checking}
         onPrendre={({ metier, commune }) => {
           const t = TRADES.find((x) => x.label === metier);
           if (t) setMetierId(t.id);
           setVille(commune);
           setCodePostal("");
+          if (t) lancerChasse({ metierId: t.id, ville: commune });
         }}
       />
 
@@ -748,17 +783,7 @@ function ChassePage() {
           <div className="flex justify-end">
             <Button
               type="button"
-              onClick={() => {
-                // Une chasse REMPLACE les résultats affichés. Lancée par
-                // inadvertance — un doigt qui glisse sur mobile — elle efface
-                // le travail en cours sans rien demander. On confirme.
-                if (results.length > 0 &&
-                    !window.confirm(
-                      `Lancer une nouvelle chasse effacera les ${results.length} résultats affichés. Continuer ?`)) {
-                  return;
-                }
-                search.mutate();
-              }}
+              onClick={() => lancerChasse()}
               disabled={!isConnected || search.isPending || checking}
               className="gap-2 w-full sm:w-auto bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white"
             >

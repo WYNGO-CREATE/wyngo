@@ -12,7 +12,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Compass } from "lucide-react";
+import { Compass, Search, Loader2 } from "lucide-react";
 
 type Mission = {
   id: string; metier: string; commune: string; total_connu: number | null;
@@ -22,9 +22,12 @@ type Mission = {
 
 export function MissionBanner({
   onPrendre,
+  enCours,
 }: {
-  /** Pré-remplit la chasse avec le métier et la ville de la mission. */
+  /** Lance la chasse sur le secteur de la mission — et remplit le formulaire. */
   onPrendre?: (m: { metier: string; commune: string }) => void;
+  /** Une chasse tourne déjà : on ne propose pas d'en lancer une deuxième. */
+  enCours?: boolean;
 }) {
   const { data: m } = useQuery({
     queryKey: ["mission-courante"],
@@ -52,9 +55,11 @@ export function MissionBanner({
         </span>
       </div>
       {onPrendre && (
-        <Button size="sm" variant="outline" className="ml-auto h-8 text-xs"
+        <Button size="sm" className="ml-auto h-8 text-xs gap-1.5" disabled={enCours}
           onClick={() => onPrendre({ metier: m.metier, commune: m.commune })}>
-          Chasser ce secteur
+          {enCours
+            ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Chasse en cours…</>
+            : <><Search className="h-3.5 w-3.5" /> Chasser ce secteur</>}
         </Button>
       )}
     </div>

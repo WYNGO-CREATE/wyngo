@@ -84,12 +84,17 @@ function ChassePremium() {
         .slice(0, 10)
     : [];
 
-  const run = async () => {
-    if (sectors.length === 0) { toast.error("Ajoute au moins un secteur."); return; }
-    if (!location.trim()) { toast.error("Indique une ville (ou ville + code postal)."); return; }
+  const run = async (secteur?: { metier: string; commune: string }) => {
+    // Le bandeau de mission lance directement : au moment du clic, les
+    // `setState` du formulaire ne sont pas encore appliqués. On travaille donc
+    // sur le secteur reçu, pas sur un état qui n'a pas fini de se mettre à jour.
+    const cibles = secteur ? [secteur.metier] : sectors;
+    const ou = (secteur ? secteur.commune : location).trim();
+    if (cibles.length === 0) { toast.error("Ajoute au moins un secteur."); return; }
+    if (!ou) { toast.error("Indique une ville (ou ville + code postal)."); return; }
     setLoading(true); setRes(null); setAdded(new Set());
     const { data, error } = await supabase.functions.invoke("premium-hunt", {
-      body: { sectors, location: location.trim(), limit: 30, radiusKm: radius },
+      body: { sectors: cibles, location: ou, limit: 30, radiusKm: radius },
     });
     setLoading(false);
     if (error) { toast.error("Chasse impossible", { description: error.message }); return; }
@@ -155,11 +160,14 @@ function ChassePremium() {
         </p>
       </div>
 
-      {/* Proposition de secteur — pré-remplit métier et ville, n'oblige à rien. */}
+      {/* Proposition de secteur — un clic, et la chasse part. Le formulaire
+          se remplit aussi, pour que l'écran dise ce qui a été cherché. */}
       <MissionBanner
+        enCours={loading}
         onPrendre={({ metier, commune }) => {
           setSectors([metier]);
           setLocation(commune);
+          run({ metier, commune });
         }}
       />
 
@@ -220,7 +228,7 @@ function ChassePremium() {
               La chasse balaie la ville <strong>et toute sa périphérie</strong> (communes et villages alentour). Chaque prospect affiche sa commune réelle et sa distance.
             </p>
           </div>
-          <Button onClick={run} disabled={loading} className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+          <Button onClick={() => run()} disabled={loading} className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             {loading ? "Balayage + audit technique en cours… (~40 s)" : "Lancer la chasse premium"}
           </Button>
