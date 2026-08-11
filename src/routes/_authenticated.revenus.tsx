@@ -15,13 +15,16 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Euro, ChevronLeft, ChevronRight, TrendingUp, Clock, ShieldCheck,
-  ShieldAlert, FileText, Handshake, Info,
+  ShieldAlert, FileText, Handshake, Info, IdCard, Loader2, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +35,13 @@ export const Route = createFileRoute("/_authenticated/revenus")({
 
 type Affaire = { client: string; numero: string | null; date: string | null; base: number; commission: number };
 type Contrat = {
-  id: string; denomination: string; nature: "prospection" | "developpement";
+  id: string; nom_complet: string; denomination: string;
+  nature: "prospection" | "developpement";
   commission_pct: number | null; base_commission: string;
   mandat_signe_le: string | null; mandat_token: string;
+  siret: string | null; adresse: string | null; code_postal: string | null;
+  ville: string | null; iban: string | null; bic: string | null;
+  regime_tva: "franchise" | "reel"; tva_numero: string | null;
 };
 type Revenus = {
   contrat: Contrat | null;
@@ -166,6 +173,9 @@ function RevenusPage() {
             </CardContent>
           </Card>
 
+          {/* ── Ses informations légales ── */}
+          <MesInformations contrat={r.contrat} />
+
           {/* ── Le mois ── */}
           <Card>
             <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
@@ -273,6 +283,157 @@ function RevenusPage() {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * ─── Mes informations légales ──────────────────────────────────────────
+ *
+ * Ce sont celles qui figureront SUR SA FACTURE : dénomination, SIRET,
+ * adresse, IBAN. Personne d'autre ne les connaît exactement — une faute de
+ * frappe sur un IBAN, c'est un virement perdu ; sur un SIRET, c'est une
+ * facture irrégulière. Il les saisit donc lui-même.
+ *
+ * Ce qu'il ne peut PAS toucher ici : son pourcentage de commission, la nature
+ * de sa prestation, le compte rattaché. Ça relève de l'accord entre les
+ * parties, pas d'un formulaire — et la fonction en base n'écrit de toute
+ * façon que les champs d'identité.
+ */
+function MesInformations({ contrat }: { contrat: Contrat }) {
+  const qc = useQueryClient();
+  const [ouvert, setOuvert] = useState(false);
+  const [v, setV] = useState({
+    denomination: contrat.denomination ?? "",
+    siret: contrat.siret ?? "", adresse: contrat.adresse ?? "",
+    code_postal: contrat.code_postal ?? "", ville: contrat.ville ?? "",
+    iban: contrat.iban ?? "", bic: contrat.bic ?? "",
+    regime_tva: contrat.regime_tva ?? "franchise", tva_numero: contrat.tva_numero ?? "",
+  });
+
+  const manquants = [
+    !contrat.siret && "SIRET",
+    !contrat.adresse && "adresse",
+    !contrat.iban && "IBAN",
+    !/(\bEI\b|entrepreneur individuel)/i.test(contrat.denomination ?? "") && "mention « EI »",
+  ].filter(Boolean) as string[];
+
+  const enregistrer = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("maj_mes_infos_prestataire" as any, {
+        p_denomination: v.denomination, p_siret: v.siret, p_adresse: v.adresse,
+        p_code_postal: v.code_postal, p_ville: v.ville, p_iban: v.iban, p_bic: v.bic,
+        p_regime_tva: v.regime_tva, p_tva_numero: v.tva_numero,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Informations enregistrées");
+      setOuvert(false);
+      qc.invalidateQueries({ queryKey: ["mes-revenus"] });
+    },
+    onError: (e: Error) => toast.error("Enregistrement impossible", { description: e.message }),
+  });
+
+  const ch = (k: keyof typeof v, x: string) => setV((o) => ({ ...o, [k]: x }));
+
+  return (
+    <Card className={cn(manquants.length > 0 && "border-amber-500/30 bg-amber-500/[0.03]")}>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+              <IdCard className="h-3.5 w-3.5" /> Mes informations de facturation
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ce sont celles qui figureront sur vos factures. Group Arsène ne les invente pas.
+            </p>
+          </div>
+          <Button size="sm" variant={manquants.length > 0 ? "default" : "outline"}
+            onClick={() => setOuvert((o) => !o)}>
+            {ouvert ? "Fermer" : manquants.length > 0 ? "Compléter" : "Modifier"}
+          </Button>
+        </div>
+
+        {manquants.length > 0 && !ouvert && (
+          <div className="rounded-lg bg-amber-500/[0.07] border border-amber-500/20 p-3 text-sm flex gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-muted-foreground">
+              Il manque <b>{manquants.join(", ")}</b>. Sans ces informations, aucune facture
+              ne peut être établie à votre nom — donc rien ne peut vous être réglé.
+            </p>
+          </div>
+        )}
+
+        {!ouvert && manquants.length === 0 && (
+          <p className="text-sm">
+            <b>{contrat.denomination}</b>
+            {contrat.siret && <> · SIRET {contrat.siret}</>}
+            {contrat.iban && <> · IBAN …{contrat.iban.slice(-4)}</>}
+          </p>
+        )}
+
+        {ouvert && (
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Dénomination sur la facture</Label>
+              <Input className="text-sm" value={v.denomination}
+                placeholder={`${contrat.nom_complet} EI`}
+                onChange={(e) => ch("denomination", e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">
+                Elle doit comporter <b>« EI »</b> ou <b>« Entrepreneur Individuel »</b> —
+                c'est une obligation légale depuis le 15 mai 2022.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Chp label="SIRET" value={v.siret} onChange={(x) => ch("siret", x)}
+                aide="14 chiffres, sur votre avis de situation INSEE" />
+              <Chp label="Adresse" value={v.adresse} onChange={(x) => ch("adresse", x)} />
+              <Chp label="Code postal" value={v.code_postal} onChange={(x) => ch("code_postal", x)} />
+              <Chp label="Ville" value={v.ville} onChange={(x) => ch("ville", x)} />
+              <Chp label="IBAN" value={v.iban} onChange={(x) => ch("iban", x)}
+                aide="C'est le compte qui sera crédité" />
+              <Chp label="BIC" value={v.bic} onChange={(x) => ch("bic", x)} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Ma TVA</Label>
+              <select className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                value={v.regime_tva} onChange={(e) => ch("regime_tva", e.target.value)}>
+                <option value="franchise">Franchise en base — je ne facture pas la TVA</option>
+                <option value="reel">Je suis assujetti à la TVA</option>
+              </select>
+              <p className="text-[11px] text-muted-foreground">
+                En début d'activité, c'est presque toujours la franchise en base.
+                Dans le doute, laissez ce choix.
+              </p>
+            </div>
+
+            {v.regime_tva === "reel" && (
+              <Chp label="N° de TVA intracommunautaire" value={v.tva_numero}
+                onChange={(x) => ch("tva_numero", x)} />
+            )}
+
+            <Button size="sm" disabled={enregistrer.isPending} onClick={() => enregistrer.mutate()}>
+              {enregistrer.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+              Enregistrer
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Chp({ label, value, onChange, aide }: {
+  label: string; value: string; onChange: (v: string) => void; aide?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <Input className="text-sm" value={value} onChange={(e) => onChange(e.target.value)} />
+      {aide && <p className="text-[11px] text-muted-foreground">{aide}</p>}
     </div>
   );
 }

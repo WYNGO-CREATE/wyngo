@@ -480,6 +480,13 @@ function DialogFiche({ valeur, onClose, onSaved }: {
   const ch = (k: keyof Prestataire, x: unknown) => setV((o) => ({ ...o, [k]: x }));
   const denomOk = /(\bEI\b|entrepreneur individuel)/i.test(v.denomination ?? "");
 
+  // Tant que la dénomination n'a pas été touchée, elle suit le nom saisi.
+  // Personne n'a envie de retaper « Nino Bondon » puis d'ajouter « EI ».
+  const majNom = (x: string) => setV((o) => {
+    const suivait = !o.denomination || o.denomination === `${o.nom_complet ?? ""} EI`.trim();
+    return { ...o, nom_complet: x, denomination: suivait ? `${x} EI`.trim() : o.denomination };
+  });
+
   return (
     <Dialog open={!!valeur} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -487,7 +494,7 @@ function DialogFiche({ valeur, onClose, onSaved }: {
 
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Champ label="Nom et prénom" value={v.nom_complet} onChange={(x) => ch("nom_complet", x)} />
+            <Champ label="Nom et prénom" value={v.nom_complet} onChange={majNom} />
             <Champ label="Email" value={v.email} onChange={(x) => ch("email", x)} />
           </div>
 
@@ -495,11 +502,19 @@ function DialogFiche({ valeur, onClose, onSaved }: {
             <Label className="text-xs">Dénomination sur la facture</Label>
             <Input className="text-sm" placeholder="Ex : Nino Bondon EI"
               value={v.denomination ?? ""} onChange={(e) => ch("denomination", e.target.value)} />
-            <p className={cn("text-[11px]", denomOk ? "text-muted-foreground" : "text-amber-700 dark:text-amber-400")}>
-              {denomOk
-                ? "La mention « EI » est bien présente."
-                : "Doit comporter « EI » ou « Entrepreneur Individuel » — obligatoire depuis le 15/05/2022."}
-            </p>
+            {denomOk ? (
+              <p className="text-[11px] text-muted-foreground">La mention « EI » est bien présente.</p>
+            ) : (
+              <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                Il manque « EI » — obligatoire sur la facture d'un entrepreneur individuel
+                depuis le 15/05/2022. Vous pouvez enregistrer quand même, mais aucune facture
+                ne pourra être émise tant que la mention n'y est pas.{" "}
+                <button type="button" className="underline font-medium"
+                  onClick={() => ch("denomination", `${(v.denomination ?? v.nom_complet ?? "").trim()} EI`.trim())}>
+                  Ajouter « EI »
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -580,7 +595,7 @@ function DialogFiche({ valeur, onClose, onSaved }: {
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Annuler</Button>
-          <Button disabled={enregistrer.isPending || !v.nom_complet || !v.email || !denomOk}
+          <Button disabled={enregistrer.isPending || !v.nom_complet?.trim() || !v.email?.trim()}
             onClick={() => enregistrer.mutate()}>
             {enregistrer.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
             Enregistrer
