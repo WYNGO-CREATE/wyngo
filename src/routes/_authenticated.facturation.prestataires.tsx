@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Plus, Link2, FileText, Check,
-  ShieldCheck, ShieldAlert, AlertTriangle, Send, Loader2, Copy, Euro,
+  ShieldCheck, ShieldAlert, AlertTriangle, Send, Loader2, Copy, Euro, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -254,6 +254,46 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
     onError: (e: Error) => toast.error("Création impossible", { description: e.message }),
   });
 
+  // Toutes les affaires ne passent pas par le CRM : un deal trouvé au
+  // téléphone, une recommandation, un dépannage. On doit pouvoir porter une
+  // ligne à la main — sinon il faudrait fabriquer un faux prospect pour que
+  // le calcul tombe juste.
+  const ajouterLigne = useMutation({
+    mutationFn: async (ligne: Ligne) => {
+      const lignes = [...(facture?.lignes ?? []), ligne];
+      const ht = lignes.reduce((s, l) => s + Number(l.montant || 0), 0);
+      const tva = p.regime_tva === "franchise" ? 0 : Math.round(ht * Number(p.taux_tva) / 100 * 100) / 100;
+      if (facture) {
+        const { error } = await supabase.from("prestataire_factures" as any)
+          .update({ lignes: lignes as any, total_ht: ht, total_tva: tva, total_ttc: ht + tva })
+          .eq("id", facture.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase.from("prestataire_factures" as any).insert({
+          prestataire_id: p.id, periode, lignes: lignes as any,
+          total_ht: ht, total_tva: tva, total_ttc: ht + tva, statut: "brouillon",
+        });
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => { toast.success("Ligne ajoutée"); onChange(); },
+    onError: (e: Error) => toast.error("Ajout impossible", { description: e.message }),
+  });
+
+  const retirerLigne = useMutation({
+    mutationFn: async (index: number) => {
+      const lignes = (facture?.lignes ?? []).filter((_, i) => i !== index);
+      const ht = lignes.reduce((s, l) => s + Number(l.montant || 0), 0);
+      const tva = p.regime_tva === "franchise" ? 0 : Math.round(ht * Number(p.taux_tva) / 100 * 100) / 100;
+      const { error } = await supabase.from("prestataire_factures" as any)
+        .update({ lignes: lignes as any, total_ht: ht, total_tva: tva, total_ttc: ht + tva })
+        .eq("id", facture!.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => onChange(),
+    onError: (e: Error) => toast.error("Suppression impossible", { description: e.message }),
+  });
+
   const changerStatut = useMutation({
     mutationFn: async (modif: Record<string, unknown>) => {
       const { error } = await supabase.from("prestataire_factures" as any)
@@ -331,12 +371,28 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
 
             <ul className="text-sm space-y-1">
               {(facture.lignes ?? []).map((l, i) => (
-                <li key={i} className="flex justify-between gap-3">
-                  <span className="text-muted-foreground truncate">{l.libelle}</span>
-                  <span className="tabular-nums shrink-0">{eur(l.montant)}</span>
+                <li key={i} className="flex justify-between gap-2 items-start">
+                  <span className="text-muted-foreground min-w-0">
+                    {l.libelle}
+                    {l.detail && <span className="block text-[11px] opacity-70">{l.detail}</span>}
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span className="tabular-nums">{eur(l.montant)}</span>
+                    {facture.statut === "brouillon" && (
+                      <button type="button" title="Retirer cette ligne"
+                        className="text-muted-foreground hover:text-destructive transition"
+                        onClick={() => retirerLigne.mutate(i)}>
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>
+
+            {facture.statut === "brouillon" && (
+              <LigneLibre onAjouter={(l) => ajouterLigne.mutate(l)} enCours={ajouterLigne.isPending} />
+            )}
 
             <div className="flex gap-1.5 flex-wrap pt-1">
               {facture.statut === "brouillon" && (
@@ -351,7 +407,7 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
                   <Copy className="h-3.5 w-3.5" /> Lien
                 </Button>
               )}
-              {facture.statut === "validee" && (
+              {(facture.statut === "emise" || facture.statut === "validee") && (
                 <Button size="sm" variant="outline" className="h-8 gap-1.5" disabled={changerStatut.isPending}
                   onClick={() => changerStatut.mutate({ statut: "payee", payee_le: new Date().toISOString() })}>
                   <Check className="h-3.5 w-3.5" /> Marquer réglée
@@ -365,14 +421,17 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed p-4">
-            {p.nature === "prospection" ? (
+          // Pas encore de facture ce mois-ci. Deux chemins, toujours ouverts
+          // tous les deux : ce que le CRM a calculé, et ce qu'on porte à la
+          // main pour les affaires qui ne sont pas passées par lui.
+          <div className="rounded-lg border border-dashed p-4 space-y-3">
+            {p.nature === "prospection" && (
               commissions.isLoading ? (
                 <p className="text-sm text-muted-foreground">Calcul des apports du mois…</p>
               ) : lignesProposees.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Aucune affaire encaissée à son nom sur {moisLabel(periode)}.
-                  {!p.user_id && " Aucun compte CRM n'est rattaché à cette fiche — l'attribution est impossible."}
+                  Aucune affaire encaissée à son nom sur {moisLabel(periode)} dans le CRM.
+                  {!p.user_id && " Aucun compte CRM n'est rattaché à cette fiche — l'attribution automatique est impossible."}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -395,9 +454,15 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
                   </Button>
                 </div>
               )
-            ) : (
-              <FormeForfait onCreer={(l) => creer.mutate(l)} enCours={creer.isPending} />
             )}
+
+            {p.nature === "developpement" && (
+              <p className="text-sm text-muted-foreground">
+                Aucune facture préparée pour {moisLabel(periode)}. Ajoutez la mission livrée.
+              </p>
+            )}
+
+            <LigneLibre onAjouter={(l) => ajouterLigne.mutate(l)} enCours={ajouterLigne.isPending} />
           </div>
         )}
       </CardContent>
@@ -405,23 +470,116 @@ function FichePrestataire({ p, periode, facture, onEditer, onChange }: {
   );
 }
 
-/** Nino est au forfait : la mission et son montant se saisissent. */
-function FormeForfait({ onCreer, enCours }: { onCreer: (l: Ligne[]) => void; enCours: boolean }) {
+/**
+ * ─── Porter une ligne à la main ────────────────────────────────────────
+ *
+ * Toutes les affaires ne passent pas par le CRM : un deal décroché au
+ * téléphone, une recommandation d'un client, un dépannage un samedi. Sans
+ * cette saisie, il faudrait fabriquer un faux prospect pour que le calcul
+ * automatique tombe juste — et polluer la base pour une histoire de
+ * comptabilité.
+ *
+ * Deux façons de chiffrer, parce que les deux situations existent :
+ *   • un POURCENTAGE sur un montant d'affaire — le cas d'une commission ;
+ *   • un MONTANT SEC — une mission au forfait, une prime, un dépannage.
+ */
+function LigneLibre({ onAjouter, enCours }: {
+  onAjouter: (l: Ligne) => void; enCours: boolean;
+}) {
+  const [ouvert, setOuvert] = useState(false);
+  const [mode, setMode] = useState<"pourcentage" | "montant">("pourcentage");
   const [libelle, setLibelle] = useState("");
+  const [detail, setDetail] = useState("");
+  const [base, setBase] = useState("");
+  const [taux, setTaux] = useState("");
   const [montant, setMontant] = useState("");
-  const valide = libelle.trim().length > 2 && Number(montant) > 0;
+
+  const calcule = mode === "pourcentage"
+    ? Math.round(Number(base) * Number(taux) / 100 * 100) / 100
+    : Number(montant);
+  const valide = libelle.trim().length > 2 && calcule > 0;
+
+  const reset = () => {
+    setLibelle(""); setDetail(""); setBase(""); setTaux(""); setMontant(""); setOuvert(false);
+  };
+
+  if (!ouvert) {
+    return (
+      <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-xs" onClick={() => setOuvert(true)}>
+        <Plus className="h-3.5 w-3.5" /> Ajouter une ligne à la main
+      </Button>
+    );
+  }
+
   return (
-    <div className="space-y-2.5">
-      <p className="text-sm text-muted-foreground">Mission livrée ce mois-ci :</p>
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-        <Input className="text-sm" placeholder="Ex : refonte du module de chasse"
+    <div className="rounded-lg border bg-muted/20 p-3 space-y-2.5">
+      <p className="text-xs text-muted-foreground">
+        Pour une affaire qui n'est pas passée par le CRM — un deal au téléphone,
+        une recommandation, un dépannage.
+      </p>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">De quoi s'agit-il</Label>
+        <Input className="text-sm" placeholder="Ex : apport d'affaire — Garage Martin"
           value={libelle} onChange={(e) => setLibelle(e.target.value)} />
-        <Input className="text-sm w-32" type="number" min="0" step="0.01" placeholder="Montant HT"
-          value={montant} onChange={(e) => setMontant(e.target.value)} />
-        <Button size="sm" disabled={!valide || enCours}
-          onClick={() => onCreer([{ libelle: libelle.trim(), montant: Number(montant) }])}>
-          Préparer
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Précision (facultatif — elle figurera sur la facture)</Label>
+        <Input className="text-sm" placeholder="Ex : trouvé par recommandation, signé le 12 août"
+          value={detail} onChange={(e) => setDetail(e.target.value)} />
+      </div>
+
+      <div className="flex gap-1.5">
+        {([["pourcentage", "Un % sur l'affaire"], ["montant", "Un montant fixe"]] as const).map(([m, l]) => (
+          <button key={m} type="button" onClick={() => setMode(m)}
+            className={cn("h-7 px-2.5 rounded-md border text-xs transition",
+              mode === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent")}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {mode === "pourcentage" ? (
+        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Montant de l'affaire (HT)</Label>
+            <Input className="text-sm" type="number" min="0" step="0.01" placeholder="3000"
+              value={base} onChange={(e) => setBase(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Sa part (%)</Label>
+            <Input className="text-sm" type="number" min="0" max="100" step="0.5" placeholder="10"
+              value={taux} onChange={(e) => setTaux(e.target.value)} />
+          </div>
+          <p className="text-sm font-semibold tabular-nums pb-2">
+            = {eur(calcule)}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Montant HT</Label>
+          <Input className="text-sm w-40" type="number" min="0" step="0.01" placeholder="450"
+            value={montant} onChange={(e) => setMontant(e.target.value)} />
+        </div>
+      )}
+
+      <div className="flex gap-1.5">
+        <Button size="sm" className="h-8" disabled={!valide || enCours}
+          onClick={() => {
+            onAjouter({
+              libelle: libelle.trim(),
+              detail: detail.trim() || undefined,
+              base: mode === "pourcentage" ? Number(base) : undefined,
+              taux: mode === "pourcentage" ? Number(taux) : undefined,
+              montant: calcule,
+            });
+            reset();
+          }}>
+          {enCours && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+          Ajouter
         </Button>
+        <Button size="sm" variant="ghost" className="h-8" onClick={reset}>Annuler</Button>
       </div>
     </div>
   );

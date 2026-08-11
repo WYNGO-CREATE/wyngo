@@ -92,6 +92,9 @@ button { border:0; border-radius:10px; padding:13px 24px; font:inherit; font-wei
 .ko { background:#fef2f2; color:#991b1b; border:1px solid #fecaca }
 .pied { padding:14px 32px; background:#f8fafc; text-align:center; font-size:11px; color:#94a3b8 }
 .cache { display:none }
+.recours { margin:14px 0 0; font-size:12.5px; color:#94a3b8 }
+.lien { background:none; border:0; padding:0; font:inherit; color:#64748b;
+        text-decoration:underline; cursor:pointer }
 `;
 
 function enveloppe(titre: string, contenu: string, actions = "") {
@@ -285,8 +288,11 @@ function pageFacture(f: any, p: any, a: any) {
       <div class="rangee">
         <button class="principal" type="submit" onclick="document.getElementById('action').value='valider'">
           Valider cette facture</button>
-        <button class="secondaire" type="button" onclick="contester()">Contester</button>
       </div>
+      <p class="recours">
+        Un montant vous semble faux ?
+        <button type="button" class="lien" onclick="contester()">Signalez-le</button>
+      </p>
     </form>
     <script>
       function contester() {
