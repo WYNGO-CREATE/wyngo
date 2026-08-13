@@ -36,6 +36,7 @@ import { Route as AuthenticatedChassePremiumRouteImport } from './routes/_authen
 import { Route as AuthenticatedChasseRouteImport } from './routes/_authenticated.chasse'
 import { Route as AuthenticatedApolloRouteImport } from './routes/_authenticated.apollo'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated.agenda'
+import { Route as AuthenticatedActualitesRouteImport } from './routes/_authenticated.actualites'
 import { Route as AuthenticatedProspectsIndexRouteImport } from './routes/_authenticated.prospects.index'
 import { Route as AuthenticatedProspectsIdRouteImport } from './routes/_authenticated.prospects.$id'
 import { Route as AuthenticatedFacturationReglagesRouteImport } from './routes/_authenticated.facturation.reglages'
@@ -181,6 +182,11 @@ const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedActualitesRoute = AuthenticatedActualitesRouteImport.update({
+  id: '/actualites',
+  path: '/actualites',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProspectsIndexRoute =
   AuthenticatedProspectsIndexRouteImport.update({
     id: '/prospects/',
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/actualites': typeof AuthenticatedActualitesRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/actualites': typeof AuthenticatedActualitesRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/apollo': typeof AuthenticatedApolloRoute
   '/chasse': typeof AuthenticatedChasseRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/espace': typeof EspaceRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/actualites': typeof AuthenticatedActualitesRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/apollo': typeof AuthenticatedApolloRoute
   '/_authenticated/chasse': typeof AuthenticatedChasseRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/login'
     | '/signup'
+    | '/actualites'
     | '/agenda'
     | '/apollo'
     | '/chasse'
@@ -382,6 +392,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/login'
     | '/signup'
+    | '/actualites'
     | '/agenda'
     | '/apollo'
     | '/chasse'
@@ -419,6 +430,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/login'
     | '/signup'
+    | '/_authenticated/actualites'
     | '/_authenticated/agenda'
     | '/_authenticated/apollo'
     | '/_authenticated/chasse'
@@ -651,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgendaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/actualites': {
+      id: '/_authenticated/actualites'
+      path: '/actualites'
+      fullPath: '/actualites'
+      preLoaderRoute: typeof AuthenticatedActualitesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/prospects/': {
       id: '/_authenticated/prospects/'
       path: '/prospects'
@@ -738,6 +757,7 @@ const AuthenticatedFacturationRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedActualitesRoute: typeof AuthenticatedActualitesRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedApolloRoute: typeof AuthenticatedApolloRoute
   AuthenticatedChasseRoute: typeof AuthenticatedChasseRoute
@@ -766,6 +786,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedActualitesRoute: AuthenticatedActualitesRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedApolloRoute: AuthenticatedApolloRoute,
   AuthenticatedChasseRoute: AuthenticatedChasseRoute,

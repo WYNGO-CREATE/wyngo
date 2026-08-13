@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
+  Newspaper,
   Euro,
   Users,
   CalendarClock,
@@ -171,6 +172,7 @@ export function AppSidebar() {
   // Items "compte", communs aux deux univers
   const accountItems: NavItem[] = [];
   if (role === "admin") accountItems.push({ title: "Équipe", url: "/equipe", icon: UserCog, badge: 0 });
+  if (role === "admin") accountItems.push({ title: "Actualités du site", url: "/actualites", icon: Newspaper, badge: 0 });
   accountItems.push({ title: "Le Radar Tech", url: "/redaction", icon: Radar, badge: 0 });
   accountItems.push({ title: "Mon profil", url: "/profil", icon: User, badge: 0 });
 
