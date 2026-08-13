@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { RadiographiePanel } from "@/components/radiographie-panel";
 import { useAuth } from "@/hooks/use-auth";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -158,6 +159,15 @@ export function CallModeDrawer({
 
         <div className="px-6 py-5 space-y-6">
           {/* LA FICHE — le cœur : analyse marché + arguments chiffrés */}
+          {/* La radiographie d'abord : elle ne coûte rien et ne dépend d'aucune
+              donnée payante. L'analyse concurrentielle vient après, quand on
+              veut nommer ceux qui dominent déjà le web. */}
+          {prospect && (
+            <RadiographiePanel
+              prospectId={prospect.id}
+              ville={prospect.location}
+            />
+          )}
           {prospect && <MarketPanel prospectId={prospect.id} prospectName={prospect.first_name} />}
 
           {/* Trames d'ouverture — secondaires, repliées visuellement */}

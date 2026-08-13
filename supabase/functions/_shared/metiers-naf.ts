@@ -1,0 +1,357 @@
+/**
+ * ─── Métier → code d'activité ─────────────────────────────────────────
+ *
+ * Généré depuis `src/lib/trades-catalog.ts`, le catalogue que Hugo a
+ * constitué et fait auditer code par code. C'est la seule correspondance qui
+ * fasse foi côté serveur.
+ *
+ * Pourquoi ne pas deviner depuis la base officielle : sa recherche libre
+ * porte sur le NOM des entreprises, pas sur leur activité. « Plombier
+ * Montauban » ne renvoie que les sociétés qui ont « plombier » dans leur
+ * raison sociale — deux, au lieu des centaines qui exercent le métier. Un
+ * recensement fondé là-dessus serait faux, donc pire qu'absent.
+ *
+ * NE PAS MODIFIER À LA MAIN : régénérer depuis le catalogue.
+ */
+
+export const METIERS_NAF: [string, string][] = [
+  ["Administration de biens", "68.32A"],
+  ["Agence SEO / SEA", "73.11Z"],
+  ["Agence d'intérim", "78.20Z"],
+  ["Agence de communication", "73.11Z"],
+  ["Agence de voyage", "79.11Z"],
+  ["Agence immobilière", "68.31Z"],
+  ["Agent général d'assurance", "66.22Z"],
+  ["Aide à domicile - Auxiliaire de vie", "88.10A"],
+  ["Aménagement combles - Extension", "43.32A"],
+  ["Animalerie", "47.76Z"],
+  ["Antiquaire - Brocante", "47.79Z"],
+  ["Apiculteur - Miel artisanal", "01.49Z"],
+  ["Architecte DPLG", "71.11Z"],
+  ["Architecte d'intérieur", "71.11Z"],
+  ["Armurerie - Magasin de chasse", "47.78C"],
+  ["Articles de sport", "47.64Z"],
+  ["Atelier de couture sur mesure", "14.13Z"],
+  ["Audioprothésiste", "47.74Z"],
+  ["Auto-école", "85.53Z"],
+  ["Bar - Café - Brasserie", "56.30Z"],
+  ["Bar à cocktails - Speakeasy", "56.30Z"],
+  ["Bar à vin", "56.30Z"],
+  ["Barbier - Barbershop", "96.02A"],
+  ["Bijouterie - Horlogerie", "47.77Z"],
+  ["Bijoutier-créateur", "32.12Z"],
+  ["Boucherie - Charcuterie", "47.22Z"],
+  ["Boulangerie - Pâtisserie", "10.71C"],
+  ["Bowling", "93.29Z"],
+  ["Box CrossFit", "93.13Z"],
+  ["Boxe - Arts martiaux", "93.12Z"],
+  ["Brasserie artisanale (bière)", "11.05Z"],
+  ["Bureau d'études - Ingénierie", "71.12B"],
+  ["Cabinet RH - Recrutement", "78.10Z"],
+  ["Cabinet d'avocats", "69.10Z"],
+  ["Cabinet de domiciliation d'entreprises", "82.11Z"],
+  ["Cabinet dentaire", "86.23Z"],
+  ["Camping - Glamping", "55.30Z"],
+  ["Carreleur - Revêtements", "43.33Z"],
+  ["Carrosserie - Peinture auto", "45.20A"],
+  ["Caviste - Vins & spiritueux", "47.25Z"],
+  ["Centre d'imagerie médicale - Radiologie", "86.22A"],
+  ["Centre d'épilation laser", "96.02B"],
+  ["Centre de bronzage - UV", "96.04Z"],
+  ["Centre de massages", "96.04Z"],
+  ["Centre de rééducation - Soins de suite", "86.90E"],
+  ["Centre dentaire", "86.23Z"],
+  ["Centre pneumatiques", "45.20A"],
+  ["Centre équestre - Manège", "93.19Z"],
+  ["Chambres d'hôtes", "55.20Z"],
+  ["Chocolaterie - Confiserie", "10.82Z"],
+  ["Cinéma indépendant", "59.14Z"],
+  ["Climatisation - Pompe à chaleur", "43.22B"],
+  ["Clinique privée", "86.10Z"],
+  ["Club / Practice de golf", "93.12Z"],
+  ["Club de tennis", "93.12Z"],
+  ["Coach business / professionnel", "70.22Z"],
+  ["Coach de vie - Life coach", "96.09Z"],
+  ["Coach sportif personnel", "85.51Z"],
+  ["Commissaire aux comptes", "69.20Z"],
+  ["Community manager freelance", "73.11Z"],
+  ["Comportementaliste animal", "96.09Z"],
+  ["Concession automobile", "45.11Z"],
+  ["Conseil aux entreprises", "70.22Z"],
+  ["Conseiller en gestion de patrimoine", "66.22Z"],
+  ["Conserverie artisanale", "10.39B"],
+  ["Constructeur de maisons", "41.20A"],
+  ["Constructeur de piscines", "43.99B"],
+  ["Consultant cybersécurité", "62.02A"],
+  ["Consultant stratégie", "70.22Z"],
+  ["Contrôle technique", "71.20A"],
+  ["Cordonnerie - Clés - Imprimerie minute", "95.23Z"],
+  ["Courtier en assurance", "66.22Z"],
+  ["Courtier en crédit / Mortgage", "66.19B"],
+  ["Couvreur - Charpentier", "43.91A"],
+  ["Créateur de contenu / Influenceur", "73.11Z"],
+  ["Créateur de mode - Styliste", "14.13Z"],
+  ["Crêperie", "56.10C"],
+  ["Cuisiniste - Vente de cuisines", "47.59A"],
+  ["Céramiste - Potier", "23.41Z"],
+  ["DPO - Conseil RGPD", "62.02A"],
+  ["Diagnostic thermique - DPE", "71.20B"],
+  ["Diagnostiqueur immobilier", "71.20B"],
+  ["Discothèque - Club", "56.30Z"],
+  ["Distillerie artisanale", "11.01Z"],
+  ["Distributeur de matériel médical", "46.46Z"],
+  ["Distributeur de pièces automobiles", "45.31Z"],
+  ["Diététicien - Nutritionniste", "86.90F"],
+  ["Décorateur d'intérieur - Home stager", "74.10Z"],
+  ["Décoration - Ameublement", "47.59B"],
+  ["Démolition", "43.11Z"],
+  ["Déménageur", "49.42Z"],
+  ["Dépannage - Remorquage", "52.21Z"],
+  ["Désinsectisation - Nuisibles", "81.29A"],
+  ["Développeur web - Agence digitale", "62.01Z"],
+  ["EHPAD - Maison de retraite médicalisée", "87.10A"],
+  ["Encadreur d'art", "47.78B"],
+  ["Ergothérapeute", "86.90E"],
+  ["Escape game", "93.29Z"],
+  ["Expert en assurance - Évaluation des risques", "66.21Z"],
+  ["Expertise comptable", "69.20Z"],
+  ["Fabricant de mobilier", "31.09B"],
+  ["Façadier - Ravalement", "43.99B"],
+  ["Ferronnier d'art", "25.99B"],
+  ["Fleuriste", "47.76Z"],
+  ["Food truck - Cuisine mobile", "56.10C"],
+  ["Forgeron - Coutelier", "25.50A"],
+  ["Fournitures et équipements industriels", "46.69C"],
+  ["Friperie - Dépôt-vente", "47.79Z"],
+  ["Fromagerie - Crémerie", "47.29Z"],
+  ["Garage automobile", "45.20A"],
+  ["Garde d'enfants - Crèche privée", "88.91A"],
+  ["Garde-meubles - Stockage", "52.10B"],
+  ["Glacier - Fabricant de glaces", "10.52Z"],
+  ["Graphiste - Designer", "74.10Z"],
+  ["Grossiste alimentaire", "46.39B"],
+  ["Grossiste boissons - Vins et spiritueux", "46.34Z"],
+  ["Grossiste produits d'entretien - Hygiène", "46.44Z"],
+  ["Grossiste quincaillerie - Outillage pro", "46.74A"],
+  ["Guide touristique - Excursion", "79.90Z"],
+  ["Géomètre-expert", "71.12A"],
+  ["Gîte rural", "55.20Z"],
+  ["Hammam - Sauna", "96.04Z"],
+  ["Home staging - Mise en valeur", "74.10Z"],
+  ["Horloger - Réparation", "95.25Z"],
+  ["Horticulteur", "01.19Z"],
+  ["Huilerie artisanale", "10.41B"],
+  ["Huissier de justice", "69.10Z"],
+  ["Hypnothérapeute", "96.09Z"],
+  ["Hébergement web - Infogérance", "63.11Z"],
+  ["Hôtel", "55.10Z"],
+  ["Hôtel de charme - Boutique-hôtel", "55.10Z"],
+  ["Imprimerie - Reprographie", "18.12Z"],
+  ["Infirmier(ère) libéral(e)", "86.90D"],
+  ["Informatique - Réparation", "47.41Z"],
+  ["Institut de beauté", "96.02B"],
+  ["Instruments de musique", "47.59A"],
+  ["Intermédiaire en services financiers", "66.19B"],
+  ["Isolation - ITE / ITI", "43.29A"],
+  ["Jeux & jouets", "47.65Z"],
+  ["Karting", "93.29Z"],
+  ["Kebab - Cuisine orientale", "56.10C"],
+  ["Kinésithérapeute", "86.90E"],
+  ["Laboratoire d'analyses médicales", "86.90B"],
+  ["Laser game - Quasar", "93.29Z"],
+  ["Lavage auto - Detailing", "45.20A"],
+  ["Librairie - Papeterie", "47.61Z"],
+  ["Lingerie - Sous-vêtements", "47.71Z"],
+  ["Location de voitures", "77.11A"],
+  ["Location meublés tourisme", "55.20Z"],
+  ["Logistique - Transport", "52.29B"],
+  ["Lotisseur - Aménageur foncier", "41.10B"],
+  ["Luthier - Réparation d'instruments", "32.20Z"],
+  ["Magasin bio / vrac", "47.21Z"],
+  ["Magasin de chaussures", "47.72A"],
+  ["Magasin de cycles - Vélos", "47.64Z"],
+  ["Magasin de luminaires", "47.59B"],
+  ["Magasin de meubles", "47.59A"],
+  ["Magasin de pêche", "47.64Z"],
+  ["Magasin de tissus - Mercerie", "47.51Z"],
+  ["Magasin de vélos électriques", "47.64Z"],
+  ["Magasin de vêtements", "47.71Z"],
+  ["Maintenance industrielle", "33.12Z"],
+  ["Maison de santé pluridisciplinaire", "86.21Z"],
+  ["Mandataire immobilier", "68.31Z"],
+  ["Maquillage permanent / Dermographie", "96.02B"],
+  ["Maquilleur professionnel", "96.02B"],
+  ["Maraîcher - AMAP", "01.13Z"],
+  ["Marbrier - Sculpteur sur pierre", "23.70Z"],
+  ["Marchand de biens", "68.10Z"],
+  ["Maroquinerie", "47.72B"],
+  ["Matériel de restauration professionnel - CHR", "46.69B"],
+  ["Maçon - Gros œuvre", "43.99C"],
+  ["Menuiserie industrielle - Charpente", "16.23Z"],
+  ["Menuisier alu / PVC", "43.32B"],
+  ["Menuisier bois", "43.32A"],
+  ["Mobilier et fournitures de bureau", "46.65Z"],
+  ["Modeleur 3D - Animation 3D", "74.10Z"],
+  ["Motion designer - Animation 2D/3D", "59.12Z"],
+  ["Médecin généraliste", "86.21Z"],
+  ["Médiateur familial", "88.99B"],
+  ["Naturopathe", "96.09Z"],
+  ["Nettoyage professionnel", "81.21Z"],
+  ["Négoce de matériaux de construction", "46.73A"],
+  ["Onglerie - Prothésiste ongulaire", "96.02B"],
+  ["Opticien", "47.78A"],
+  ["Organisation événements particuliers", "82.30Z"],
+  ["Organisme de formation professionnelle", "85.59A"],
+  ["Orthodontiste", "86.23Z"],
+  ["Orthophoniste", "86.90E"],
+  ["Ostéopathe", "86.90E"],
+  ["Paintball - Airsoft", "93.29Z"],
+  ["Parfumerie - Cosmétiques", "47.75Z"],
+  ["Paysagiste - Jardinier", "81.30Z"],
+  ["Peintre - Décorateur", "43.34Z"],
+  ["Pension pour animaux", "96.09Z"],
+  ["Pet-sitter - Visites à domicile", "96.09Z"],
+  ["Pharmacie", "47.73Z"],
+  ["Photographe (portrait, mariage)", "74.20Z"],
+  ["Photographe immobilier", "74.20Z"],
+  ["Pilote de drone professionnel", "74.90B"],
+  ["Pizzeria", "56.10C"],
+  ["Plasturgie - Pièces techniques plastique", "22.29A"],
+  ["Plombier - Chauffagiste", "43.22A"],
+  ["Plâtrier - Plaquiste", "43.31Z"],
+  ["Podologue - Pédicure", "86.90E"],
+  ["Poissonnerie", "47.23Z"],
+  ["Pompes funèbres", "96.03Z"],
+  ["Poêles & cheminées", "47.52B"],
+  ["Pressing - Blanchisserie", "96.01B"],
+  ["Primeur / Fruits & légumes", "47.21Z"],
+  ["Producteur fromager fermier", "10.51C"],
+  ["Promoteur immobilier", "41.10A"],
+  ["Psychologue libéral", "86.90F"],
+  ["Psychomotricien", "86.90E"],
+  ["Pub - Brasserie irlandaise", "56.30Z"],
+  ["Pâtisserie artisanale", "10.71D"],
+  ["Pédiatre", "86.22A"],
+  ["Pépiniériste - Plantes", "01.30Z"],
+  ["Ramoneur - Fumisterie", "81.22Z"],
+  ["Relieur - Doreur", "18.14Z"],
+  ["Restaurant gastronomique", "56.10A"],
+  ["Restaurant japonais - Sushi", "56.10A"],
+  ["Restaurant traditionnel", "56.10A"],
+  ["Restaurateur d'œuvres d'art", "90.03B"],
+  ["Restauration rapide", "56.10C"],
+  ["Retouches - Couturière", "95.29Z"],
+  ["Rédacteur web - Copywriter", "90.03B"],
+  ["Résidence senior", "87.30A"],
+  ["Sage-femme libérale", "86.90D"],
+  ["Salle d'escalade", "93.13Z"],
+  ["Salle de bain - Équipement", "47.52B"],
+  ["Salle de sport - Fitness", "93.13Z"],
+  ["Salon de coiffure", "96.02A"],
+  ["Salon de thé - Coffee shop", "56.10C"],
+  ["Sandwicherie - Snacking", "56.10C"],
+  ["Serrurier - Métallerie", "43.32B"],
+  ["Société de gestion de portefeuille", "66.30Z"],
+  ["Société de recouvrement de créances", "82.91Z"],
+  ["Sophrologue", "86.90F"],
+  ["Soutien scolaire - Cours particuliers", "85.59B"],
+  ["Spa - Centre bien-être", "96.04Z"],
+  ["Storiste - Stores - Volets", "43.34Z"],
+  ["Studio de jeux vidéo", "58.21Z"],
+  ["Studio yoga / Pilates", "85.51Z"],
+  ["Syndic de copropriété", "68.32A"],
+  ["Sécurité privée - Gardiennage", "80.10Z"],
+  ["Tabac - Presse - Loto", "47.26Z"],
+  ["Tapissier d'ameublement", "13.92Z"],
+  ["Tatoueur - Perceur", "96.09Z"],
+  ["Terrassement - VRD", "43.12A"],
+  ["Théâtre - Salle de spectacle", "90.04Z"],
+  ["Toiletteur canin / félin", "96.09Z"],
+  ["Torréfacteur - Café artisanal", "10.83Z"],
+  ["Tour-opérateur", "79.12Z"],
+  ["Traducteur - Interprète", "74.30Z"],
+  ["Traitement et revêtement de surface", "25.61Z"],
+  ["Traiteur événementiel", "56.21Z"],
+  ["Transformation agroalimentaire", "10.89Z"],
+  ["Téléphonie - Multimédia", "47.42Z"],
+  ["Télésurveillance - Alarme", "80.20Z"],
+  ["Tôlerie - Chaudronnerie", "25.11Z"],
+  ["UX / UI designer", "74.10Z"],
+  ["Usinage - Mécanique de précision", "25.62B"],
+  ["Vente / Réparation moto", "45.40Z"],
+  ["Vente voitures d'occasion", "45.11Z"],
+  ["Vidéaste - Films d'entreprise", "59.11C"],
+  ["Viticulteur - Vigneron", "01.21Z"],
+  ["Vitrage auto - Pare-brise", "45.20A"],
+  ["Vitrailliste - Maître verrier", "23.19Z"],
+  ["Vitrier - Miroitier", "43.34Z"],
+  ["Voyance - Astrologie", "96.09Z"],
+  ["Vétérinaire", "75.00Z"],
+  ["Wedding planner", "74.90B"],
+  ["Zinguerie - Étanchéité toit", "43.91B"],
+  ["Ébéniste", "31.09A"],
+  ["École de danse", "85.52Z"],
+  ["École de musique", "85.52Z"],
+  ["École de natation", "85.51Z"],
+  ["École de ski - Moniteur", "85.51Z"],
+  ["Éducateur canin - Dresseur", "96.09Z"],
+  ["Élagueur - Cordiste", "81.30Z"],
+  ["Électricien bâtiment", "43.21A"],
+  ["Électroménager", "47.54Z"],
+  ["Éleveur - Vente directe", "01.41Z"],
+  ["Énergies renouvelables - Solaire", "43.22B"],
+  ["Épicerie fine", "47.29Z"],
+  ["Étude notariale", "69.10Z"],
+];
+
+const normalise = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+   .replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Le code d'activité correspondant à un métier écrit à la main.
+ * On cherche la correspondance la plus SPÉCIFIQUE : « boulangerie
+ * pâtisserie » doit l'emporter sur « boulangerie ».
+ */
+export function nafDuMetier(metier?: string | null): { naf: string; label: string } | null {
+  const m = normalise(String(metier ?? ""));
+  if (m.length < 3) return null;
+
+  // « Coiffeur » et « Salon de coiffure » désignent le même métier, mais aucun
+  // n'est contenu dans l'autre. On compare donc aussi sur la racine des mots :
+  // coiff-, plomb-, boulang-. C'est ce qui rattrape la façon dont les gens
+  // écrivent réellement un métier.
+  const racines = (s: string) =>
+    s.split(" ").filter((w) => w.length > 4).map((w) => w.slice(0, 5));
+  const rm = racines(m);
+
+  let meilleur: { naf: string; label: string; score: number } | null = null;
+  for (const [label, naf] of METIERS_NAF) {
+    const l = normalise(label);
+    let score = 0;
+    if (m.includes(l) || l.includes(m)) {
+      // Le libellé le plus long qui colle est le plus précis.
+      score = 100 + Math.min(l.length, m.length);
+    } else {
+      const communes = racines(l).filter((r) => rm.includes(r));
+      if (communes.length) score = communes.length * 10 + communes.join("").length;
+    }
+    if (score && (!meilleur || score > meilleur.score)) meilleur = { naf, label, score };
+  }
+  return meilleur ? { naf: meilleur.naf, label: meilleur.label } : null;
+}
+
+/**
+ * Les autres métiers qui partagent ce code d'activité.
+ *
+ * 158 des 287 métiers du catalogue partagent leur code avec au moins un
+ * autre : avocat, notaire et huissier sont tous en 69.10Z. Un décompte fondé
+ * sur le code compte donc les trois. Le dire est la seule façon d'utiliser le
+ * chiffre sans mentir — « 3 256 études et cabinets juridiques » et non
+ * « 3 256 notaires ».
+ */
+export function metiersDuNaf(naf?: string | null): string[] {
+  const n = String(naf ?? "").trim();
+  if (!n) return [];
+  return METIERS_NAF.filter(([, code]) => code === n).map(([label]) => label);
+}
