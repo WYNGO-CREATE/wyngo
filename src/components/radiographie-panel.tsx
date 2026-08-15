@@ -16,7 +16,7 @@
  *     ne doit pas le dire.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,8 @@ type Fiche = {
   naf: string | null; identite_par: string | null;
   partage_le_code_avec: string[];
   marche: {
-    commune: number | null; departement: number | null; departement_code: string | null;
+    commune: number | null; commune_mesuree_par: "commune" | "code postal" | null;
+    departement: number | null; departement_code: string | null; departement_plafonne: boolean;
     france: number | null; france_plafonne: boolean;
   } | null;
   angle: string; ouverture: string;
@@ -62,6 +63,8 @@ export function RadiographiePanel({ prospectId, metier, ville }: {
   const [chargement, setChargement] = useState(false);
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [manuel, setManuel] = useState({ metier: metier ?? "", ville: ville ?? "" });
+  const [ajuster, setAjuster] = useState(false);
+  const dejaLance = useRef<string | null>(null);
 
   const lancer = async () => {
     setChargement(true); setFiche(null);
@@ -81,6 +84,18 @@ export function RadiographiePanel({ prospectId, metier, ville }: {
     }
   };
 
+  // Le métier et la ville n'ont pas à être saisis : la fonction les retrouve
+  // à la source, par le SIRET du prospect puis par le catalogue des métiers.
+  // On lance donc la mesure à l'ouverture, une fois par prospect — le tiroir
+  // se remonte souvent, et régénérer à chaque fois coûterait un appel IA.
+  useEffect(() => {
+    if (!prospectId || dejaLance.current === prospectId) return;
+    dejaLance.current = prospectId;
+    lancer();
+    // `lancer` est stable pour un prospect donné : on ne le suit pas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
+
   const m = fiche?.marche;
 
   return (
@@ -89,24 +104,50 @@ export function RadiographiePanel({ prospectId, metier, ville }: {
         <Activity className="h-3.5 w-3.5" /> Radiographie du marché
       </p>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div className="space-y-1">
-          <Label className="text-[11px]">Métier</Label>
-          <Input className="h-8 text-sm" placeholder="Ex : boulangerie"
-            value={manuel.metier} onChange={(e) => setManuel((o) => ({ ...o, metier: e.target.value }))} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-[11px]">Ville</Label>
-          <Input className="h-8 text-sm" placeholder="Ex : Albi"
-            value={manuel.ville} onChange={(e) => setManuel((o) => ({ ...o, ville: e.target.value }))} />
-        </div>
-      </div>
+      {/* Ce que la mesure a retenu — et le moyen de la corriger si le
+          métier enregistré sur la fiche est trop vague. */}
+      {fiche && !ajuster && (
+        <p className="text-xs text-muted-foreground">
+          {fiche.metier ? <><b className="text-foreground">{fiche.metier}</b> · </> : null}
+          <b className="text-foreground">{fiche.ville}</b>
+          {fiche.identite_par ? <> · identifié par {fiche.identite_par}</> : null}
+          {" · "}
+          <button type="button" className="underline hover:text-foreground"
+            onClick={() => { setManuel({ metier: fiche.metier ?? "", ville: fiche.ville ?? "" }); setAjuster(true); }}>
+            corriger
+          </button>
+        </p>
+      )}
 
-      <Button onClick={lancer} disabled={chargement || (!prospectId && !manuel.metier)}
-        className="w-full gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white">
-        {chargement ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
-        {chargement ? "Mesure du marché en cours…" : fiche ? "Relancer" : "Analyser son marché"}
-      </Button>
+      {(ajuster || (!fiche && !chargement)) && (
+        <>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-[11px]">Métier</Label>
+              <Input className="h-8 text-sm" placeholder="Ex : boulangerie"
+                value={manuel.metier} onChange={(e) => setManuel((o) => ({ ...o, metier: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px]">Ville</Label>
+              <Input className="h-8 text-sm" placeholder="Ex : Albi"
+                value={manuel.ville} onChange={(e) => setManuel((o) => ({ ...o, ville: e.target.value }))} />
+            </div>
+          </div>
+
+          <Button onClick={() => { setAjuster(false); lancer(); }}
+            disabled={chargement || (!prospectId && !manuel.metier)}
+            className="w-full gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white">
+            {chargement ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
+            {chargement ? "Mesure du marché en cours…" : fiche ? "Relancer" : "Analyser son marché"}
+          </Button>
+        </>
+      )}
+
+      {chargement && !ajuster && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Mesure du marché en cours…
+        </p>
+      )}
 
       {fiche && (
         <div className="space-y-3">
@@ -117,7 +158,10 @@ export function RadiographiePanel({ prospectId, metier, ville }: {
                 <MapPin className="h-3 w-3" /> Mesuré à l'instant · base officielle des entreprises
               </p>
               <div className="grid grid-cols-3 gap-2 text-center">
-                {[[nb(m.commune), fiche.ville], [nb(m.departement), `département ${m.departement_code ?? ""}`],
+                {[[nb(m.commune), fiche.ville],
+                  [m.departement_plafonne ? "10 000+" :
+                     (m.departement !== null && m.commune !== null && m.departement < m.commune ? "—" : nb(m.departement)),
+                   `département ${m.departement_code ?? ""}`],
                   [m.france_plafonne ? "10 000+" : nb(m.france), "France"]].map(([v, l], i) => (
                   <div key={i}>
                     <p className="text-xl font-semibold tabular-nums leading-none">{v}</p>
@@ -126,7 +170,9 @@ export function RadiographiePanel({ prospectId, metier, ville }: {
                 ))}
               </div>
               <p className="text-[11px] text-muted-foreground mt-2.5">
-                Établissements sous le code {fiche.naf}
+                {m.commune_mesuree_par === "code postal"
+                  ? <>Mesuré par code postal — peut inclure les communes voisines. Code {fiche.naf}</>
+                  : <>Établissements sous le code {fiche.naf}</>}
                 {fiche.partage_le_code_avec?.length > 0 && (
                   <>
                     {" "}— <b>ce code couvre aussi {fiche.partage_le_code_avec.slice(0, 3).join(", ")}</b>.

@@ -65,12 +65,24 @@ function villeSeule(v?: string | null): string {
   return dernier.replace(/\b\d{5}\b/, "").trim() || t;
 }
 
+/**
+ * L'API publique limite le débit. Une radiographie enchaîne plusieurs
+ * requêtes : sans reprise, un 429 fait perdre le chiffre local et l'écran
+ * affiche « marché non mesuré » alors que la donnée existe. On repasse deux
+ * fois, en espaçant.
+ */
 async function chercher(params: Record<string, string>) {
   const u = new URL(API);
   for (const [k, v] of Object.entries(params)) if (v) u.searchParams.set(k, v);
-  const r = await fetch(u.toString(), { signal: AbortSignal.timeout(20000) });
-  if (!r.ok) return null;
-  return await r.json();
+  for (let essai = 0; essai < 3; essai++) {
+    try {
+      const r = await fetch(u.toString(), { signal: AbortSignal.timeout(20000) });
+      if (r.ok) return await r.json();
+      if (r.status !== 429 && r.status < 500) return null;
+    } catch { /* réseau : on retente */ }
+    if (essai < 2) await new Promise((ok) => setTimeout(ok, 1200 * (essai + 1)));
+  }
+  return null;
 }
 
 /**
@@ -127,13 +139,13 @@ async function identite(siret?: string | null, entreprise?: string | null, ville
  * renvoie Chaumontel, parce que l'API classe par pertinence et non par
  * population.
  */
-async function communeInsee(nom: string): Promise<{ code: string; nom: string; departement: string } | null> {
+async function communeInsee(nom: string): Promise<{ code: string; nom: string; departement: string; cp: string[] } | null> {
   const propre = nom.trim();
   if (propre.length < 2) return null;
   try {
     const u = new URL("https://geo.api.gouv.fr/communes");
     u.searchParams.set("nom", propre);
-    u.searchParams.set("fields", "nom,code,codeDepartement,population");
+    u.searchParams.set("fields", "nom,code,codeDepartement,codesPostaux,population");
     u.searchParams.set("limit", "15");
     const r = await fetch(u.toString(), { signal: AbortSignal.timeout(15000) });
     if (!r.ok) return null;
@@ -147,15 +159,76 @@ async function communeInsee(nom: string): Promise<{ code: string; nom: string; d
     // À nom égal, la plus peuplée : c'est celle dont on parle neuf fois sur dix.
     const choisie = (exactes.length ? exactes : liste)
       .sort((a: { population?: number }, b: { population?: number }) => (b.population ?? 0) - (a.population ?? 0))[0];
-    return { code: choisie.code, nom: choisie.nom, departement: choisie.codeDepartement };
+    return { code: choisie.code, nom: choisie.nom, departement: choisie.codeDepartement,
+             cp: Array.isArray(choisie.codesPostaux) ? choisie.codesPostaux : [] };
   } catch { return null; }
 }
 
+
+/**
+ * ─── Paris, Lyon, Marseille ───────────────────────────────────────────
+ *
+ * Ces trois villes ont un code de commune qui ne porte AUCUNE entreprise :
+ * tout est enregistré sous les codes d'arrondissement municipal. Interroger
+ * Lyon (69123) renvoie 0 avocat ; les 9 arrondissements en totalisent plus de
+ * dix mille.
+ *
+ * Le symptôme est traître parce qu'il ne ressemble pas à une panne : l'API
+ * répond correctement, avec un zéro. C'est la troisième fois que ce piège se
+ * présente sur ce projet — d'où cette table explicite plutôt qu'une règle
+ * devinée.
+ *
+ * Les codes sont ceux de l'INSEE, stables depuis des décennies.
+ */
+const ARRONDISSEMENTS: Record<string, string[]> = {
+  // Paris
+  "75056": Array.from({ length: 20 }, (_, i) => String(75101 + i)),
+  // Lyon
+  "69123": Array.from({ length: 9 }, (_, i) => String(69381 + i)),
+  // Marseille
+  "13055": Array.from({ length: 16 }, (_, i) => String(13201 + i)),
+};
+
+/**
+ * Le nombre d'entreprises dans une commune, arrondissements compris.
+ *
+ * ⚠️ On envoie tous les codes en UNE requête, séparés par des virgules —
+ * jamais une requête par arrondissement dont on additionnerait les résultats.
+ * Le compteur porte sur des ENTREPRISES, pas des établissements : un cabinet
+ * qui a des bureaux dans deux arrondissements ressort dans les deux, et la
+ * somme le compte deux fois. À Lyon, l'addition donnait 10 171 avocats pour
+ * un département qui n'en compte que 7 204 — un chiffre impossible, qu'un
+ * prospect avocat aurait relevé immédiatement. La requête groupée en donne
+ * 6 373, cohérent.
+ */
+async function compter(
+  naf: string,
+  insee: { code: string; cp: string[] },
+): Promise<{ n: number; par: "commune" | "code postal" } | null> {
+  const codes = ARRONDISSEMENTS[insee.code] ?? [insee.code];
+  const r = await chercher({ activite_principale: naf, code_commune: codes.join(","), per_page: "1" });
+  const n = typeof r?.total_results === "number" ? r.total_results : null;
+  if (n !== null && n > 0) return { n, par: "commune" };
+
+  // Repli par code postal. La Corse en a besoin — ses communes ne sont pas
+  // indexées sous leur code INSEE (2A004, 2B033) et renvoient toujours zéro.
+  // On en fait une règle générale plutôt qu'un cas particulier : un zéro peut
+  // toujours cacher un trou de la base, et le repli ne coûte qu'une requête.
+  if (insee.cp.length) {
+    const r2 = await chercher({ activite_principale: naf, code_postal: insee.cp.join(","), per_page: "1" });
+    const n2 = typeof r2?.total_results === "number" ? r2.total_results : null;
+    // Un code postal peut déborder sur les villages voisins : on le dit, pour
+    // que personne ne présente ce chiffre comme strictement communal.
+    if (n2 !== null && n2 > 0) return { n: n2, par: "code postal" };
+  }
+  return n === null ? null : { n, par: "commune" };
+}
+
 /** Combien exercent le même métier autour de lui. Chiffres bruts, vérifiables. */
-async function densite(naf: string | null, insee: { code: string; nom: string; departement: string } | null) {
+async function densite(naf: string | null, insee: { code: string; nom: string; departement: string; cp: string[] } | null) {
   if (!naf) return null;
   const [ville, dep, france] = await Promise.all([
-    insee ? chercher({ activite_principale: naf, code_commune: insee.code, per_page: "1" }) : Promise.resolve(null),
+    insee ? compter(naf, insee) : Promise.resolve(null),
     insee ? chercher({ activite_principale: naf, departement: insee.departement, per_page: "1" }) : Promise.resolve(null),
     chercher({ activite_principale: naf, per_page: "1" }),
   ]);
@@ -163,9 +236,12 @@ async function densite(naf: string | null, insee: { code: string; nom: string; d
   // comme un décompte exact serait faux : on le dit tel quel.
   const brut = (n: unknown) => (typeof n === "number" ? n : null);
   const fr = brut(france?.total_results);
+  const depTotal = brut(dep?.total_results);
   return {
-    commune: brut(ville?.total_results),
-    departement: brut(dep?.total_results),
+    commune: ville?.n ?? null,
+    commune_mesuree_par: ville?.par ?? null,
+    departement: depTotal,
+    departement_plafonne: depTotal !== null && depTotal >= 10000,
     departement_code: insee?.departement ?? null,
     france: fr,
     france_plafonne: fr !== null && fr >= 10000,
@@ -327,7 +403,7 @@ Deno.serve(async (req) => {
     const mesures = marche
       ? `Sur son marché — chiffres relevés à l'instant dans la base officielle des entreprises :
 - ${marche.commune ?? "?"} établissements exercent le même métier à ${insee?.nom ?? commune}
-- ${marche.departement ?? "?"} dans le département ${marche.departement_code ?? "?"}
+${marche.departement === null || marche.departement_plafonne || (marche.commune !== null && marche.departement < marche.commune) ? "" : `- ${marche.departement} dans le département ${marche.departement_code ?? "?"}\n`}
 - ${marche.france_plafonne ? "plus de 10 000" : (marche.france ?? "?")} en France
 Code d'activité : ${id.naf ?? "inconnu"} (identité retrouvée par ${id.source})
 ${partage.length
